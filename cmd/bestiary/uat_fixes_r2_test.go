@@ -201,3 +201,200 @@ func TestShow_EntityView_DefaultsToTable_NoOutputFlag(t *testing.T) {
 		})
 	}
 }
+
+// TestEntityProviderOrder_CreatorThenCanonicalThenAlphabetical pins the three-group
+// display order of the entity view's provider line: the creator's own hosted surfaces
+// in CURATION order, then the family's canonical provider, then everything else
+// alphabetically. The synthetic entity below is deliberately built with an already
+// alphabetical Providers slice so a failure means the reorder did not happen, not that
+// the input happened to be sorted.
+//
+// zhipu is used because its curated surface list is longer than one and is
+// deliberately NOT alphabetical (zhipuai before zai), so this also pins that the
+// curation order survives — a sort applied "for tidiness" anywhere in the chain turns
+// this red.
+func TestEntityProviderOrder_CreatorThenCanonicalThenAlphabetical(t *testing.T) {
+	creatorSurfaces := bestiary.Creator("zhipu").Providers()
+	if len(creatorSurfaces) < 2 {
+		t.Skipf("the zhipu creator row no longer carries two or more surfaces (%v); "+
+			"re-pin this test on a creator that does before assuming the order is unpinned",
+			creatorSurfaces)
+	}
+
+	e := bestiary.Entity{
+		Ref:     bestiary.EntityRef{Family: bestiary.Family("claude"), Version: "4.6"},
+		Creator: bestiary.Creator("zhipu"),
+		Providers: []bestiary.Provider{
+			"anthropic", "openrouter", "zai", "zhipuai",
+		},
+	}
+
+	ordered, preferred := entityProviderOrder(e)
+
+	// Group 1 is curation order, not alphabetical: zhipuai leads zai.
+	// Group 2 is the family's canonical provider (claude → anthropic).
+	want := []bestiary.Provider{"zhipuai", "zai", "anthropic", "openrouter"}
+	if len(ordered) != len(want) {
+		t.Fatalf("entityProviderOrder returned %d providers, want %d — the result must be a "+
+			"PERMUTATION of Entity.Providers, never a set that drops or invents one.\ngot:  %v\nwant: %v",
+			len(ordered), len(want), ordered, want)
+	}
+	for i := range want {
+		if ordered[i] != want[i] {
+			t.Fatalf("entityProviderOrder position %d = %q, want %q. Expected order is "+
+				"creator surfaces in curation order, then the family's canonical provider, "+
+				"then the rest alphabetically.\ngot:  %v\nwant: %v",
+				i, ordered[i], want[i], ordered, want)
+		}
+	}
+	if preferred != 3 {
+		t.Errorf("preferred group length = %d, want 3 (two creator surfaces + the canonical "+
+			"provider). This is where the %q separator is drawn.", preferred, providerGroupSeparator)
+	}
+}
+
+// TestEntityProviderOrder_NeverInventsAProvider pins that a creator surface or
+// canonical provider that does NOT serve this entity is not hoisted into the line.
+// Without the membership guard the printed count (which stays len(e.Providers)) would
+// disagree with the printed list.
+func TestEntityProviderOrder_NeverInventsAProvider(t *testing.T) {
+	e := bestiary.Entity{
+		Ref:       bestiary.EntityRef{Family: bestiary.Family("claude"), Version: "4.6"},
+		Creator:   bestiary.Creator("zhipu"), // hosts zhipuai/zai; neither serves this entity
+		Providers: []bestiary.Provider{"openrouter", "bedrock"},
+	}
+	ordered, preferred := entityProviderOrder(e)
+	if preferred != 0 {
+		t.Errorf("preferred group length = %d, want 0 — neither the creator surfaces nor the "+
+			"canonical provider serve this entity, so nothing may be hoisted", preferred)
+	}
+	want := []bestiary.Provider{"bedrock", "openrouter"}
+	for i := range want {
+		if ordered[i] != want[i] {
+			t.Fatalf("entityProviderOrder = %v, want %v (alphabetical, no hoist)", ordered, want)
+		}
+	}
+}
+
+// TestJoinProviderGroups_SeparatorOnlyBetweenGroups pins that the visual separator is
+// drawn only when there is something on BOTH sides of it, so an entity with no
+// preferred surfaces (or with nothing but preferred surfaces) renders a plain list.
+func TestJoinProviderGroups_SeparatorOnlyBetweenGroups(t *testing.T) {
+	names := []string{"a", "b", "c"}
+	for _, tc := range []struct {
+		name      string
+		preferred int
+		want      string
+	}{
+		{"no_preferred_group", 0, "a, b, c"},
+		{"all_preferred", 3, "a, b, c"},
+		{"split", 1, "a | b, c"},
+		{"split_two", 2, "a, b | c"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := joinProviderGroups(names, tc.preferred); got != tc.want {
+				t.Errorf("joinProviderGroups(%v, %d) = %q, want %q", names, tc.preferred, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestOrderInstancesByProvider_FollowsProviderLineAndIsStable pins that the instance
+// table follows the SAME order as the provider line — the reason the reorder exists is
+// that the table truncates at instanceTableLimit, so an unordered table can cut the
+// lab's own offering while showing twenty rehosts — and that rows sharing a provider
+// keep their incoming (id-sorted) order.
+func TestOrderInstancesByProvider_FollowsProviderLineAndIsStable(t *testing.T) {
+	insts := []bestiary.ProviderInstance{
+		{ID: "m-a", Provider: "openrouter"},
+		{ID: "m-b", Provider: "openrouter"},
+		{ID: "m-c", Provider: "zhipuai"},
+		{ID: "m-d", Provider: "anthropic"},
+	}
+	order := []bestiary.Provider{"zhipuai", "anthropic", "openrouter"}
+
+	got := orderInstancesByProvider(insts, order)
+
+	wantIDs := []bestiary.ModelID{"m-c", "m-d", "m-a", "m-b"}
+	for i, want := range wantIDs {
+		if got[i].ID != want {
+			t.Fatalf("instance row %d = %q (%s), want %q. Rows must follow the provider line's "+
+				"order, with ties keeping the incoming order.", i, got[i].ID, got[i].Provider, want)
+		}
+	}
+	// The caller's slice must be untouched: the JSON output reads the entity's own
+	// Instances projection and must not inherit a display-only reorder.
+	if insts[0].ID != "m-a" {
+		t.Errorf("orderInstancesByProvider mutated the caller's slice (insts[0] = %q); it must "+
+			"sort a COPY so the JSON projection keeps the registry order", insts[0].ID)
+	}
+}
+
+// TestEntityView_ProviderLineAndInstanceTableAgree walks the PRODUCTION formatter end
+// to end on a real registry entity and asserts the two renderings agree: the first
+// provider named on the "Providers (N):" line is also the provider of the first
+// instance row. This is the property the fix is actually about, and it is checked
+// against live data rather than a synthetic entity so a curation change that empties a
+// creator row surfaces here.
+func TestEntityView_ProviderLineAndInstanceTableAgree(t *testing.T) {
+	ent, ok := bestiary.EntityByKey("glm@5")
+	if !ok {
+		t.Skip("glm@5 is not in this keyspace; re-pin this walk on a live multi-provider entity")
+	}
+	if len(ent.Providers) < 2 || len(ent.Instances) < 2 {
+		t.Skipf("glm@5 no longer has multiple providers/instances (%d/%d)",
+			len(ent.Providers), len(ent.Instances))
+	}
+
+	var buf strings.Builder
+	writeEntityView(&buf, ent)
+	out := buf.String()
+
+	ordered, preferred := entityProviderOrder(ent)
+	if preferred == 0 {
+		t.Fatalf("glm@5 rendered no preferred provider group; its creator is %q with surfaces %v, "+
+			"and at least one of those should serve it", ent.Creator, ent.Creator.Providers())
+	}
+
+	// The line carries the separator exactly once, with the preferred group ahead of it.
+	line := ""
+	for _, l := range strings.Split(out, "\n") {
+		if strings.HasPrefix(l, "Providers (") {
+			line = l
+			break
+		}
+	}
+	if line == "" {
+		t.Fatal("entity view printed no \"Providers (N):\" line")
+	}
+	head, _, found := strings.Cut(line, providerGroupSeparator)
+	if !found {
+		t.Fatalf("provider line carries no %q separator between the preferred group and the "+
+			"rest:\n%s", providerGroupSeparator, line)
+	}
+	if !strings.HasSuffix(head, string(ordered[preferred-1])) {
+		t.Errorf("the provider named immediately before the separator is not the last preferred "+
+			"provider (%q):\n%s", ordered[preferred-1], line)
+	}
+
+	// The first instance row belongs to the first provider on the line.
+	first := string(ordered[0])
+	if !strings.Contains(line, "): "+first) {
+		t.Errorf("provider line does not lead with %q:\n%s", first, line)
+	}
+	rows := strings.Split(out, "\n")
+	idx := -1
+	for i, l := range rows {
+		if strings.HasPrefix(l, "Instances (") {
+			idx = i + 2 // skip the header row
+			break
+		}
+	}
+	if idx < 0 || idx >= len(rows) {
+		t.Fatal("entity view printed no instance table")
+	}
+	if !strings.Contains(rows[idx], first) {
+		t.Errorf("first instance row does not belong to %q, the first provider on the "+
+			"provider line — the table and the line must use ONE order:\n%s", first, rows[idx])
+	}
+}

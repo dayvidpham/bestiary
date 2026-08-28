@@ -116,17 +116,37 @@ func TestResolve_CanonicalProviderPreference_ExactID_Corpus(t *testing.T) {
 					c.Input, refs[0].Provider, want, providersOf(refs))
 			}
 
+			// Non-vacuity: a `sole` case must be won by a CURATED axis, never by an
+			// accident of registry ordering. There are two such axes and the winner
+			// may come from either — the creator's curated distribution surfaces
+			// (checked first, as resolution checks them first) or the family's
+			// canonical provider.
 			canon := refs[0].Family.CanonicalProvider()
+			creatorSurfaces := refs[0].Family.Creator().Providers()
+			wonByCreator := containsProvider(creatorSurfaces, want)
+			wonByCanonical := canon == want
+
 			if c.Expected.Sole {
-				if canon != want {
-					t.Errorf("family %q CanonicalProvider() = %q, want %q — the case asserts a PREFERENCE, so the "+
-						"expected provider must be the curated canonical, not an accident of ordering", refs[0].Family, canon, want)
+				if !wonByCreator && !wonByCanonical {
+					t.Errorf("family %q: expected provider %q is neither one of creator %q's curated surfaces %v "+
+						"nor the curated canonical %q — the case asserts a PREFERENCE, so the winner must be curated "+
+						"on one of the two axes, not an accident of ordering",
+						refs[0].Family, want, refs[0].Family.Creator(), creatorSurfaces, canon)
 				}
 				if len(refs) != 1 {
-					t.Errorf("Resolve(%q) returned %d refs (%v), want exactly 1 (the canonical provider %q); "+
-						"the preference must drop the %d rehost(s)", c.Input, len(refs), providersOf(refs), want, len(hosts)-1)
+					t.Errorf("Resolve(%q) returned %d refs (%v), want exactly 1 (the preferred provider %q); "+
+						"the preference must drop the %d other host(s)", c.Input, len(refs), providersOf(refs), want, len(hosts)-1)
 				}
 			} else {
+				// Fall-through cases must have NEITHER axis available among the hosts,
+				// or the preference should have fired and the case is misclassified.
+				for _, cp := range creatorSurfaces {
+					if containsProvider(hosts, cp) {
+						t.Errorf("case asserts fall-through, but family %q's creator %q has curated surface %q and it IS "+
+							"among the hosts %v — the creator preference should have fired; re-classify this case",
+							refs[0].Family, refs[0].Family.Creator(), cp, hosts)
+					}
+				}
 				if canon != "" && containsProvider(hosts, canon) {
 					t.Errorf("case asserts fall-through, but family %q has curated canonical %q and it IS among the "+
 						"hosts %v — the preference should have fired; re-classify this case", refs[0].Family, canon, hosts)

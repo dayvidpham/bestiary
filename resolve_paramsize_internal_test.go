@@ -54,9 +54,17 @@ func TestResolve_SizedSiblings_DistinctAmbiguityGroups(t *testing.T) {
 // sized model into multiple ambiguity groups. Two providers serving the identical
 // sized model (same family/version/#size, same ID) stay a single group and resolve
 // without ambiguity.
+//
+// BOTH synthetic providers are deliberately REHOSTS — neither is one of the Meta
+// creator's curated distribution surfaces nor llama's canonical provider. The
+// provider-preference layer narrows a single group to its most-preferred host, which
+// is correct behaviour but would mask the over-split this test exists to catch: one
+// returned ref is equally consistent with "one group, narrowed" and with "two groups,
+// one dropped". Two rehosts leave the preference a no-op, so the returned count is a
+// direct read of the group count.
 func TestResolve_SameSizeAcrossProviders_StaysOneGroup(t *testing.T) {
 	const id = "meta-llama/Llama-3.3-70b-Instruct"
-	meta := ModelInfo{ID: ModelID(id), Provider: "meta", Family: "llama", Version: "3.3", Modifier: []string{"instruct"}, ParamSize: "70b"}
+	meta := ModelInfo{ID: ModelID(id), Provider: "deepinfra", Family: "llama", Version: "3.3", Modifier: []string{"instruct"}, ParamSize: "70b"}
 	together := ModelInfo{ID: ModelID(id), Provider: "together", Family: "llama", Version: "3.3", Modifier: []string{"instruct"}, ParamSize: "70b"}
 	withSyntheticRegistry(t, []ModelInfo{meta, together}, func(t *testing.T) {
 		refs, err := Resolve("llama")

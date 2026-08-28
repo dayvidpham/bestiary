@@ -36,6 +36,9 @@ var internalParamSize1TCorpusJSON []byte
 //go:embed testdata/parse/curation_repair_v028_corpus.json
 var internalCurationRepairV028CorpusJSON []byte
 
+//go:embed testdata/parse/compound_recovery_corpus.json
+var internalCompoundRecoveryCorpusJSON []byte
+
 // pNotationInput is one row of the p-notation corpus. It carries EITHER a bare Token
 // (a unit probe of decodePNotationVersion) OR an Id + Provider (a catalog probe of
 // the entity a real registry row resolves to) — the two kinds share a corpus because

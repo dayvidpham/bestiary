@@ -874,16 +874,20 @@ func overlayEntities(store *bestiary.Store) []bestiary.Entity {
 // bakedEntityMetadataFromEntities gathers the baked metadata rows currently
 // attached to the static entity set. The registry attaches baked models.dev
 // metadata to entities (and synthesizes baked standalone entities) at load, so the
-// set of non-nil Entity.Metadata over Entities() IS the baked metadata surfaced in
+// union of Entity.MetadataAll over Entities() IS the baked metadata surfaced in
 // views. It is the base layer MergeEntityMetadata overlays synced metadata onto;
 // there is no exported baked-slice accessor and this reconstruction needs none
 // (unlinked baked rows are intentionally never surfaced in views anyway).
+//
+// It walks MetadataAll, never the derived Metadata primary: several lab ids can
+// decompose to one entity key, and reading only the primary would rebuild the base
+// layer from one row per entity — silently dropping every non-primary row from the
+// overlay, so a sync could not preserve (or update) rows the base layer never
+// mentioned. The union is therefore the full baked row set, not the entity count.
 func bakedEntityMetadataFromEntities(ents []bestiary.Entity) []bestiary.EntityMetadata {
 	var out []bestiary.EntityMetadata
 	for i := range ents {
-		if ents[i].Metadata != nil {
-			out = append(out, *ents[i].Metadata)
-		}
+		out = append(out, ents[i].MetadataAll...)
 	}
 	return out
 }
@@ -1026,18 +1030,23 @@ func runEntities(format bestiary.OutputFormat, dbPath string) error {
 
 // writeEntitiesTable renders the registry-wide entity summary: one row per entity
 // with its key, provider/host instance count, whether provider-agnostic metadata is
-// attached, and how many benchmark claims that metadata carries. An entity with no
-// metadata shows "-" for METADATA and 0 for BENCHMARKS. Rows are emitted in the
-// caller's order (sorted by key).
+// attached, and how many benchmark claims that metadata carries SUMMED over every
+// joined metadata row. An entity with no metadata shows "-" for METADATA and 0 for
+// BENCHMARKS. Rows are emitted in the caller's order (sorted by key).
 func writeEntitiesTable(w io.Writer, ents []bestiary.Entity) {
 	fmt.Fprintf(w, "Entities (%d):\n", len(ents))
 	fmt.Fprintf(w, "  %-48s %9s %8s %10s\n", "ENTITY KEY", "PROVIDERS", "METADATA", "BENCHMARKS")
 	for _, e := range ents {
 		metadata := "-"
 		benchmarks := 0
-		if e.Metadata != nil {
+		if len(e.MetadataAll) > 0 {
 			metadata = "yes"
-			benchmarks = len(e.Metadata.Benchmarks)
+			// Sum across EVERY joined row: when several lab ids decompose to this
+			// entity, each contributes its own claims and the honest total is their
+			// sum. Counting only the primary row would under-report the entity.
+			for _, m := range e.MetadataAll {
+				benchmarks += len(m.Benchmarks)
+			}
 		}
 		fmt.Fprintf(w, "  %-48s %9d %8s %10d\n", e.PreferredName(), len(e.Providers), metadata, benchmarks)
 	}
@@ -2561,6 +2570,117 @@ func writeQuantRows(w io.Writer, rows []bestiary.QuantVRAM) {
 	}
 }
 
+// providerGroupSeparator divides the PREFERRED provider group (creator-hosted
+// surfaces, then the family's canonical provider) from the remaining, alphabetical
+// ones in the entity view's "Providers (N):" line. It is a display device only: the
+// two groups are already ordered, and the bar makes the boundary visible so a reader
+// can tell "the lab's own surfaces" from "everyone else who rehosts it" without
+// having to know the creator table by heart. It is deliberately not a comma — a
+// comma would read as one flat list, which is exactly the reading that made the
+// alphabetical order misleading.
+const providerGroupSeparator = " | "
+
+// entityProviderOrder returns the entity's providers in DISPLAY order, together with
+// the length of the leading PREFERRED group.
+//
+// The order is:
+//
+//  1. the creator's own hosted surfaces, in Creator.Providers() CURATION order (not
+//     alphabetical — the curated order encodes primacy, e.g. Zhipu's own "zhipuai"
+//     API ahead of the international "zai" brand, and creator-first selection already
+//     uses that index as its tie-break);
+//  2. the family's CanonicalProvider, when it is not already in group 1 and actually
+//     serves this entity;
+//  3. everything else, alphabetically.
+//
+// Groups 1 and 2 are the PREFERRED group; the returned count is where group 3 starts.
+// Providers the entity does not actually have are never introduced, so the returned
+// slice is a permutation of e.Providers and the printed count still equals
+// len(e.Providers).
+//
+// Why not leave it alphabetical: the aggregate arrives first-seen over an
+// instance list that is itself provider-sorted, so the line rendered as a flat
+// alphabetical run in which the lab that TRAINED the model sat wherever its name
+// happened to fall (Zhipu's own "zhipuai" was 41st of 42 on glm@5). Creator is
+// already a first-class axis on the view one line above; this makes the provider
+// line agree with it.
+func entityProviderOrder(e bestiary.Entity) (ordered []bestiary.Provider, preferred int) {
+	have := make(map[bestiary.Provider]bool, len(e.Providers))
+	for _, p := range e.Providers {
+		have[p] = true
+	}
+
+	taken := make(map[bestiary.Provider]bool, len(e.Providers))
+	ordered = make([]bestiary.Provider, 0, len(e.Providers))
+	add := func(p bestiary.Provider) {
+		if p == "" || !have[p] || taken[p] {
+			return
+		}
+		taken[p] = true
+		ordered = append(ordered, p)
+	}
+
+	for _, p := range e.Creator.Providers() {
+		add(p)
+	}
+	add(e.Ref.Family.CanonicalProvider())
+	preferred = len(ordered)
+
+	rest := make([]bestiary.Provider, 0, len(e.Providers)-preferred)
+	for _, p := range e.Providers {
+		if !taken[p] {
+			taken[p] = true
+			rest = append(rest, p)
+		}
+	}
+	sort.Slice(rest, func(i, j int) bool { return rest[i] < rest[j] })
+	return append(ordered, rest...), preferred
+}
+
+// joinProviderGroups renders the ordered provider names as one line, with
+// providerGroupSeparator between the preferred group and the rest. With no preferred
+// group (an entity whose creator hosts nothing and whose family has no canonical
+// provider — the common case for a community family) or with no rest, the line is a
+// plain comma-joined list and carries no bar.
+func joinProviderGroups(names []string, preferred int) string {
+	if preferred <= 0 || preferred >= len(names) {
+		return strings.Join(names, ", ")
+	}
+	return strings.Join(names[:preferred], ", ") + providerGroupSeparator + strings.Join(names[preferred:], ", ")
+}
+
+// orderInstancesByProvider re-sorts a COPY of the instance rows so they follow the
+// same provider order the "Providers (N):" line prints. This matters beyond
+// tidiness: the instance table truncates at instanceTableLimit, so on a
+// heavily-rehosted entity the lab's own offering could be cut from the view entirely
+// while twenty rehosts were shown. Ordering by the same key puts the preferred
+// surfaces above the cut.
+//
+// The sort is STABLE, so instances sharing a provider keep the registry's incoming
+// order (id-sorted), and a provider absent from `order` — which cannot happen for a
+// registry entity, since the aggregate derives the provider set from these very rows
+// — sorts last rather than panicking. The caller's slice is never mutated.
+func orderInstancesByProvider(insts []bestiary.ProviderInstance, order []bestiary.Provider) []bestiary.ProviderInstance {
+	if len(insts) < 2 {
+		return insts
+	}
+	rank := make(map[bestiary.Provider]int, len(order))
+	for i, p := range order {
+		rank[p] = i
+	}
+	rankOf := func(p bestiary.Provider) int {
+		if r, ok := rank[p]; ok {
+			return r
+		}
+		return len(order)
+	}
+	out := append([]bestiary.ProviderInstance(nil), insts...)
+	sort.SliceStable(out, func(i, j int) bool {
+		return rankOf(out[i].Provider) < rankOf(out[j].Provider)
+	})
+	return out
+}
+
 // writeEntityView prints the human-readable aggregate entity view.
 func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "Entity: %s\n", e.PreferredName())
@@ -2574,8 +2694,9 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	// guessed "unknown".
 	fmt.Fprintf(w, "  Creator:       %s\n", orDash(string(e.Creator)))
 
-	providers := make([]string, len(e.Providers))
-	for i, p := range e.Providers {
+	orderedProviders, preferredCount := entityProviderOrder(e)
+	providers := make([]string, len(orderedProviders))
+	for i, p := range orderedProviders {
 		providers[i] = string(p)
 	}
 	hosts := make([]string, len(e.Hosts))
@@ -2586,7 +2707,8 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	for i, r := range e.Regions {
 		regions[i] = r.String()
 	}
-	fmt.Fprintf(w, "Providers (%d): %s\n", len(e.Providers), orDash(strings.Join(providers, ", ")))
+	fmt.Fprintf(w, "Providers (%d): %s\n", len(e.Providers),
+		orDash(joinProviderGroups(providers, preferredCount)))
 	fmt.Fprintf(w, "Hosts (%d): %s\n", len(e.Hosts), orDash(strings.Join(hosts, ", ")))
 	fmt.Fprintf(w, "Regions (%d): %s\n", len(e.Regions), orDash(strings.Join(regions, ", ")))
 
@@ -2596,14 +2718,14 @@ func writeEntityView(w io.Writer, e bestiary.Entity) {
 	fmt.Fprintf(w, "Max output:         %s\n", fmtRangeInt(e.MaxOutputRange))
 	fmt.Fprintf(w, "Capabilities: %s\n", orDash(strings.Join(capList(e.Capabilities), ", ")))
 
-	writeEntityMetadata(w, e.Metadata)
+	writeEntityMetadata(w, e.Metadata, e.MetadataAll)
 
 	fmt.Fprintf(w, "Lineage (%d):\n", len(e.Lineage))
 	for _, edge := range e.Lineage {
 		fmt.Fprintf(w, "  -> %s %s\n", edge.Kind.String(), edge.Parent.String())
 	}
 
-	writeInstanceTable(w, e.Instances)
+	writeInstanceTable(w, orderInstancesByProvider(e.Instances, orderedProviders))
 
 	writeNominaTable(w, e.Nomina())
 }
@@ -2690,18 +2812,50 @@ func writeNominaTable(w io.Writer, nomina []bestiary.Nomen) {
 }
 
 // writeEntityMetadata renders the models.dev entity metadata (provider-agnostic
-// facts) attached to an entity: its description, license, and a benchmark table.
-// It is a no-op when no metadata is joined (m == nil), so an entity with no
-// metadata renders exactly as before. Description and license are entity-level
-// facts (models.json side); status is deliberately absent here — it is
-// instance-level and renders only on the instance table.
-func writeEntityMetadata(w io.Writer, m *bestiary.EntityMetadata) {
-	if m == nil {
-		return
+// facts) attached to an entity: the primary row's description and license, the ids
+// of every joined row, and one benchmark table PER ROW. It is a no-op when no
+// metadata is joined (empty all), so an entity with no metadata renders exactly as
+// before. Description and license are entity-level facts (models.json side); status
+// is deliberately absent here — it is instance-level and renders only on the
+// instance table.
+//
+// primary is the derived Entity.Metadata pointer (the shortest MetadataID) and
+// supplies the single description/license shown; all is the complete record. Each
+// benchmark table is headed by the MetadataID that reported its claims and the
+// tables are NEVER merged: a benchmark score is a lab-reported CLAIM attributable to
+// the id it was published under, so fusing two rows' tables would present an
+// assessment record no lab actually published. When only one row joined, the
+// attribution line names it once and the output is otherwise unchanged.
+func writeEntityMetadata(w io.Writer, primary *bestiary.EntityMetadata, all []bestiary.EntityMetadata) {
+	if len(all) == 0 {
+		if primary == nil {
+			return
+		}
+		// A hand-constructed entity may carry a primary with no record behind it.
+		all = []bestiary.EntityMetadata{*primary}
 	}
-	fmt.Fprintf(w, "Description: %s\n", orDash(m.Description))
-	fmt.Fprintf(w, "License:     %s\n", orDash(m.License))
-	writeBenchmarkTable(w, m.Benchmarks)
+	if primary == nil {
+		primary = &all[0]
+	}
+	fmt.Fprintf(w, "Description: %s\n", orDash(primary.Description))
+	fmt.Fprintf(w, "License:     %s\n", orDash(primary.License))
+
+	ids := make([]string, len(all))
+	for i, m := range all {
+		ids[i] = string(m.MetadataID)
+		if m.MetadataID == primary.MetadataID {
+			ids[i] += " (primary)"
+		}
+	}
+	fmt.Fprintf(w, "Metadata rows (%d): %s\n", len(all), orDash(strings.Join(ids, ", ")))
+
+	for _, m := range all {
+		if len(m.Benchmarks) == 0 {
+			continue
+		}
+		fmt.Fprintf(w, "Claims reported under %s:\n", m.MetadataID)
+		writeBenchmarkTable(w, m.Benchmarks)
+	}
 }
 
 // benchmarkTableLimit is the maximum number of benchmark rows the TABLE view
@@ -2857,6 +3011,9 @@ func runSync(provider string, format bestiary.OutputFormat, dbPath string) error
 //     APPENDS one dataset_ingested row stamped with the sync wall-clock (a runtime
 //     ingest is a genuine event, so a wall-clock RFC3339 timestamp is correct here
 //     — this is NOT the committed-snapshot kind that must stay byte-deterministic).
+//     It also registers the curated, huggingface and self-referential bestiary
+//     dimension rows, whose committed ingest timestamps come from the seed: the
+//     nomina persisted below carry those source_id FKs.
 //   - UpsertEntityMetadata: the fetched metadata, attributed to models.dev and
 //     stamped with the same sync timestamp (its parent row's source_id is an FK, so
 //     the DataSource must be registered first — hence the ordering above).
@@ -2973,9 +3130,30 @@ func runSyncClient(client *bestiary.Client, provider string, format bestiary.Out
 			ParserSchema: modelsDevParserSchema,
 		}
 	}
+	// Also register the self-referential bestiary DataSource: every SELF-MINTED
+	// canonical nomen persisted below is attributed to DataSourceBestiary — bestiary
+	// authored the key, so no upstream is the honest Source. The nomina.source_id
+	// foreign key references data_sources, so this dimension row MUST exist before
+	// UpsertNomina. Its committed ingest timestamp comes from the seed.
+	selfDS, ok := bestiary.DataSourceByID(bestiary.DataSourceBestiary)
+	if !ok {
+		selfDS = bestiary.DataSource{
+			ID:            bestiary.DataSourceBestiary,
+			URI:           "https://github.com/dayvidpham/bestiary",
+			CanonicalName: "bestiary (self-minted)",
+		}
+	}
+	selfIngest, ok := bestiary.DatasetIngestedFor(bestiary.DataSourceBestiary)
+	if !ok {
+		selfIngest = bestiary.DatasetIngested{
+			SourceID:     bestiary.DataSourceBestiary,
+			IngestedAt:   now,
+			ParserSchema: modelsDevParserSchema,
+		}
+	}
 	if err := store.UpsertDataSources(ctx,
-		[]bestiary.DataSource{ds, curatedDS, hfDS},
-		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest}); err != nil {
+		[]bestiary.DataSource{ds, curatedDS, hfDS, selfDS},
+		[]bestiary.DatasetIngested{ingest, curatedIngest, hfIngest, selfIngest}); err != nil {
 		return fmt.Errorf("sync: persist data source + ingest row: %w", err)
 	}
 

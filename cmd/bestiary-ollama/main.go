@@ -29,7 +29,11 @@
 //     inferred (Ollama exposes no base_model marker) via decomposition + a curated
 //     base table; a base-known finetune carries a base_ref, a base-unknown one
 //     becomes a standalone entry AND is appended to a sorted ollama_unlinked.json.
-//  4. The result is MERGED into parse/data/quant_vram.json: fetch-owned fields
+//  4. Identities that resolve to the SAME catalog ID are COALESCED into one
+//     entry (model_id is the file's join key, so it may appear at most once):
+//     the strongest join arm owns the entry and any quant they disagree on, and
+//     every other identity contributes the quants it alone measured.
+//  5. The result is MERGED into parse/data/quant_vram.json: fetch-owned fields
 //     (weights_bytes, the quant set, param_size from tags) refresh, while
 //     curation-owned fields (architecture facts, context_window, base_ref,
 //     provenance _comments) are preserved from the existing file. The ollama row
@@ -62,7 +66,13 @@ const (
 	// politeness violation. It is passed into politebot.New; the polite seam sets
 	// it on every request. The ≥1s inter-request cadence is owned by politebot
 	// (politebot.DefaultMinRequestInterval).
-	userAgent = "bestiary-ollama/0.2.4 (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
+	//
+	// The version segment is DERIVED from bestiary.ReleaseVersion, never spelled
+	// here: as a literal it sat at "0.2.4" for three releases and misreported the
+	// build to the operators reading their own server logs. TestUserAgent_* pins
+	// both the shape and the currency of the derived string.
+	userAgent = "bestiary-ollama/" + bestiary.ReleaseVersion +
+		" (+https://github.com/dayvidpham/bestiary; polite ingest bot)"
 
 	// registryBase is the anonymous Docker-Distribution-v2 registry host.
 	registryBase = "https://registry.ollama.ai"
@@ -401,6 +411,48 @@ type joinResult struct {
 	ModelsDevID bestiary.ModelID    // set when Joined
 	BaseRef     string              // set for a base-known community finetune
 	Unlinked    bool                // base-unknown community model (-> ollama_unlinked.json)
+	Arm         joinArm             // WHICH precedence arm produced this result
+}
+
+// joinArm names the precedence arm that produced a join. It is recorded because
+// two DISTINCT Ollama identities can resolve to ONE catalog ID (Ollama's bare
+// size tag and its explicit -instruct tag are the same model), and the arm is
+// what decides which of them owns a per-quant measurement they disagree on. The
+// ordering is the precedence itself: a smaller value is the stronger claim.
+type joinArm int
+
+const (
+	// joinArmAlias: a curated alias entry named the catalog row outright.
+	joinArmAlias joinArm = iota
+	// joinArmMechanical: the identity's own decomposition matched the catalog.
+	joinArmMechanical
+	// joinArmInstructFallback: a bare size-only tag matched only after retrying
+	// with an "instruct" modifier — the entity is named by Ollama's default-tag
+	// convention rather than by the identity itself.
+	joinArmInstructFallback
+	// joinArmCommunity: no catalog row; the model is kept under its Ollama-native
+	// namespace ID, with an inferred base or as unlinked.
+	joinArmCommunity
+)
+
+// joinArmNames is the canonical text name of each precedence arm, indexed by the
+// enum value. It is the single source of truth for String.
+var joinArmNames = [...]string{
+	joinArmAlias:            "alias",
+	joinArmMechanical:       "mechanical",
+	joinArmInstructFallback: "instruct-fallback",
+	joinArmCommunity:        "community",
+}
+
+// String returns the lowercase name of the precedence arm, so a joinResult
+// printed in a log line or a test failure names the arm rather than a bare int.
+// An out-of-range value renders as "joinarm(<n>)" so an unexpected value is
+// diagnosable instead of silently dropped.
+func (a joinArm) String() string {
+	if int(a) < 0 || int(a) >= len(joinArmNames) {
+		return fmt.Sprintf("joinarm(%d)", int(a))
+	}
+	return joinArmNames[a]
 }
 
 // joinOllama joins a single quant-stripped Ollama identity onto the catalog.
@@ -430,6 +482,7 @@ func joinOllama(
 			res.Decomp = ad
 			res.Joined = true
 			res.ModelsDevID = id
+			res.Arm = joinArmAlias
 			return res
 		}
 	}
@@ -438,6 +491,7 @@ func joinOllama(
 	if id, ok := matchCatalog(decomp.joinKey(), catalog, curated); ok {
 		res.Joined = true
 		res.ModelsDevID = id
+		res.Arm = joinArmMechanical
 		return res
 	}
 
@@ -448,11 +502,13 @@ func joinOllama(
 			res.Decomp = instr
 			res.Joined = true
 			res.ModelsDevID = id
+			res.Arm = joinArmInstructFallback
 			return res
 		}
 	}
 
 	// 4. Community model: KEPT, never dropped. Infer the base.
+	res.Arm = joinArmCommunity
 	if base := inferBase(ollamaIDStripped, decomp, catalog, bases, curated); base != "" {
 		res.BaseRef = base
 	} else {
@@ -605,7 +661,19 @@ func buildOutput(
 	var groupOrder []string
 
 	for _, ft := range tags {
-		_, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ft.OllamaID))
+		q, quantRaw, stripped := bestiary.DetectQuantization(bestiary.ModelID(ft.OllamaID))
+		quant, ok := canonicalQuantName(q, quantRaw)
+		if !ok {
+			// Writing this row would produce a corpus the loader rejects outright,
+			// taking the whole catalog down for one unreadable row.
+			fmt.Fprintf(os.Stderr,
+				"bestiary-ollama: skip %q: quant token %q has no canonical Quantization name\n"+
+					"  What: the token is not in the Quantization name table, so curated data cannot carry it\n"+
+					"  Where: buildOutput\n"+
+					"  How to fix: add the scheme to the Quantization enum, then re-run the refresh\n",
+				ft.OllamaID, quantRaw)
+			continue
+		}
 		strippedID := string(stripped)
 		g := groups[strippedID]
 		if g == nil {
@@ -614,22 +682,70 @@ func buildOutput(
 			groupOrder = append(groupOrder, strippedID)
 		}
 		g.rows = append(g.rows, quantRowOut{
-			Quant:        strings.ToLower(quantRaw),
+			Quant:        quant,
 			WeightsBytes: ft.WeightsBytes,
 			Digest:       ft.Digest,
 		})
+	}
+
+	// COALESCE by output model id. model_id is the file's join key (codegen matches
+	// on it), so it may appear at most once — but two distinct Ollama identities
+	// routinely resolve to ONE catalog id: the bare size tag `llama3.1:405b` and the
+	// explicit `llama3.1:405b-instruct` are the same model, the bare one arriving
+	// through the instruct fallback. Emitting a group per identity wrote the same
+	// model_id two and three times, each with a different subset of the quants.
+	//
+	// The strongest join arm owns the entry (and any quant the identities disagree
+	// on, since they are separately-built manifests of one model); every other
+	// identity still contributes the quants the winner did not measure, so
+	// coalescing never costs a measurement. Ties break on the stripped Ollama id, so
+	// the result does not depend on fetch order.
+	ordered := append([]string(nil), groupOrder...)
+	sort.Slice(ordered, func(i, j int) bool {
+		gi, gj := groups[ordered[i]], groups[ordered[j]]
+		if gi.join.Arm != gj.join.Arm {
+			return gi.join.Arm < gj.join.Arm
+		}
+		return gi.strippedID < gj.strippedID
+	})
+
+	type coalesced struct {
+		modelID string
+		join    joinResult
+		rows    []quantRowOut
+		byQuant map[string]bool
+	}
+	byModelID := map[string]*coalesced{}
+	var coalescedOrder []string
+	for _, sid := range ordered {
+		g := groups[sid]
+		modelID := outputModelID(g.join, g.strippedID)
+		key := strings.ToLower(modelID)
+		c := byModelID[key]
+		if c == nil {
+			c = &coalesced{modelID: modelID, join: g.join, byQuant: map[string]bool{}}
+			byModelID[key] = c
+			coalescedOrder = append(coalescedOrder, key)
+		}
+		for _, r := range g.rows {
+			q := strings.ToLower(r.Quant)
+			if c.byQuant[q] {
+				continue // the stronger identity already measured this quant
+			}
+			c.byQuant[q] = true
+			c.rows = append(c.rows, r)
+		}
 	}
 
 	// Start the output from a copy of every existing entry so curation that was
 	// not re-fetched this run is never dropped.
 	out := quantFileOut{Comment: quantFileComment, SchemaVersion: quantVRAMSchemaVersion}
 	refreshed := map[string]bool{}
-	for _, sid := range groupOrder {
-		g := groups[sid]
-		modelID := outputModelID(g.join, g.strippedID)
-		prev, hasPrev := existingByID[strings.ToLower(modelID)]
-		refreshed[strings.ToLower(modelID)] = true
-		out.Models = append(out.Models, mergeEntry(modelID, g.join, g.rows, prev, hasPrev))
+	for _, key := range coalescedOrder {
+		c := byModelID[key]
+		prev, hasPrev := existingByID[key]
+		refreshed[key] = true
+		out.Models = append(out.Models, mergeEntry(c.modelID, c.join, c.rows, prev, hasPrev))
 	}
 	for _, m := range existing.Models {
 		if !refreshed[strings.ToLower(m.ModelID)] {
@@ -638,9 +754,10 @@ func buildOutput(
 	}
 
 	var unlinked []string
-	for _, sid := range groupOrder {
-		if groups[sid].join.Unlinked {
-			unlinked = append(unlinked, outputModelID(groups[sid].join, sid))
+	for _, key := range coalescedOrder {
+		c := byModelID[key]
+		if c.join.Unlinked {
+			unlinked = append(unlinked, c.modelID)
 		}
 	}
 
@@ -648,6 +765,40 @@ func buildOutput(
 	sort.Slice(out.Models, func(i, j int) bool { return out.Models[i].ModelID < out.Models[j].ModelID })
 	sort.Strings(unlinked)
 	return out, unlinked
+}
+
+// quantAliases maps the spellings Ollama publishes onto the canonical
+// Quantization wire names. The enum deliberately does not accept these aliases
+// (Quantization.UnmarshalText rejects "fp16"), and normalising them is the
+// documented obligation of an ingest layer rather than of the enum.
+var quantAliases = map[string]string{
+	"fp16": "f16",
+	"fp32": "f32",
+}
+
+// canonicalQuantName renders the quant token a corpus row carries: ALWAYS the
+// canonical name of a named Quantization, never the raw Ollama tag. The corpus
+// is validated against the enum's name table, so a raw token that is not a
+// canonical name makes the whole file unreadable; and because curation is keyed
+// by quant, a raw spelling would also orphan the curated architecture facts of
+// the very same quant (Ollama's "fp16" against a curated "f16").
+//
+// It reports false when the token cannot be named — an unrecognised scheme
+// resolves to the QuantizationOther escape, which curated data may not use. The
+// caller drops that row rather than writing one the loader will reject.
+func canonicalQuantName(q bestiary.Quantization, raw string) (string, bool) {
+	if q != bestiary.QuantizationNone && q != bestiary.QuantizationOther {
+		return q.String(), true
+	}
+	lower := strings.ToLower(raw)
+	if alias, ok := quantAliases[lower]; ok {
+		lower = alias
+	}
+	parsed, err := bestiary.ParseQuantization(lower)
+	if err != nil || parsed == bestiary.QuantizationNone || parsed == bestiary.QuantizationOther {
+		return "", false
+	}
+	return parsed.String(), true
 }
 
 // mergeEntry assembles one output entry: fetch-owned fields from the fresh rows,
@@ -890,6 +1041,16 @@ func fetchTag(ctx context.Context, c *politebot.Client, lib, tag string) (fetche
 // run / main
 // --------------------------------------------------------------------------
 
+// newPoliteClient builds the ONE outbound seam this tool uses: a polite client
+// carrying the derived, current-version User-Agent and politebot's default
+// ≥1s inter-request cadence. run() calls it with no options (a real transport,
+// the real clock); the offline tests call it with an injected transport and a
+// fake clock, so the cadence and the User-Agent are asserted on the SAME
+// constructor production runs — no test-only client, no second code path.
+func newPoliteClient(opts ...politebot.Option) *politebot.Client {
+	return politebot.New(userAgent, opts...)
+}
+
 func run(args []string) error {
 	dataDir := "parse/data"
 	snapshot := time.Now().UTC().Format(time.RFC3339)
@@ -915,7 +1076,7 @@ func run(args []string) error {
 	}
 
 	ctx := context.Background()
-	c := politebot.New(userAgent)
+	c := newPoliteClient()
 
 	aliases, err := loadAliasesFromDir(dataDir)
 	if err != nil {

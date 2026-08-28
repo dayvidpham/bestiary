@@ -1,7 +1,753 @@
 {
-  "_comment": "Curated per-quant weights-bytes and architecture facts for VRAM estimation. KEYING CONTRACT: model_id is the models.dev model ID (the same ID used in models_static_gen.go) for any model that exists in the models.dev catalog, so that codegen (cmd/bestiary-gen) joins these rows onto the catalog by exact model-ID match and bakes ParamSize/Source/QuantVRAM into the generated static data. A non-models.dev Ollama-native ID — either a colon-tag form (e.g. \"llama3:70b-instruct\") or a namespace/slash form (e.g. \"ollama/dracarys2-llama-3-70b-instruct\") — is reserved ONLY for community finetunes that are NOT in models.dev; those legitimately do not join during codegen and await the offline Ollama tool's network-gated ID join; such entries carry an explanatory _comment. Each entry's _comment states whether its figures are research-sourced (from ollama.com tags page or registry.ollama.ai manifest API, cited in llm/research/v024-vram-quantization.md) or plausible+documented (reasonable estimates for seed coverage, to be replaced on next offline tool refresh). The source field identifies the data source for provenance tracking; it does not indicate figure quality. VRAMBytes and VRAMContextTokens are NOT stored here — they are computed and baked by the codegen caller (cmd/bestiary-gen) using EstimateVRAMBytes.",
+  "_comment": "Per-model per-quant weights and architecture facts for VRAM estimation. FIELD OWNERSHIP: the offline Ollama tool (cmd/bestiary-ollama) owns weights_bytes, the per-row digest (the sha256 OCI manifest digest), the quant set, param_size, and source — it refreshes these from the Ollama registry on each run. Curation owns layers/kv_heads/head_dim (absent from the Ollama registry), context_window, base_ref, and the per-entry _comment — the tool PRESERVES these across a refresh (merge-on-refresh), never clobbering them. model_id is the models.dev catalog ID for joined models, or an 'ollama/\u003cid\u003e' namespace form for community models with no models.dev presence. VRAMBytes/VRAMContextTokens are computed and baked by codegen. Sorted by model_id (rows by quant) — deterministic.",
   "schema_version": 1,
   "models": [
+    {
+      "model_id": "codestral-2508",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4108916928,
+          "digest": "sha256:732fc95457eea3f4e99e06194d7b8f6280f9ef5997c0c148fc585e653e8844d6"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4372811712,
+          "digest": "sha256:1064e17101bdd2460dd5c4e03e4f5cc1b38a4dee66084dc91faba294ccb64a92"
+        }
+      ]
+    },
+    {
+      "model_id": "google/gemma-2-27b-it",
+      "param_size": "27b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 54462021216,
+          "digest": "sha256:37e860be93fbdc4e7ea94f7b4accf38203f863f2e5bc5d115fc1a05303f1b7b7"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 10449575520,
+          "digest": "sha256:c462bb6579c08212b3f2cbf971fe7eda61d0296aae4ac52e3d69c81797320b92"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 14519361120,
+          "digest": "sha256:d85a73b9c74628fc9355155c34072ee7210c2a3e8455b5e2b9a5877385f2f3e2"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 13424647776,
+          "digest": "sha256:ec2b8a22a7e106f2ce220c00b331c753543adb1e5b204b527822d07f81ec2980"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 12169059936,
+          "digest": "sha256:22d14bda1c6158b92c8ffcae48437e318b97b105f49b8dfd9ab3beaabcf997e6"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 15628378336,
+          "digest": "sha256:d109ef1844fab92b1cb56b2212da07335c936952e2ccf8adc36cb1baf9e89692"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 17256291936,
+          "digest": "sha256:5558029efb6ac4c64e4cfdefac7a503d1e8835f3c43749ce43b7f4843c0ecfe8"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 16645381728,
+          "digest": "sha256:a7fc9dce4a1ebdbcf3976a91058873cb43fe9c1a60c74c04729fb26de96b2345"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 15739264608,
+          "digest": "sha256:b5cae3cb17e4731484d8b66bcadcc403aeb3e6229f0eb1aa862840d62f71fd70"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 18884206176,
+          "digest": "sha256:bd51ef48d716cbec78420821dc73949e9a63f3eaace99af2902e414e644917d2"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 20512120416,
+          "digest": "sha256:e7a8610f357ff755b49481e3f62547aa3371dfa45212ef78538f73cf1c71a126"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 19408117344,
+          "digest": "sha256:29704433f1e36b1f61d422106680cf66e23333cb9b6f8b4a54f47940c130fd68"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 18884206176,
+          "digest": "sha256:a02f89f6fc994ea2c58906b420c17e01466c3c9f19a827f89832f7c36998d36c"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 22343523936,
+          "digest": "sha256:06fad2a17ad87ac1d68e0737dd06f61a3df168c012f3ed679f6e70d56ebaf258"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 28937387616,
+          "digest": "sha256:e5a026c3056b0f49fa1cae9bf4c8f54592032d65cfb84e1d86129a05384c5980"
+        }
+      ]
+    },
+    {
+      "model_id": "google/gemma-2-2b-it",
+      "param_size": "2b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 5235213216,
+          "digest": "sha256:39eb09d7c29b2975b9fa6133555a15bb8ebc9498e9c1ff3b1a9c4ea6ab3ea651"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1229829024,
+          "digest": "sha256:6a77c0d23d59310b6c9aece80e6c398c0d8d9367b9c113b49ef84aa18384b156"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 1550435232,
+          "digest": "sha256:61a606f71d646799e3e697671770660c31b13f63101df1ed5eee3314607e993d"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1461666720,
+          "digest": "sha256:0a7b0f32d84e7d143f7a66874e80bab4875455384df0954d8c020be5bb7c6e98"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1360659360,
+          "digest": "sha256:7fb4fbf34ff96966dc2b29345148998de400206dbb27eaf3f55eb8156fd117e1"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 1629509152,
+          "digest": "sha256:e18ad7af7efbfaecd8525e356861b84c240ece3a3effeb79d2aa7c0f258f71bd"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 1756025760,
+          "digest": "sha256:b5a8033d9d649df1aaf0c1f31111d48dc9fe0f741a4f226de3bd242f8a1ccfc5"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 1708581792,
+          "digest": "sha256:78f8414622d308a93b4ac478c5c40ca872da248f133eabeef12f40a79229ee95"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 1638650784,
+          "digest": "sha256:664b03b633cb14e7538f680828aac99fa55195f27ede21b9e26a21fecf3b9913"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 1882543008,
+          "digest": "sha256:af0891d8e56c9eab032b0ffb388433e1c8cedca4c9e02b7e75b2c061469b8f3f"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2009060256,
+          "digest": "sha256:1135883f8e8046fa52c1507d6e8f8a9924da11db572b8fe6293e573d71e5cc07"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 1923277728,
+          "digest": "sha256:505f2076eb646ce11c72516bc8fee85310934dd3c1e85abe076c41006a148a41"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 1882543008,
+          "digest": "sha256:11805c333b39b44232550fecc8aeeaca3cd9d0890afa0840825e3e95f92d6723"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 2151392160,
+          "digest": "sha256:8e6a8971d5f7c196d919f96e734034cb9c010f99ba758be52924d19f8fce0be7"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 2784494496,
+          "digest": "sha256:2b8d82c77ac569c320e9dafeb4d355bc0de499078f8ea6f4056188af820d5c40"
+        }
+      ]
+    },
+    {
+      "model_id": "intfloat/e5-mistral-7b-instruct",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 14485668384,
+          "digest": "sha256:f5989910299df4fe9e9fe7671df15f80a38bfc2a4225e619a1a068f421ffdb04"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3084034656,
+          "digest": "sha256:7933e7c155189d06a579600b0107ea73910d8b97a54efdb63cc8dee3198a4eb0"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 3822961248,
+          "digest": "sha256:c7f7b4463399a84b3ccebd1799bdb5346c7642304d8c1038bf689af1603ca9fb"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3519922784,
+          "digest": "sha256:4296b21b20e8247e41e73aadd0f3ee464fcf3927893066771b094dd4afad64f0"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3165504096,
+          "digest": "sha256:5548404d7d19180a8dac51a7320136efc21b01f5370b5ed6646b7772da06b5f8"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4109853280,
+          "digest": "sha256:7e354394ef7b3d6266ea33695e844404e2fc09583108d2474d4a66f9a009b9bc"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4554252896,
+          "digest": "sha256:b320003124c3ceccde718be8ccb753a2a036a90b096335e86d8f703a7c515570"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4372811712,
+          "digest": "sha256:1064e17101bdd2460dd5c4e03e4f5cc1b38a4dee66084dc91faba294ccb64a92"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4141310560,
+          "digest": "sha256:9ea5a83e392a904e8a51941d7e29203486eced99a9690d6fd928a28950f4d25c"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 4998652512,
+          "digest": "sha256:0033d54d22c844aeff65cd4a4dcad800a34f75e1ad9c149202cefd370da5c9f2"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5443052128,
+          "digest": "sha256:a34b5405f2a9bdf353294d5f38f64308c1954fff99f1c942c33d20ca2494184a"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5132345952,
+          "digest": "sha256:2995417e1d69f6999eec4b138837a7e014bc7af1a411393790329322fb52ac5f"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 4998652512,
+          "digest": "sha256:eb4786104fba9b4449ea8446bfd2f2fd35f62670a97d0a6098ac659bb571f4f5"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 5943001696,
+          "digest": "sha256:a45a10d30dd1481f63a00c43824d97a704c993e6f0857f68967e91677306593a"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 7696794208,
+          "digest": "sha256:e9f218d40e434a3fa35be30fd6372ff4a6a8d2d28288545297c8b710d7736924"
+        }
+      ]
+    },
+    {
+      "model_id": "llama-3.1-405b-instruct",
+      "param_size": "405b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 811722959584,
+          "digest": "sha256:d7f8a1a3f9ec7baef9526b8f3f1a47e2684e57f663c569a4e4b35e11e2943a94"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 149322787552,
+          "digest": "sha256:20fa4f8f28312b4bb541e33e8a867b2974a0a8a23c4cb8a7ad7da274a6759a40"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 212838476512,
+          "digest": "sha256:4572229a5d516d16a2b1f21deea21780811bb2929c828035a44b9a9ee8c478fd"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 195373394656,
+          "digest": "sha256:7c5960bcff1ca034fe1181d5c4ad68966d7033483fbc65a01501c67511d9a374"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 175233657568,
+          "digest": "sha256:792281d835fe5414ba9de2e149766c8c1189659558f7aec9698c094c50d5f976"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 228856425184,
+          "digest": "sha256:02766cd47dfb668399471ef398206c7a3577954a8ecbcbf372bed80aa9b61c03"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 254090668768,
+          "digest": "sha256:be4acc6add6182b6c7d0adfbf4d2f6f0e77fe01a1ed19df60a46d3012909fd3e"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 243069610720,
+          "digest": "sha256:f02250158f3d54ed5e6d26c8f10b9e7f3032d226f46b470bd87dbfbfff959806"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 230500592352,
+          "digest": "sha256:3430607dffffdd0ec42f976588f7095b48023664271ed030c7bc3f587f29db29"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 279324912352,
+          "digest": "sha256:3ec81e38b560379455ceceb81b8f757873ae5f7c6cf005984d7c97c53047e238"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 304559155936,
+          "digest": "sha256:0ac6f4ea577dc30cee71ad0330779fcf001636e638882d851e078313732b840b"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 286646856416,
+          "digest": "sha256:1ee0ee7c0c5a61006d7c87fd5578749ef9dd5e1cd0cd34dd85149beb6e6fe933"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 279324912352,
+          "digest": "sha256:0a679d37a3bb66ace3bb92461874e19d152a63cd070919531ade8b2cac9d0e21"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 332947679968,
+          "digest": "sha256:c5381c3eabd6b34f70acf723e0074dde23a0f2b260e4bb82f0fb350a560e9525"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 431239293664,
+          "digest": "sha256:6cd31bb18aefc91f09cf5e6719635dcca6cbb23a1868ca6e0c86d97bcb4cc874"
+        }
+      ]
+    },
+    {
+      "model_id": "llama-3.1-70b-instruct",
+      "param_size": "70b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 141117917536,
+          "digest": "sha256:44ad5c5c5b2c12bf69f7d4696a08ecd78bd93e1507a5793dd80d6529d8539537"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 26375113056,
+          "digest": "sha256:788212a1a93b4fa0a1698c4590ddc2c9bbda7b114310b346cdc4123c2c3e4847"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 37140597088,
+          "digest": "sha256:017ec0c83408317e2b35b60a25a7a29405d07084560b32983747522ae75f5f37"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 34267498848,
+          "digest": "sha256:7b21f348cb1409e236526e88b5da2a6e4a01f8bed36a33fd675c102b94d41d23"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 39969737056,
+          "digest": "sha256:654440dac7f3ad911ccb39b7e42e2a0228833641b601937134aa3e4b7a389ad7"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 42520398176,
+          "digest": "sha256:4bde18c49e43c760fdef6aeb50fd5ff18ac7e76ccf2748180ae220bb4d427260"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 40347224416,
+          "digest": "sha256:9d3b384d658bb126993569851ef0cafd28584daf66be3353dc99ac91bff9ce5b"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 48657451360,
+          "digest": "sha256:3b32242a0a8bb40bd76b8dc211c676d9ce21e5987b337a55bdb48a22d3e60047"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 53001308512,
+          "digest": "sha256:e5165257478c9fe4981677d8f29828568afc2b98d72b9063d5acfc5794c362be"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 49949821280,
+          "digest": "sha256:a9528db392c2ae8ff37bcce79963ddc335a7c3546cc8c8e30620ec20d15ccc4c"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 48657451360,
+          "digest": "sha256:6a830fa69d36a9ce6f35acdb3c6eb7764319fa4441d09dc32e0c5b9a8a0e9298"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 57888147808,
+          "digest": "sha256:d080a4d0ea7df063a4c12bb8c9ccd8857d9ad57d6db4435a126a066f2683ec56"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 74975054176,
+          "digest": "sha256:1e618846a0687f3a379140ab1b4d7f98c841d3227bda175297c60ccc64104922"
+        }
+      ]
+    },
+    {
+      "model_id": "llama-3.1-8b-instant",
+      "param_size": "8b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 16068891168,
+          "digest": "sha256:6cd82fb1489d829b87fad063a6af8b5585575c3788b511300c249368154d0929"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3179131424,
+          "digest": "sha256:881f675fcac83a4027b8238b02a60b43bbfed4620c995a9e30b7102e6851848b"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 4321956384,
+          "digest": "sha256:1b4a17832197eeb36e957c874914c5ce0001cad2d5f391406d3cd43983932d94"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 4018917920,
+          "digest": "sha256:3ca0f5000da5f09c88b59bf5203ff97ce08b606ebe01ba2a91b82569bab8b673"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3664499232,
+          "digest": "sha256:0b53f38422fd2e39af57eeca887d0941ca4d29c1b858685bf49b2490208ce2df"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4661211680,
+          "digest": "sha256:8fac841265c7b571b71bc865028b1508e868e19b0aea209f4aac290cad566cc6"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 5130252832,
+          "digest": "sha256:8a09b201dfc6d824111d72c2f363fe2fa81ef6a5994740bbd19157fe240320bc"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4920734240,
+          "digest": "sha256:4317dca5b85cbed4113db278a1d387cfe3e74cbee894dbb0f3110f722d1b9bfd"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4692668960,
+          "digest": "sha256:a37c71733ffbb2e582f1ad2a878d088841a1f5facb6f6e3bd87e291884d72a43"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 5599293984,
+          "digest": "sha256:498684ba564e86854ad045f21a31be7675f63fe3cd3f348a9728f84491b69144"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 6068335136,
+          "digest": "sha256:d98f24681570106fb1ce880a40e86471a6359b98a4b256cc38cee75075122536"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5732987424,
+          "digest": "sha256:7b5528bbe616c3301d0fc4d2c88be0a4c33221a0e0dc3ac07c150a7563c21e02"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 5599293984,
+          "digest": "sha256:969bfca2c6245bb74510504ae6e22d0aa92d3f64d2b63eaa3411d77f9c8c1029"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 6596006432,
+          "digest": "sha256:1678be70edc8fe933bc34f9f1df721c99d868729ea3e2f87a160f3c5d2c5905d"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 8540770848,
+          "digest": "sha256:6ba14b9c90655a32109fb02f937f1f113d625da02cac846943ceda78cbd24e83"
+        }
+      ]
+    },
+    {
+      "model_id": "llama-3.1-8b-instruct",
+      "param_size": "8b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 16068895872,
+          "digest": "sha256:daa7d15f6d0b44c157d2f3db2ee44e92a637edbf9d606a9bd17e54b115e77b22"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3179136128,
+          "digest": "sha256:1b69ad64adfef1410ad2fbdedb0a19524dbbf2d3344c0922577df60299b8df03"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 4321961088,
+          "digest": "sha256:da079dd25c556031df552e54bd86c6916ea080f21400070a16b0ced3c03c6a21"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 4018922624,
+          "digest": "sha256:1c30d1d4e24731715448cd66d3a2b716e96c34579d16bd376745c32a55e6a106"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3664503936,
+          "digest": "sha256:e22e2ce49b8c1c387cc38357258af453a6f7c45ccf8158541669cac1fcc95117"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4661216384,
+          "digest": "sha256:1a4c3c319823fdabddb22479d0b10820a7a39fe49e45c40bae28fbe83926dc14"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 5130257536,
+          "digest": "sha256:fd49b3c1e768fedc4f95619c43e26c2a56511857a4c8cef700c5c88910428d16"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4920738944,
+          "digest": "sha256:455f34728c9b5dd3376378bfb809ee166c145b0b4c1f1a6feca069055066ef9a"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4692673664,
+          "digest": "sha256:af27798abc5207b91cc16de26320d75f2d1384cdf783614133e6271b7dc5a180"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 5599298688,
+          "digest": "sha256:3600e9ab05f17f7980b2da37b53408c57cf357152204a4f1e686aa8fcc29a71d"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 6068339840,
+          "digest": "sha256:550ea11f39fef4502327891bc6785091a941f2e856c626c28cff7c52eed05384"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5732992128,
+          "digest": "sha256:81e02bcba7cfb3efac7e85f28bb05d2c50db7cfd6e2a7765e6031f70bb1187b9"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 5599298688,
+          "digest": "sha256:22b8ae65edaf98db965973d1dd023a244762dcbe2c0544d37bbb4c45c697c341"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 6596011136,
+          "digest": "sha256:ad688d3b0503ff9cd3bca6925ac03c46f5fccc58b6927708572dded651071fe9"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 8540775552,
+          "digest": "sha256:4a4a958ae5504a5ff0e265d985f398cb95d1f63c6a9c199f94f2d2e112112dfc"
+        }
+      ]
+    },
+    {
+      "model_id": "llama-3.2-3b",
+      "param_size": "3b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 6433683904,
+          "digest": "sha256:8668fed3529f49d18e3f0ac254786f7e46cb2cfa8f68904799d941cb9418c768"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1363931584,
+          "digest": "sha256:d13b57fcd2c4d09e59c7767d60653f7e6090ead5b2c649fccd9c90a4b76d47e6"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 1815343552,
+          "digest": "sha256:3cc1d0785d39806663fb9175bcd194764e100d4b6ae20794e7ce396257f4c735"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1687155136,
+          "digest": "sha256:79251391d92b0bf61a3fb7293d941ec1ab0dd952fc4f4d76980503f058760dd9"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1542844864,
+          "digest": "sha256:2b3bd27253c7b769531d53070ca8e97cb133e76945ce87c03501dd509f59211c"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 1917186496,
+          "digest": "sha256:2d321f8d0627c029a42e24a2f78357d6fb5e7726c7071d98946f05b6a0c958db"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 2093347264,
+          "digest": "sha256:89589546e93c219aeed5ca75e14186693813be594f9bce63c3bf8ec3d70e3078"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 2019373504,
+          "digest": "sha256:07de289d2caefb64e7d63b214e639870ec9819cae662c2c17e7192a001f2189e"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 1928196544,
+          "digest": "sha256:9c88b182df832dd967a7af85bd0384c69c3624bc30b0b04252e5284234f3ee95"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 2269508032,
+          "digest": "sha256:0443464b9a7de1d3ff9da65fb59f0806c8e58d5e1497514f55846820f7d3b70e"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2445668800,
+          "digest": "sha256:01254f9d8568becfd556b979782ca07ab7bd4712ce28ca035388ef4c08cbbf66"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 2322149824,
+          "digest": "sha256:61318ba08687c70cb1256db7b02a6f4588dd49b521c7810ef81832f15fffa094"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 2269508032,
+          "digest": "sha256:9887f6be5a2dbb6037a1fa12057eeb1720dc06d7f493e9ce067cfcc2984f8603"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 2643849664,
+          "digest": "sha256:239f40e017844496eed59f47da84970334c23e9de2ac554d843e6132348e7346"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 3421895104,
+          "digest": "sha256:476a50b956c93789b2f838bf83c0ef913664be0542863112f6f2a22ff9016487"
+        }
+      ]
+    },
+    {
+      "_comment": "Plausible+documented: weights_bytes estimated from ollama.com/library/llama3.2 tags page size display (~2.0 GB Q4_K_M, ~3.2 GB Q8_0). Arch facts absent (exercises partial-VRAM path). model_id is the models.dev catalog ID 'llama-3.2-3b-instruct' so codegen joins this row. Refresh with offline tool for authoritative figures.",
+      "model_id": "llama-3.2-3b-instruct",
+      "param_size": "3b",
+      "source": "ollama",
+      "context_window": 131072,
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 6433687776,
+          "digest": "sha256:1bc315994ceb8ceef3a1f699658bc1b71f73fb03f7666c3e0b3b2f840d01d319"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1363935456,
+          "digest": "sha256:8812f2c4bd58f46ca3d80145716c196dde4bbf1ab8193344e04d35c83e5d837b"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 1815347424,
+          "digest": "sha256:cd903419c9a1b4bd7db5737ad37f641b5072246c989b0aca6eb8825555b763f8"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1687159008,
+          "digest": "sha256:8f8b2dfde5a07a991cbf93cc9214996abc6cf50f941717217af64e096eb62245"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1542848736,
+          "digest": "sha256:fef42a9656f557e05cf42d28066d9f5ad83a4713be7c5fd3281d348f390af9bf"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 1917190368,
+          "digest": "sha256:c5b3569010e23926e7a8abc1f5b07c8bface80a52aa5f38cca4f4cc43f07b050"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 2093351136,
+          "digest": "sha256:82ecb46c0c6158c44ea677d351dee52ee2bce2c1cf983f4b22d3dff8918dca96"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 2019377376,
+          "digest": "sha256:34bb5ab01051a11372a91f95f3fbbc51173eed8e7f13ec395b9ae9b8bd0e242b"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 1928200416,
+          "digest": "sha256:9c65e8607c0c53ff6b5da6c4fe3aabb0d12ed7cdd0a0741a483b708e78a18c00"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 2269511904,
+          "digest": "sha256:b3b3c7ff805d98c616b3cd509cbbf81c37b83688c88ba254b65cf693d4be352b"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2445672672,
+          "digest": "sha256:9d99bd30ab7adbce27d3c246bcc22922c7cf174a21f360feb20eb7d359c2cabc"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 2322153696,
+          "digest": "sha256:e32efebd977975adfef79e5999f12ef9dac99d3cebe3eea09614e77ea2e3ef26"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 2269511904,
+          "digest": "sha256:b5a9193946deb326e29f9886c0c4a0e8a096ee99ff221f03e1e8b8cdcd0317fb"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 2643853536,
+          "digest": "sha256:cc88376befda3637bc486f8d6086be3972fd05e68338913a52f0956b310623ff"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 3421898976,
+          "digest": "sha256:eb854b581f548d79e2c3c37475009a2ff5d7f71a985a97d54c482d60c97d4c82"
+        }
+      ]
+    },
     {
       "_comment": "Research-sourced: arch facts from Meta-Llama-3.3-70B public model card (layers=80, kv_heads=8, head_dim=128, context_window=131072). weights_bytes from ollama.com/library/llama3.3/tags page (Q4_K_M ~42.5 GB, Q8_0 ~75 GB, F16 ~141 GB) as of 2026-06-09. model_id is the models.dev catalog ID 'llama-3.3-70b-instruct' so codegen joins this row onto the catalog.",
       "model_id": "llama-3.3-70b-instruct",
@@ -10,22 +756,70 @@
       "context_window": 131072,
       "rows": [
         {
-          "quant": "q4_k_m",
-          "weights_bytes": 43033509888,
+          "quant": "f16",
+          "weights_bytes": 141117917888,
+          "digest": "sha256:45bd1ecf18652f7697fe09bd317fe84a87b4d077239581e1b5e097bee49d0e11",
           "layers": 80,
           "kv_heads": 8,
           "head_dim": 128
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 26375113408,
+          "digest": "sha256:34ae60f38c8b47ae5bb2045f42857aaa9defd932951d985e4593d5dadda621f3"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 34267499200,
+          "digest": "sha256:e314df765eaac3893ab0e49192758d5d2c031b09067eccb97d15cb17fbee6abe"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 30912056000,
+          "digest": "sha256:988ea6b78f9cd4f7e39270a1809bdc27002b73090a755ee70fb8ef80b0825cae"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 39969737408,
+          "digest": "sha256:121ae1c490aded31a9fdee9667108dda641178e6c05684703df449992cc6aa14"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 42520398528,
+          "digest": "sha256:c7091aa45e9be6c15e1e5c8d5489d47f18183bf5077b3d3697924e1d18ad1b2a",
+          "layers": 80,
+          "kv_heads": 8,
+          "head_dim": 128
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 40347224768,
+          "digest": "sha256:4f26385067605477cdc919d51b56c56e2c92f5a6189ae7ed9612ec8a718d92f7"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 48657451712,
+          "digest": "sha256:699c5115ae80e0f731fcf989e0d7b9c3883a08c3c9e25364dfc65a70ee0f99d0"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 53001308864,
+          "digest": "sha256:c5cb12bac9267e1ce94088f60cbe51cd3d40e8f6900998ad3dab675819fb4272"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 49949821632,
+          "digest": "sha256:5ac8dbcc1dab80f63001bbc5f2a65981df1281cebb73da045bc0e8c7d2bc3bb7"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 57888148160,
+          "digest": "sha256:794cfb5cb1150399d3941846baed4a663d2860a8f529da935a3f9c66b269e3e2"
         },
         {
           "quant": "q8_0",
-          "weights_bytes": 75176521728,
-          "layers": 80,
-          "kv_heads": 8,
-          "head_dim": 128
-        },
-        {
-          "quant": "f16",
-          "weights_bytes": 141166166016,
+          "weights_bytes": 74975054528,
+          "digest": "sha256:d95adcc05174aa07d5a696525380a494fcb642cc8e83bb492d5b5164ff7af983",
           "layers": 80,
           "kv_heads": 8,
           "head_dim": 128
@@ -40,19 +834,248 @@
       "rows": []
     },
     {
-      "_comment": "Plausible+documented: weights_bytes estimated from ollama.com/library/llama3.2 tags page size display (~2.0 GB Q4_K_M, ~3.2 GB Q8_0). Arch facts absent (exercises partial-VRAM path). model_id is the models.dev catalog ID 'llama-3.2-3b-instruct' so codegen joins this row. Refresh with offline tool for authoritative figures.",
-      "model_id": "llama-3.2-3b-instruct",
-      "param_size": "3b",
+      "model_id": "meta/llama-3.1-70b",
+      "param_size": "70b",
       "source": "ollama",
-      "context_window": 131072,
       "rows": [
         {
+          "quant": "f16",
+          "weights_bytes": 141117912832,
+          "digest": "sha256:6229fa9006b91c59ce8ae181c859cdd73fc96250b64d00b139c328ffc365a8ca"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 26375108352,
+          "digest": "sha256:ce84b755202252367b2fbdb1d701c22e12d188aadc2973b82f70995e05f679d3"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 37140592384,
+          "digest": "sha256:35fb333a0200065e9b2df72716dc7d980517bf1641be53134a2e68a3b7ec4039"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 34267494144,
+          "digest": "sha256:432a209f2c9f74fb22050ded94914715eb835da3c0f40611239334aa8e8fcf1a"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 30912050944,
+          "digest": "sha256:cac671cca5e7eec879deab40ed0c6d07becb09ae1f9ed4cdb43d5e317934fc49"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 39969732352,
+          "digest": "sha256:afe09ee0e905bc974b876d6e36ded557e37dfff64cffc0af520f0bec40e315c6"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 44313589504,
+          "digest": "sha256:9ffe79b3c287279e38fdb89efe5aca1ed4fff17f8e51a10ff59adc3aa94c3759"
+        },
+        {
           "quant": "q4_k_m",
-          "weights_bytes": 2019139072
+          "weights_bytes": 42520398176,
+          "digest": "sha256:4bde18c49e43c760fdef6aeb50fd5ff18ac7e76ccf2748180ae220bb4d427260"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 40347219712,
+          "digest": "sha256:57eb0e8a297265982d68607615f50f92afb6af37665da34fcfe91c0df3abc0e3"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 48657446656,
+          "digest": "sha256:d84d4b7128d39b86d46c33f03edb08b0cb1f17b5c9f2285158d58b5966b7d658"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 53001303808,
+          "digest": "sha256:8e0174da2c13373bee656b95af6fe5b507ce4564eaf34de8e648307076dee49b"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 49949816576,
+          "digest": "sha256:35052e4364f588f0f5c3dc6698546ca97d2e022645ebf926d1ad4eae0988baa2"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 48657446656,
+          "digest": "sha256:c2e31815fbe0e15ba17ac29a854d63b89d1bb6c88ae12cd0c9b338ae17e9b3e5"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 57888143104,
+          "digest": "sha256:926d81a47866b16dab8b58c089912484bc7479bd288f021598a42ca6362bd71f"
         },
         {
           "quant": "q8_0",
-          "weights_bytes": 3419799040
+          "weights_bytes": 74975049472,
+          "digest": "sha256:f1e44617ebc4890254357f3023ea6dbee424e2fd66f870d3257af888dc0893b4"
+        }
+      ]
+    },
+    {
+      "model_id": "meta/llama-3.2-1b-instruct",
+      "param_size": "1b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 2479595328,
+          "digest": "sha256:0c03e8bc38d422ff88b8fb137ce1d581f2e39485cf4c3a92baa36d5a7dcc79d4"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 580874048,
+          "digest": "sha256:6cee7e070f79b9f223ae02a2cf3d91c630894f8baff9b7b67014cf9a9f4f4a6c"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 732524352,
+          "digest": "sha256:01468fa03184883b4599184104d16007a1d8e68a6a06f007827a3f1589d5676b"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 690843456,
+          "digest": "sha256:95d4f728b1bfde90758666cab928c7a6a226ca814f830f98da6dbb61201bded6"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 641691456,
+          "digest": "sha256:a45aa2aca348b0c53abdb964aa452a6ccac32c8b09bbabd4b0036d7b29cbf5a2"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 770928448,
+          "digest": "sha256:e9e2eec515fb23b377a83b49584ef8dadf83b067bbe72c4f1fa8b10fdb994dc9"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 831745856,
+          "digest": "sha256:743a2ed160e7992028ad8556380ed9b3fbf0513f8fc6dc994d6a35faa3507671"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 807694144,
+          "digest": "sha256:bbb3b1633f7e058144147ef85ac5ab828280d5dbb970a3d852d3805e8d8b558a"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 775647040,
+          "digest": "sha256:8eb5220275bc3c8c93f74a434176edf926e5180c30388be0f8f8dec570c35086"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 892563264,
+          "digest": "sha256:d25171a8b2819b0c54bc65e9479eeddc4856394c53a71faaa7470ea66cd01ff4"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 953380672,
+          "digest": "sha256:e14dfb0bfa5df2fc3e2b6a0401fda762469b4fc213cd49a5d13d4626ee890bf9"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 911503168,
+          "digest": "sha256:1a817d2ab6904e85bce1287ef40822de491b8b8699ef900537188cc0865aa5f1"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 892563264,
+          "digest": "sha256:eb6071b2fdae62aaecef4fe4b51b23c84d39637b98a284342c211098262683dd"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 1021800256,
+          "digest": "sha256:8e435f287afb2720ec4596e86c297e61a1914ad8e61f78b7433085f062dd54d4"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 1321082688,
+          "digest": "sha256:4f659a1e86d7f5a33c389f7991e7224b7ee6ad0358b53437d54c02d2e1b1118d"
+        }
+      ]
+    },
+    {
+      "model_id": "mistral-7b-instruct-v0.3",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 14497337280,
+          "digest": "sha256:25eaa449ccba68a44665959e1dc2ad62b7b8126e762f1cd654c12acd704dd208"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 2722877376,
+          "digest": "sha256:deda6b21727dd60bdcea27cc4a26f58ff8b98ff7eecb1a4149f87f5c38d09feb"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 3825979328,
+          "digest": "sha256:f3f2a0d28c531c82541ce3d70caec9cd43e334e9fff80d28d5a9314a980c81db"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3522940864,
+          "digest": "sha256:607b41f3b5573d1bf59971d7b8bd8c0db721a79bee463a074a21239852536ad9"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3168522176,
+          "digest": "sha256:27e1b13861955527aa5cadf91ff209755492fec3cdbf5c3e604128bf291959bf"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4113289152,
+          "digest": "sha256:42347cd80dc868877d2807869c0e9c90034392b2f1f001cae1563488021e2e19"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4557885376,
+          "digest": "sha256:6cf4f397a861ee923f64a23b2c18fccb0e40d002d7bb676cb91e83c246e5536f"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4372811712,
+          "digest": "sha256:1064e17101bdd2460dd5c4e03e4f5cc1b38a4dee66084dc91faba294ccb64a92"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4144746432,
+          "digest": "sha256:739a29adee816fa7a89f5e671a4b16944b811239b5fceb6ba6cd0024df3b3a03"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 5002481600,
+          "digest": "sha256:4a05f8858f50a2b2b6ce38c4d89d330345295ee19d16e2d84eba4dcdfe7e138e"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5447077824,
+          "digest": "sha256:aa39dda228e327f0495d0b34108ec0b9991247797dfd54a33847d64a35df2e46"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5136175040,
+          "digest": "sha256:fd65e884cb522b95879d507a17688221ecc213181eb206c49dff55c29904d1cf"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 5002481600,
+          "digest": "sha256:b9e240d101647e1f36f4d520e46c353710da3c08a13545110bbe3f9be6b00e45"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 5947248576,
+          "digest": "sha256:36a090b9ec409a5b3fbc89cd9cdc46165f285e54c0432c9e8e3a0168d5ad5604"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 7702564800,
+          "digest": "sha256:98c8818c62a2726c792e4352ef595ed40164c2bf008818f1658d2e981be53590"
         }
       ]
     },
@@ -70,6 +1093,1473 @@
           "layers": 80,
           "kv_heads": 8,
           "head_dim": 128
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:27b-instruct",
+      "param_size": "27b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 54462021856,
+          "digest": "sha256:28152497fce27fbd69fd43728ea3adbc9550eec2501bc07995c1595721bbc873"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 10449576160,
+          "digest": "sha256:c81095648aa8d3290e4fe8fe4145690d6010e50a411527a598574a3c2f196415"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 14519361760,
+          "digest": "sha256:6c97e93e1b7b9df0dd734a430f4d12af4a88e8ae8f775034373d8507fe8eb6f1"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 13424648416,
+          "digest": "sha256:4c6f79b21f2e528d08d201b037e7ac257eca5c8796a8a8e7fd605e2d477caebb"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 12169060576,
+          "digest": "sha256:5e8fd750fa1278734c3cdb61bed7a82a9f3d1775fce0cfc04055fe8283406140"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 15628378336,
+          "digest": "sha256:d109ef1844fab92b1cb56b2212da07335c936952e2ccf8adc36cb1baf9e89692"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 17256292576,
+          "digest": "sha256:f1a85d66bbf1ed7c13c96f75e9fee5e1a49dece1a65c7d18913c57ee8bb54962"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 16645382368,
+          "digest": "sha256:3498d8a8c37367305f3477e03dd2659f873973feb6ec9960cd35834d34140e42"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 15739265248,
+          "digest": "sha256:522136ba28bbcaf963c4e3d663eab7f81ff6f2fb555b1733bf6f2dc79cdd8ad4"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 18884206816,
+          "digest": "sha256:695862e6b46aded61678dab673b8647e5fb6fca8ad77a9b973c6cb1c34b2f42f"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 20512121056,
+          "digest": "sha256:1d689863476e3a30df91c6d717a7b956eacb746a837ab4e12f53815221f4c6c0"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 19408117984,
+          "digest": "sha256:7a1a37c01bf01de74a3971052ee4fec44354a788c3637750edd361d197a09e8f"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 18884206816,
+          "digest": "sha256:1870ee52468afcd857d09cdd7b39245fa84c7bea4412988b0d8645c9e5af8253"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 22343524576,
+          "digest": "sha256:97788d645d56bab462a63853c8e69c1a1c464da4baaff870138afb95a9572347"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 28937388256,
+          "digest": "sha256:d55baf7df634fde80fa35eb04c670762bc6e7c335c3e0787bd2b199a4f526c2b"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:2b-instruct",
+      "param_size": "2b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 5235213856,
+          "digest": "sha256:798766d9852100a2430c39e99d44347878a9fb2748632e4ed48d2dda6a6be5a6"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1229829664,
+          "digest": "sha256:1553478ea364d5018552ec8f3cb8d9e925b92f5feef75bc3fd1d3669b7cddbc5"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 1550435872,
+          "digest": "sha256:8a47e7e6244b76d1512a0c59bcacb37a2733ed41a578a80f84fbb68eb05566b7"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1461667360,
+          "digest": "sha256:bd9a42901ae78a2dc980499d3cc89d827ab1e47e7cbd2af544fce0df5d1755a2"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1360660000,
+          "digest": "sha256:4eff34567b79cab1fd4deebf2a9671d65744704e38fee36e321b84161ee38dd9"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 1629509152,
+          "digest": "sha256:e18ad7af7efbfaecd8525e356861b84c240ece3a3effeb79d2aa7c0f258f71bd"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 1756026400,
+          "digest": "sha256:6c9d466e5c6ce56644e9b4dcd7d56283ea78953a80e4f7fbf2c70e789757c60c"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 1708582432,
+          "digest": "sha256:a354580a0ee93e578b0c08a42059a0ec4e376678c47d1b3417c45765fbebef36"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 1638651424,
+          "digest": "sha256:6a7b06ba9d8b0b443ce1caa397e0f27fc01664bcfb33802b7e435342bc5dbfbb"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 1882543648,
+          "digest": "sha256:d70d1d02d4d6c0db83aad862010ff68149d1f7bbe51ddd95e50de052369c7c74"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2009060896,
+          "digest": "sha256:4fc60e1a950d812af48478227a6f8bafa5ed20153d02e32cd583473d24eb5d92"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 1923278368,
+          "digest": "sha256:75aaf71f99a04602d5945af02abfa96cf4b908749fcb0e56bcb1ef7f6428730d"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 1882543648,
+          "digest": "sha256:08d267ae99c7a148d64b78e61335a731f23278872dcbbf82be266f00016c374f"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 2151392800,
+          "digest": "sha256:1c0b77bda08d39d8e6fb8968e43163763ff247505824ecdbfb3f576fac1fbcb7"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 2784495136,
+          "digest": "sha256:6687e98067aea0374ea77d1d8c5f0ac4d7dd0028bc1917d71deb5748c1dd4de3"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:9b",
+      "param_size": "9b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 5443143296,
+          "digest": "sha256:10aa81da732eae8a66e07d70620089a608f546ff280a2856a43be69d622f715a"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:9b-instruct",
+      "param_size": "9b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 18490680960,
+          "digest": "sha256:6c29221808fbb23452f8a36a9d17996f0eb0cdbdceb3b0ffe3fc475c50256d40"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3805398656,
+          "digest": "sha256:c03daf1b8a5f7a7943822ab346e646677661dd12d62f2777f8963f8b802b81b4"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 5132453504,
+          "digest": "sha256:caa440cd9093f93e6c3809940f61688ba1166e7d5de97bda9afdb38ea88557fc"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 4761781888,
+          "digest": "sha256:ff6a6cd0a5169a80d46b0c3e32abc6ef4a3b95a3fb4673e0445f8b4f71afab5f"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 4337665664,
+          "digest": "sha256:54303afaf478e5d2c2e59cc4e900e8a39d93abc0ad727e0820a29a77b3c13cf6"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 5443143296,
+          "digest": "sha256:10aa81da732eae8a66e07d70620089a608f546ff280a2856a43be69d622f715a"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 5963368064,
+          "digest": "sha256:d97a1bf41479d8fcc68fa9dfddc0ce69f6e341e6344b3f8662b40d8743106593"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 5761058432,
+          "digest": "sha256:7a058fe7bbba716486cb59d30fda98fe7a734d956a3b7f3a4f72fd20096ff664"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 5478925952,
+          "digest": "sha256:fa3d3795f4dd8be7d26620a5b271809056213357f46bbead9495588461ac5b43"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 6483592832,
+          "digest": "sha256:70c409e91a47d3992eeb4ee49927500c12e34a0351d734be23cf0feb3993d640"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 7003817600,
+          "digest": "sha256:0896ac445ad9d76171c1c8802c84c1e8b33b9a59a3b07465acb4e2d6b7932ebf"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 6647367296,
+          "digest": "sha256:6a74e0e9dfa99fef412124daa832802fbd1fab378ff059ba2c17c5a48cd07efe"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 6483592832,
+          "digest": "sha256:3e8f07e151606820e8ab02d1e21cc056200ae1a11ae405cd204baee1f3009f87"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 7589070464,
+          "digest": "sha256:626775f96615eac70c5f75fca497e4b7db67ba80e4e18e175e0c76e86461bd38"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 9827149440,
+          "digest": "sha256:c5e72691ae21ebf0f4bd2e1e17873b6681dbf272c500b84d3ccf7cd66ea7213b"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:9b-text",
+      "param_size": "9b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 18490680320,
+          "digest": "sha256:4772f836d97ec2aba0dc5744bc4d9faa067485f6655bb6117c6b76de762ccc08"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3805398016,
+          "digest": "sha256:36b1a48972c0dffa069d19cd4a5cf44742add454e38b0333875e4e2a641a4356"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 5132452864,
+          "digest": "sha256:7bea79c4f3be3a5a1f247b8b78541b5d697a4cee20177e72f4905f530bab9749"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 4761781248,
+          "digest": "sha256:3f0680b2b94894c905f3e53886906712210e020cbfbd1afc000631ba89a6555a"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 4337665024,
+          "digest": "sha256:cebea60faf8724d1ecb409cded540a2fcb3f777bc6d234b56c80810615afc712"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 5443142656,
+          "digest": "sha256:639a1c145eb914ce81624e1bef7055a8d8d6cf9f9aa5fd8fa73a1b8608e224ae"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 5963367424,
+          "digest": "sha256:493cf1fc679c63d967261ea0f3a241e15e55821dab8561580da9910ba303edb6"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 5761057792,
+          "digest": "sha256:9c7310f871cc109175f26258c0a9f25d2c600dec77d32cf14088e2123ee2fca2"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 5478925312,
+          "digest": "sha256:28907901a7211466c9a8283be3cd62abdedf5aec7d6faad4ca81d1d392a8a9e4"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 6483592192,
+          "digest": "sha256:6000ce1c308750cb1f50f56418bdfd01055921dc29dea8c0091b4a2425e51b59"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 7003816960,
+          "digest": "sha256:937dcd85446a06be76c0b76e1e8dcd8bc8ef54a18ab2e36b627b9dc510e8c99e"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 6647366656,
+          "digest": "sha256:c03c76184e912d9a96528960111437f35714cd9032d60dc90f5318e4eabee28a"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 6483592192,
+          "digest": "sha256:9e54bf1d6fc2f4d2f3a0dacdcf2e9aeb665aabb67addc0eede99f70308ae1654"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 7589069824,
+          "digest": "sha256:7ae225c9952f70feb0fcb0da8a108de5b32b4d559155f0c3d948afd3c6e76790"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 9827148800,
+          "digest": "sha256:8017613dbba73e85ff7eaa67a3418b12b3ec83dd14d13e91f75bde6d38c93ae2"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/gemma2:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 5443143296,
+          "digest": "sha256:10aa81da732eae8a66e07d70620089a608f546ff280a2856a43be69d622f715a"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/llama3.1:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4920738944,
+          "digest": "sha256:455f34728c9b5dd3376378bfb809ee166c145b0b4c1f1a6feca069055066ef9a"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/llama3.2:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 2019377376,
+          "digest": "sha256:34bb5ab01051a11372a91f95f3fbbc51173eed8e7f13ec395b9ae9b8bd0e242b"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/llama3.3:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 42520398528,
+          "digest": "sha256:c7091aa45e9be6c15e1e5c8d5489d47f18183bf5077b3d3697924e1d18ad1b2a"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:7b-instruct-v0.2",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 14485668384,
+          "digest": "sha256:88d60663b0137868313f6c19c1b664f9461f2f4bb316060837681509d016c49b"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3084034624,
+          "digest": "sha256:271b088a7788f4a2f01a58d845250dd0719a1c7d2bedacea02081ff2abcb0f3e"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 3822961216,
+          "digest": "sha256:b87038c3184a0fb530dab5f8ede0670625041e564c88f844a655a3239ded2a3a"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3519922752,
+          "digest": "sha256:fde67a0e15434c66f257aac45561d47c696fce20d4dd38bc405c3b0c9ff68889"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3165504064,
+          "digest": "sha256:eaacb1fc2aab4f7ffc43d9be6ffb51407f43731e362457bf5629b6889c671373"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4109853248,
+          "digest": "sha256:f9b1e3196ecfce03ac97468fa0b6d85941fea050c6666c57f5856a8baec6507d"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4554252864,
+          "digest": "sha256:5789e8f37a896cc51e8f4bfd4b4c837d958bf658195ad86978d56278678e00e4"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4369375808,
+          "digest": "sha256:2af9888f36162f79c26659af1c9281f0d984e563645791330344fb32217d848e"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4141310528,
+          "digest": "sha256:23e7fc158fc0f004a560b3c93cfee5d73ca66326e06fb1c9b9063eac6fa35076"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 4998652480,
+          "digest": "sha256:47290f3646f6dab6396f540bdd7a3be9e1ef4f797828ba7347730b9a3103b6d0"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5443052096,
+          "digest": "sha256:e14ba43f8f179fca8c09bef6aa4fe9d4558389808cdc8e7350a34f656c99aa23"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5132345920,
+          "digest": "sha256:2c209036d42c42e7e334e39b9a6d7b1322b4612c658b62b28138972762c2c135"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 4998652480,
+          "digest": "sha256:eee694ad25b0701a32dc7c087bfad69477ff105825b7c7da4195c78fb414eba5"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 5943001664,
+          "digest": "sha256:f5bbb238b6be5baaf1d22fe50e711c8c9e0bde32d191dd82696ca6e236ad9893"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 7696794176,
+          "digest": "sha256:29702c50fb7822e706c20d454aa7dfa7e686920b2014cf32311bebf6f5fbd7dc"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:7b-text-v0.2",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 14484732064,
+          "digest": "sha256:d228cf7c29c2ead2318c1489bf71528bed92e59f955f2e0a79f6a9d4595fe852"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 2719242432,
+          "digest": "sha256:710382674b889832cbcaf9cf1ae594d504f2c6eb8dbcf96e21365723c02705f6"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 3822024896,
+          "digest": "sha256:27b436996c6139af1b91be67f52bec0d5610db8cfb2454801d932163eef7b014"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3518986432,
+          "digest": "sha256:413b552f62d6f3e0e17eecbbc6afea2e7569faa0c971aedada6319107f4ec2b6"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3164567744,
+          "digest": "sha256:96de3d80405bf0b2344b522056ed182441ecffb03592665fc1ce16016da4577b"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4108916928,
+          "digest": "sha256:732fc95457eea3f4e99e06194d7b8f6280f9ef5997c0c148fc585e653e8844d6"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4553316544,
+          "digest": "sha256:fcf190eeb0453fae9151f431ceb1578faaa994414f5334000e5ec826bfd384f3"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4368439488,
+          "digest": "sha256:6f44e55e1f67437751988738f3cc5f0647f5428cdf0be08e636b02260c2a3401"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4140374208,
+          "digest": "sha256:74b88e32701354fae6779243836a29eda4411a10898197ebe420d5e6fcbc8c4b"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 4997716160,
+          "digest": "sha256:d6a0476de2f375dd046dabcd17779f9ca8bd697e21aeac93dcc8cdff1a0c572f"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5442115776,
+          "digest": "sha256:aa5cccb8df00f1f324f2ebe807d6aa7c5459fa5cb2110a46847267dbb968b066"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5131409600,
+          "digest": "sha256:6e965d2b8a50303b60795c4c8ea5f70363013b881a1587e206718f4dcb633398"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 4997716160,
+          "digest": "sha256:67dd67cef9d5e5e021ce2d3185f950fd1f988c92b148ea9e47d769afbb47052f"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 5942065344,
+          "digest": "sha256:c45bd36ac8dd38c6d22e98825c0574b6ba65783d51244f4122c38174a6299420"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 7695857856,
+          "digest": "sha256:5f6c07a05cc0d260eb43d61a5c41178c363a4c1f8c7eb2e994fc245846a86db4"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:instruct",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4113289152,
+          "digest": "sha256:42347cd80dc868877d2807869c0e9c90034392b2f1f001cae1563488021e2e19"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:v0.1",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4109853280,
+          "digest": "sha256:7e354394ef7b3d6266ea33695e844404e2fc09583108d2474d4a66f9a009b9bc"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:v0.2",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4109853248,
+          "digest": "sha256:f9b1e3196ecfce03ac97468fa0b6d85941fea050c6666c57f5856a8baec6507d"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/mistral:v0.3",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4372811712,
+          "digest": "sha256:1064e17101bdd2460dd5c4e03e4f5cc1b38a4dee66084dc91faba294ccb64a92"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/phi3.5:3.8b",
+      "param_size": "3.8b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 2176177152,
+          "digest": "sha256:0611867ea67b05e39cbe647353a4d5ebe04598cdb29fe8d99d42baab00e1c724"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/phi3.5:3.8b-mini-instruct",
+      "param_size": "3.8b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 7643297280,
+          "digest": "sha256:169a3cb9f95f9c1ff37ac7387468dfe05c8085817ee872bcf7101adfa4d85cd3"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1416204288,
+          "digest": "sha256:703a326552d56531c5802244021fcd0b000a7e73ce1b0d70813bf057d86e7ef8"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 2087597568,
+          "digest": "sha256:cbbeac735c42cce1bb87e0ba8d922a33a0fa88f811a54614320d8f8c96525a09"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1955476992,
+          "digest": "sha256:2b65bf0099b1c653e275d93d94206f88d0506b2476126052eb807875fb4aecf6"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1681798656,
+          "digest": "sha256:3883083c972c188a6c4e292db10f70e94d064873fc4521d0c5e72039adb0865c"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 2176177152,
+          "digest": "sha256:0611867ea67b05e39cbe647353a4d5ebe04598cdb29fe8d99d42baab00e1c724"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 2408825856,
+          "digest": "sha256:435efc182a41c4ce3443a73e6bae6f0e56dd5e7da01c9addc2f7ba70f8898f9e"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 2393232384,
+          "digest": "sha256:bc584ebb621de3913406e11828d375da25934ded008faa7bfe1c0c3074d3885f"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 2188760064,
+          "digest": "sha256:441651bfb74f74863fdc0ea0d43df2746e6f9ff5388470da3a723f10a0353fd5"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 2641474560,
+          "digest": "sha256:55741c68a1ac944f94551d8ab187d8234d4fe60c49bbe5dee9ea81c9986315f8"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2874123264,
+          "digest": "sha256:543f4978c4bcbb56a0ae22699159c1834e6e402b0b818abf2dfe15dd86bb1ec1"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 2815276032,
+          "digest": "sha256:156b4f87e7eee24004698d9276eff80314a97953ee8adcfd6469ea1136712b19"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 2641474560,
+          "digest": "sha256:f03f2e8376b54310950d7abd7e6cb458956fe4a4016ffc698ecdf72d0c0447a2"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 3135853056,
+          "digest": "sha256:747b42df83224faea9e815d0512e059181b0f69aa55d8c65d54f1177d7f5311c"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 4061222400,
+          "digest": "sha256:27facb8c90051f7150b3c9c99905eaadfb5be252edf148aa5683a51c1bf893c0"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/phi3.5:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_0",
+          "weights_bytes": 2176177152,
+          "digest": "sha256:0611867ea67b05e39cbe647353a4d5ebe04598cdb29fe8d99d42baab00e1c724"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:0.5b",
+      "param_size": "0.5b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 397807936,
+          "digest": "sha256:005f95c7475154a17e84b85cd497949d6dd2a4f9d77c096e3c66e4d9c32acaf5"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:0.5b-base",
+      "param_size": "0.5b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q2_k",
+          "weights_bytes": 338607008,
+          "digest": "sha256:783610a2dd987857e2f1767e28674bbfb973953c66aeda6e4afa68369d7ae152"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 369357728,
+          "digest": "sha256:572b85fa904d26c27695d9a04fffca73d28d40633396feed50c461a8a2cdf553"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 355466144,
+          "digest": "sha256:0aad2d040483f7f6f319d6abfaa08d36d5c4f9f54d1185bfbd76f0307c1f76d7"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 338262944,
+          "digest": "sha256:9929486b49b66fecaa4de766ebd964a896198a8b915b4b44f0230f401dcce962"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 352154528,
+          "digest": "sha256:50b0a20cc33c2a6fc5bd1c4cec0a71a83a79e620c500419d39e31d7baf6e8dd3"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 374518688,
+          "digest": "sha256:a144d85e1e7a2b2b06ef4c6283268316e636a8c68b965f6847eda2e9b09df85e"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 397807520,
+          "digest": "sha256:3ceaa30bc9ff2a16ec13d046d08c762035dfe0b13067043137ddf6f81d92c82c"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 385471392,
+          "digest": "sha256:0b375a6f6d1428577c6056922f6209d488c37d51d0cd57ab1e5d9d5fa8748cd9"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 396882848,
+          "digest": "sha256:78864f77072478251b51b46c2ae72dc99caa61040dc39d3c2cd37f0697aac4b6"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 419247008,
+          "digest": "sha256:3e73b8cb1f090b51ae270b267e89c234a690b6971e67d2cbe1a3e90bfc7bb100"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 412709792,
+          "digest": "sha256:97ba6995c14b9c5dfe12d93c94a72b01d410e12c4033cf5174d4b9a563bf3323"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 531067808,
+          "digest": "sha256:12bde1aab371b4d5b73e4d046d2e339c0fe248f61d41bd47393b204abfbd1218"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:0.5b-instruct",
+      "param_size": "0.5b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 994156864,
+          "digest": "sha256:ff54cb6e5adea7664c2b555d4bbaf5ee5acbb325104fd8db41282cfb866d0c2e"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 338607424,
+          "digest": "sha256:93332e8bc78dade753361f22aff2dc8aca34321b4e4a587b1441ce014355c542"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 369358144,
+          "digest": "sha256:a6941ae5fbbc3a3d2181875c0deece296db56e68c9521a87908c1c8758647b87"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 355466560,
+          "digest": "sha256:cfd604baad771a86a886e6b44148de2ccaa524129f3e3db9925077566eaf9a10"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 338263360,
+          "digest": "sha256:88a9891deae258a910351d2ef790fe16a469fa22c9efb4bc2a1cc1416ae1d7e8"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 352154944,
+          "digest": "sha256:673323ba88fad5c75e61480efdeaa971d110046d8fd74064d42a51f911045ee5"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 374519104,
+          "digest": "sha256:a7973939cb3b84139168d57c895521ff7c7976a3b6596577bfc8e9ec92e8e034"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 397807936,
+          "digest": "sha256:005f95c7475154a17e84b85cd497949d6dd2a4f9d77c096e3c66e4d9c32acaf5"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 385471808,
+          "digest": "sha256:15685880186be859e2fa2fe4aa3e136024e718e67c855be4c2d203eb557e163d"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 396883264,
+          "digest": "sha256:2aebb04a42f2b9df4e71c5a5cc441f5b1cfbf48112f828574edec5312bb7a2e0"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 419247424,
+          "digest": "sha256:cd2e2e1330e84901f05883bf07f004ae70eb58447ee2faf2a9d7628e8b51b67c"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 420086080,
+          "digest": "sha256:0ef88f1e184d35424ae6b8a2142bcfbe45d257aa451e15633e8bdf0a6af85cd9"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 412710208,
+          "digest": "sha256:b4b1fb722927c2124a2ee368cc46a9615c4b5dc4a2aad54936b3c90ef3667197"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 505736512,
+          "digest": "sha256:fb52c207dbfcc38e83da8fca65d52a29792dcfc16a4eb10a2716f9898cc35de3"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 531068224,
+          "digest": "sha256:870db030a16dc97eb8aa140505ce39105f42a9b6bad54593510d0299cdffc606"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:1.5b",
+      "param_size": "1.5b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 986048512,
+          "digest": "sha256:377ac4d7aeefd5b870c9fccff9a6d4df36901d99fe3277c2f755bc401601ba1c"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:1.5b-instruct",
+      "param_size": "1.5b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 3093669376,
+          "digest": "sha256:5fcbf6f0f1c0bd137f50e24661f7c94b8e8ccb5ec5b922d8897db7acd30f8a86"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 676304896,
+          "digest": "sha256:2bec1fe0422011f864d0eda8ec1f888650643e9937fd8861a73a94ceca984a71"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 880162816,
+          "digest": "sha256:45caa097fef08a99be81f8af75e1deaf9e8c46adb2219cc4445c6740e6eae072"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 824178688,
+          "digest": "sha256:d16463067ba2a2e7cdd957d8d3f30ad2e36f57fb4e27830af4393de799f6ff4c"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 760944640,
+          "digest": "sha256:83f814ca6d4c74aaaa2a4cae9046fabe45663703faf29c36c572284af06b0049"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 934955008,
+          "digest": "sha256:859648d90bd53d095b44b265df2e3d636232f72d7158972e1835f861b40c61bb"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 1016842240,
+          "digest": "sha256:f4745a062ec1fca7dd71e139947b28fa8e3ce4bb00515830dd977cfd99a7110d"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 986048512,
+          "digest": "sha256:377ac4d7aeefd5b870c9fccff9a6d4df36901d99fe3277c2f755bc401601ba1c"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 940312576,
+          "digest": "sha256:bdc97f77eb92213abe9a4c6b889cf5dc18cec66d9da726da102bc77c811a9517"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 1098729472,
+          "digest": "sha256:c0166684ec73f22a73d03612a7ea7446aab8207edc6df64c2f6b56962a352c9e"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 1180616704,
+          "digest": "sha256:78c5c455b2c0e34fe4562c88e8f9f25c91fd1d4f7dbb1de03ecf751e5d49f1b0"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 1125050368,
+          "digest": "sha256:3da2e28afcf41dc4f05b74b16c59617ec82c75602b5b3f32df8a645753680c98"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 1098729472,
+          "digest": "sha256:0eedf0edd36badd64b8b03b87976bafed8af8298dab52cede4aa4be1f6e78ba6"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 1272739840,
+          "digest": "sha256:61ed845d199663c508b705f5086786095759c629c82d50b2ddf1abd74bf4b928"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 1646573056,
+          "digest": "sha256:f573a68391c5aba2d226be36cfcf7c71b88453c98f780f8326e340f4cd62fcb0"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:3b",
+      "param_size": "3b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 1929903008,
+          "digest": "sha256:161ddde4c9cd07c9f1ccb4e0167c434bce72caeb3fc1844262fa66bc877b0426"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:3b-instruct",
+      "param_size": "3b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 6178317216,
+          "digest": "sha256:01f090b94b7214c95ac2d4638f157f5340c0ebd93daa01364ec1b6c170d11020"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 1274756000,
+          "digest": "sha256:1089d829fcb54731edf73d608f7ea61eec05c6835264875eeff06feaefe91a9e"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 1707391904,
+          "digest": "sha256:fa962ccc399377bdcde9802234196a5d432fd51e3e6bd3aefab3203a6b7eb4f6"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 1590475680,
+          "digest": "sha256:302c9243bda64fbdad7caab5d05cad8d521babc1a18783f507e5ce4488b4a50d"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 1454357408,
+          "digest": "sha256:a69e57dde9bd213899cf7910fc2d289cc6cf40ac1105d8f5cb34cf2605febae7"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 1822849952,
+          "digest": "sha256:8bddbf2946275500469f806b961fc80966995f2725527dad89b1ae675ae21c28"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 1996258208,
+          "digest": "sha256:6331177b52b3a7c26378e0d17b69fec880cba0fa2fea0e4c193129252859f006"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 1929903008,
+          "digest": "sha256:161ddde4c9cd07c9f1ccb4e0167c434bce72caeb3fc1844262fa66bc877b0426"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 1834384288,
+          "digest": "sha256:d2c2728949870704978895210c3ebf247fdcddc1ed016ac7e8e464fb8b2f0635"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 2169666464,
+          "digest": "sha256:a55152280c659b212824baa194f4d23ac7701656cd0923f64bdfd210ceb96c81"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 2343074720,
+          "digest": "sha256:17cb53798f16e40292e404a90457edacf4022bab85b13166e10b31e824bd5d86"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 2224815008,
+          "digest": "sha256:ebfcb3484a01c37877a05c318f5a59dcddf174bc8d33b94035b0a83098d760b4"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 2169666464,
+          "digest": "sha256:32c6997895c6815804f933834e240bd03d7fb1482c06e5c2be5d84cd55fd9cc6"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 2538159008,
+          "digest": "sha256:13a346c9f63a59cdc595ffddcd1583a05c24b84d016672f02f22cd3b6166c349"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 3285476256,
+          "digest": "sha256:8e9087e8cb7f4a7a665f2bb687c735b31649f607c428945fed250ab3aaecbc80"
+        }
+      ]
+    },
+    {
+      "model_id": "ollama/qwen2.5:latest",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4683073952,
+          "digest": "sha256:2f15b3218f0552c60647ce60ada83632d2c09755b16259b13e3e4458e9ae419d"
+        }
+      ]
+    },
+    {
+      "model_id": "open-mistral-7b",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 14485667872,
+          "digest": "sha256:b74d7d3bf20a72873f08ba6ff92f2a41605ecaefce14fb29d20500ab3a6b5413"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3084034112,
+          "digest": "sha256:571db5ce1fdafeefc291de611a4bea2dc2077262dbcd58ca9e1f3c6c750111a2"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 3822960704,
+          "digest": "sha256:b7c20b3f5caff3679c6dbe68f022b16ed131b71c004078df554f79eeadc13f24"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3519922240,
+          "digest": "sha256:29c723b8223b62f92d33046cd7b1b71e4ab8a2d2fb66bf80e55a8bd082053ce8"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3165503552,
+          "digest": "sha256:5836d993d96d410452449ea32ad8cac00b777f9f1b647bdd08dc11bd21b3907e"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4108916928,
+          "digest": "sha256:732fc95457eea3f4e99e06194d7b8f6280f9ef5997c0c148fc585e653e8844d6"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4554252352,
+          "digest": "sha256:04aed2072fe5dd482c5e91d525b1354fa1e094b0bd7e8711d4f345e6b0820f7d"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4372811712,
+          "digest": "sha256:1064e17101bdd2460dd5c4e03e4f5cc1b38a4dee66084dc91faba294ccb64a92"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4141310016,
+          "digest": "sha256:2cf04228d64a950894e4adfde70c8ae216a1dcda9757935fe0b6025c52df13d4"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 4998651968,
+          "digest": "sha256:8a23d3c4796c3b90280caf5246f425b6223cbf4611dabd374a43afffd1b45331"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5443051584,
+          "digest": "sha256:f32d992c820740b19016764dd16e57dc3d2fe1a29e32f1b2a0914ebfaefd6fdd"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5132345408,
+          "digest": "sha256:ff15f9adafb4d9e15ee35d717462e01c0fd16ae50ad7cc0a77be3f96001fe05e"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 4998651968,
+          "digest": "sha256:7d760321029e146e0b31e167db6dfce3175cdbcc1e24ee43807e32c6297aa5e0"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 5943001152,
+          "digest": "sha256:521c5fdcfe8ec24e4acf58a54abd6bb55d9febf2256a2f5a7ba7aab7a84db42f"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 7696793664,
+          "digest": "sha256:17d1b78ce2e41638f0cd171af18d5fb10011cae519dcfb2960bd1788d85cc520"
+        }
+      ]
+    },
+    {
+      "model_id": "qwen2-5-14b-instruct",
+      "param_size": "14b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 29547716448,
+          "digest": "sha256:75aae8d903710c86a5f90a3bd2db4f53270305e338fb79d4f316afa61d918876"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 5770497888,
+          "digest": "sha256:63188ef0ffa438344253aa0b5a1270036783343e8a723738f07307d9033f4a6f"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 7924768608,
+          "digest": "sha256:58edc27f127dcc7e9fd9f00ec565bbe64730905f6a5ca6fc5dd3efb6a357d487"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 7339204448,
+          "digest": "sha256:a6c03be428a3c06379c934748bb841693c04e2492df8842e54ba428d6f875faf"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 6659596128,
+          "digest": "sha256:6a75b8ec402227daf65574026d2b11160024d2070435d0e976b221167566db5a"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 8517726048,
+          "digest": "sha256:bed37d78628d4235c289b7a675bb4e1576e96d7a9bf3da03a1d122ff478e47a5"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 9392140128,
+          "digest": "sha256:781eb4fcdb9530c8b8801e174b45556f17e09cc6bfdb45cf334b623dbe35c148"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 8988110688,
+          "digest": "sha256:db59b814cab753a51167db007fa6b6e0095f678ff24c9f7284753b75b34c6df3"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 8573431648,
+          "digest": "sha256:53769f2a72742caf442f117873dac44c57658dc24c2237a9c685e6ab2bc0e11b"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 10266554208,
+          "digest": "sha256:e6a08ae34ea4e3bddd9586dc360143833c4aa1061be1d4aefd0e1edb354fb508"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 11140968288,
+          "digest": "sha256:b12a83ab3f96722885f6aad9f9f59b4432aef3b9cb10fcd84f9870f5d7c643ad"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 10508873568,
+          "digest": "sha256:bb90c95f92b3ef4a32a067b852afd21b8fb0f5484edfda4cf69105376f6dd21b"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 10266554208,
+          "digest": "sha256:aa44e78a26be8a5c431532d4aeeb771a45b976470c4509a62986bb7ef1c2fbac"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 12124684128,
+          "digest": "sha256:409ac66a2022279473aee4b50296c3967ceda503fb3b80de5913d36dd5cd2dca"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 15701598048,
+          "digest": "sha256:495de1e125a18b906305fe976b391765fe7758813ef75a00e1ba2b6e0b1c0b21"
+        }
+      ]
+    },
+    {
+      "model_id": "qwen2-5-32b-instruct",
+      "param_size": "32b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 65535969888,
+          "digest": "sha256:ca4eb8fa34a29f6331c30d5e177309fc7cb378c2f5d4ced34cdc0ad058f29a67"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 12313098848,
+          "digest": "sha256:ebe5958b72ad35be8c8af3b8a9410b6961369ec76cb5c30a0d7d0e48808e8c02"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 17247079008,
+          "digest": "sha256:a158567a2db7fc17f4dd585ae3b715e1614f7f59abf053c58ea3498a78971e65"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 15935048288,
+          "digest": "sha256:f082539ad4f3bd0a9846ac84147327f04aa37b9d1d98918b5ba6dbe35d5e46a8"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 14392330848,
+          "digest": "sha256:869bd1f33cf358615d5a44ff4b3f1a61f2f28055c13c5e3e2f1a3d3b30cead16"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 18640231008,
+          "digest": "sha256:1554f9407e66d4ad343a8ac07096243bb36b7c784603f21956a9615bd9a16cca"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 20639242848,
+          "digest": "sha256:2d793ef040d6e3003698f7c6053bfa14c7adae16e7325c20c2287aab8032d7a6"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 19851336288,
+          "digest": "sha256:833f525ce183cdb6a00e35838035c46507fcd08332d6a753aa39dbb77d68e2a1"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 18784410208,
+          "digest": "sha256:e3c617ab7b3d965bb7c614f26509fe8780bff643b729503df1947449bd3241a1"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 22638254688,
+          "digest": "sha256:23185743b51d45e3b3fe22436eaeda73e7dde4632ff95ea66f0eb00680e5bde9"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 24637266528,
+          "digest": "sha256:cc3a77808108e0aff6b31222f40b3df0178a4b5dcf32c67a0b6a69d00d8e7a1f"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 23262157408,
+          "digest": "sha256:5593bf9c9cd4e0b499b91790a39dc16a2d798706053cacc5f8fcd5c3606fac6c"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 22638254688,
+          "digest": "sha256:5cc77bf6c006dd056a5a2e4aece1df37457d393d44c9bffd76c9dea26a63df68"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 26886154848,
+          "digest": "sha256:92696d578ed782e8236b220c68f6ef2306bfb80e22c7d9b0f44de24bc5a6c2ed"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 34820885088,
+          "digest": "sha256:c06064c5128cec216e38a5cb162cfee0b9c7302eb32faea7798a594315c5c94b"
+        }
+      ]
+    },
+    {
+      "model_id": "qwen2-5-72b-instruct",
+      "param_size": "72b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 145422673280,
+          "digest": "sha256:81be5bf1be3e8982f113661efe93aa8529fcffee8de7c5144037cc9013b12e40"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 29811762560,
+          "digest": "sha256:addc7f0d5a4016843c51fbf4f4d198c9321ddf038c0b730bdd0d13ee4c52a2f5"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 39505225088,
+          "digest": "sha256:0946915bcd6d049cbf82c1d284fe5e0d499193631d6909e0a88bcbad3b8b0d0f"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 37698725248,
+          "digest": "sha256:586abff9f8b7e9a336fe3572cc00db26ec71964a9713352b7f964351f65af1c3"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 34487788928,
+          "digest": "sha256:ef9de06905c8cd707d087189815aac591e6eb7688acd0347a006c786dea606b8"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 41231738240,
+          "digest": "sha256:e5a140642c3bb88991d367a6f2815ecba46eab10c2a8b0b3cfeab969aa7eaff6"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 45697885568,
+          "digest": "sha256:14df5a03ae586469de3dc6a5a95f8e28b9335f3007df1d934f2a884a1dc82be2"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 47415715200,
+          "digest": "sha256:b842e4a4351abd55957e0b5560d21c5a7580d380d1c30b9b436a5439d51cba90"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 43889223040,
+          "digest": "sha256:cb26cae2fd7c30c3813d1240a504177ae5d6b1b87f055a957297d0846bc2b947"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 50164032896,
+          "digest": "sha256:5417e706b4f5e3ec4ce8f17bfc8fe34a7801fab40e2189bdeca7d83c7f1f50e7"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 54630180224,
+          "digest": "sha256:203753053ecf614cbf5e695bee2c63d88148a718089f88d5b756831d2277d4c2"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 54447465856,
+          "digest": "sha256:fd196c61df9f6f9b8a692773c2e61947ec30b0429c21859625e21854144654ec"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 51375138176,
+          "digest": "sha256:8183406bd96e77f53ab442c88ae2a90f15b74ddc4c6be2b6f803c031e54a65c9"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 64347628928,
+          "digest": "sha256:0383264aca739169ccc3cdec2b59a2b4b8b7bdfde611b7e1e19e913f9547b245"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 77262611840,
+          "digest": "sha256:13dd1e2033e70e07df0a64a8b3a022618b31ec93e6341869f18822e94263cb8e"
+        }
+      ]
+    },
+    {
+      "model_id": "qwen2-5-7b-instruct",
+      "param_size": "7b",
+      "source": "ollama",
+      "rows": [
+        {
+          "quant": "f16",
+          "weights_bytes": 15237853600,
+          "digest": "sha256:ff9b12c12adbbae4fb1fb5cbf9cfa52f0885fc4ff6342c85a5aa8493f7203d01"
+        },
+        {
+          "quant": "q2_k",
+          "weights_bytes": 3015940512,
+          "digest": "sha256:b3e5c1460be4ceaf7d166614be39161f979544774ad44b02fdc426cada51bcdd"
+        },
+        {
+          "quant": "q3_k_l",
+          "weights_bytes": 4088459680,
+          "digest": "sha256:64c1a50dcf025ac204218e70a4405e26cc184485e5d72c65545563c08602e4c5"
+        },
+        {
+          "quant": "q3_k_m",
+          "weights_bytes": 3808391584,
+          "digest": "sha256:bcdae05da5fe7936aacc1cf77aad24ee58e7fdddb9586b13988efc8eca88c4ca"
+        },
+        {
+          "quant": "q3_k_s",
+          "weights_bytes": 3492368800,
+          "digest": "sha256:f3b3eebf76bc6899a04c39aec187e5dbbb070af536646421f2717202ac1f1f1d"
+        },
+        {
+          "quant": "q4_0",
+          "weights_bytes": 4431391136,
+          "digest": "sha256:6a401ef9d8bf4fcaf32b0e272793f526f21a7cfe2f294db23ce63f62186f6606"
+        },
+        {
+          "quant": "q4_1",
+          "weights_bytes": 4873284000,
+          "digest": "sha256:8f98a4d8dccb9a4bc19ca2ec28fd95a53c284329866f756d11366f0796186537"
+        },
+        {
+          "quant": "q4_k_m",
+          "weights_bytes": 4683073952,
+          "digest": "sha256:2f15b3218f0552c60647ce60ada83632d2c09755b16259b13e3e4458e9ae419d"
+        },
+        {
+          "quant": "q4_k_s",
+          "weights_bytes": 4457769376,
+          "digest": "sha256:3643ed3317344fd42ab9de32cc41328adc28070eeb140c92c376aed84f4e50eb"
+        },
+        {
+          "quant": "q5_0",
+          "weights_bytes": 5315176864,
+          "digest": "sha256:f979aad70e1de8ffa67188e1fc44ec2640de9b1e21d32207f09cd7f53d2d6a1a"
+        },
+        {
+          "quant": "q5_1",
+          "weights_bytes": 5757069728,
+          "digest": "sha256:02e82c8330564526ddf75b4faf75d76b237584775c04942ec4e8440845d891d2"
+        },
+        {
+          "quant": "q5_k_m",
+          "weights_bytes": 5444831648,
+          "digest": "sha256:401138c859d54e9a3de6fde0a060f2b29aec0bacbca4f90d134a645f2cb58633"
+        },
+        {
+          "quant": "q5_k_s",
+          "weights_bytes": 5315176864,
+          "digest": "sha256:d2ced12b4d0592966c7aab4e7cd0b0ebb064a2ac2d823f2b15745e983b770e4f"
+        },
+        {
+          "quant": "q6_k",
+          "weights_bytes": 6254199200,
+          "digest": "sha256:c827c7c353a85f5b27c8b6c5da3102c089d15ad90aeab716aba0c390ce647812"
+        },
+        {
+          "quant": "q8_0",
+          "weights_bytes": 8098525600,
+          "digest": "sha256:751c87ba89e64e503dc855429f0daa94754e808e25a8278ec8a2383750488ca4"
         }
       ]
     }

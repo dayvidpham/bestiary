@@ -1,0 +1,42 @@
+{
+  "_comment": "Curated Creator -> [Provider] DISTRIBUTION relation: the hosting surfaces a lab operates or brands for its OWN models. It is the Creator axis's answer to Family.CanonicalProvider, and it is deliberately NOT the set of every provider that rehosts a lab's weights -- a rehost is exactly what this relation exists to rank BELOW a first-party surface. Creator -> [Provider] is many-to-many in general, so unlike Family -> Creator it is a relation, not a function: one lab may operate several surfaces (regional splits, coding plans) and one provider slug may appear under more than one creator when a lab genuinely brands another lab's channel (google-vertex-anthropic is Anthropic's Vertex channel, so it sits under 'anthropic', not under 'google'). A multi-lab HUB is never a distribution surface here, however closely a lab is associated with it: modelscope and huggingface host many labs' weights on the same footing, so listing one under its associated lab would rank a hub above a genuine rehost for that lab's whole family set while saying nothing about first-party hosting. A creator with NO first-party surface in this catalog simply has no row here and Creator.Providers() returns an empty slice -- that is the honest answer for a weights-only lab such as BlackForestLabs or NousResearch, never an invented one. PROVIDER ORDER WITHIN A ROW IS LOAD-BEARING: it is the lab's own primacy order (primary API first, then regional splits, then plan-scoped surfaces), and resolution picks the EARLIEST listed surface present among a model's hosts. Re-sorting a row alphabetically is a behaviour change, not a formatting one. Loud-at-codegen via ValidateCreatorProviderTable (every creator must satisfy Creator.IsKnown and every provider Provider.IsKnown), graceful-at-runtime via loadCreatorProviderTableSafe. Codegen also emits parse/data/creator_providers_unserved.json listing the curated pairs that serve no instance of any of that creator's families, so a stale or aspirational row is visible rather than silent.",
+  "schema_version": 1,
+  "creator_providers": [
+    {
+      "creator": "alibaba",
+      "providers": ["alibaba", "alibaba-cn", "alibaba-token-plan", "alibaba-token-plan-cn", "alibaba-coding-plan", "alibaba-coding-plan-cn"]
+    },
+    { "creator": "amazon", "providers": ["amazon-bedrock"] },
+    { "creator": "anthropic", "providers": ["anthropic", "google-vertex-anthropic"] },
+    { "creator": "cohere", "providers": ["cohere"] },
+    { "creator": "deepseek", "providers": ["deepseek"] },
+    { "creator": "google", "providers": ["google", "google-vertex"] },
+    { "creator": "meituan", "providers": ["longcat"] },
+    { "creator": "meta", "providers": ["meta", "llama"] },
+    { "creator": "microsoft", "providers": ["azure", "azure-cognitive-services", "github-models"] },
+    {
+      "creator": "minimax",
+      "providers": ["minimax", "minimax-cn", "minimax-coding-plan", "minimax-cn-coding-plan"]
+    },
+    { "creator": "mistral", "providers": ["mistral"] },
+    { "creator": "moonshotai", "providers": ["moonshotai", "moonshotai-cn", "kimi-for-coding"] },
+    { "creator": "nvidia", "providers": ["nvidia"] },
+    { "creator": "openai", "providers": ["openai"] },
+    { "creator": "perplexity", "providers": ["perplexity", "perplexity-agent"] },
+    { "creator": "poolside", "providers": ["poolside"] },
+    { "creator": "sakana", "providers": ["sakana"] },
+    { "creator": "sarvam", "providers": ["sarvam"] },
+    {
+      "creator": "stepfun",
+      "providers": ["stepfun", "stepfun-ai", "stepfun-step-plan", "stepfun-ai-step-plan"]
+    },
+    { "creator": "tencent", "providers": ["tencent-tokenhub", "tencent-token-plan", "tencent-coding-plan"] },
+    { "creator": "upstage", "providers": ["upstage"] },
+    { "creator": "xai", "providers": ["xai"] },
+    {
+      "creator": "xiaomi",
+      "providers": ["xiaomi", "xiaomi-token-plan-cn", "xiaomi-token-plan-ams", "xiaomi-token-plan-sgp"]
+    },
+    { "creator": "zhipu", "providers": ["zhipuai", "zhipuai-coding-plan", "zai", "zai-coding-plan"] }
+  ]
+}

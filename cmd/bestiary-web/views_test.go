@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"testing"
 
@@ -23,8 +24,8 @@ func sseGet(t *testing.T, s *Server, signals string) string {
 	return rec.Body.String()
 }
 
-// TestBrowser_ListsRealCorpus is the R9 "browser lists the 958" case: over the actual
-// committed registry the index renders the dense table with every entity's row and the
+// TestBrowser_ListsRealCorpus is the "browser lists the whole corpus" case: over the actual
+// committed registry /entities renders the dense table with every entity's row and the
 // filter rail with real facet options. Offline; no network.
 func TestBrowser_ListsRealCorpus(t *testing.T) {
 	entities := bestiary.Entities()
@@ -38,9 +39,9 @@ func TestBrowser_ListsRealCorpus(t *testing.T) {
 		t.Fatalf("rows = %d, want one per entity (%d)", len(s.rows), len(entities))
 	}
 
-	body := get(t, s, "/", "text/html").Body.String()
+	body := get(t, s, "/entities", "text/html").Body.String()
 	if want := fmt.Sprintf("%d entities", len(entities)); !strings.Contains(body, want) {
-		t.Errorf("index missing entity count %q", want)
+		t.Errorf("entity browser missing entity count %q", want)
 	}
 	// The filter rail ships real facet controls.
 	for _, want := range []string{
@@ -52,7 +53,7 @@ func TestBrowser_ListsRealCorpus(t *testing.T) {
 		`aria-label="sort entities"`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("index filter rail missing %q", want)
+			t.Errorf("entity-browser filter rail missing %q", want)
 		}
 	}
 	// The (ID,Provider)->Modalities startup join surfaced real modality facets and the
@@ -95,32 +96,51 @@ func TestBrowser_FacetFilter(t *testing.T) {
 	entities := bestiary.Entities()
 	s := newTestServer(t, entities)
 
-	// Pick two distinct families with a representative key each.
-	byFam := map[string]string{}
+	// Pick two distinct families DETERMINISTICALLY. Ranging a map picked a different
+	// pair on every run, so the assertions below were only ever exercised against an
+	// arbitrary sample and the test failed roughly one run in twenty on whichever
+	// pair happened to defeat the leak check.
+	byFam := map[string][]string{}
 	for _, r := range s.rows {
 		if r.Family != "" {
-			byFam[r.Family] = r.Key
+			byFam[r.Family] = append(byFam[r.Family], r.Key)
 		}
 	}
 	if len(byFam) < 2 {
 		t.Skip("need >= 2 families")
 	}
-	var famA, keyA, famB, keyB string
-	for f, k := range byFam {
-		if famA == "" {
-			famA, keyA = f, k
-			continue
-		}
-		famB, keyB = f, k
-		break
+	fams := make([]string, 0, len(byFam))
+	for f := range byFam {
+		fams = append(fams, f)
 	}
+	sort.Strings(fams)
+	famA, famB := fams[0], fams[1]
+	keysA, keysB := append([]string(nil), byFam[famA]...), append([]string(nil), byFam[famB]...)
+	sort.Strings(keysA)
+	sort.Strings(keysB)
+	keyA, keyB := keysA[0], keysB[0]
 
 	body := sseGet(t, s, fmt.Sprintf(`{"family":%q}`, famA))
-	if !strings.Contains(body, keyA) {
-		t.Errorf("family=%q filter dropped its own entity %q", famA, keyA)
+
+	// Assert on the exact rendered ROW ANCHOR (results.html renders each entity as
+	// <a href="…">KEY</a>), not on a bare substring. The old check looked for
+	// ">"+key+"<", which a one-word key like "text" matches anywhere in the body —
+	// a family cell, a modality badge — so it reported a leak that had not happened.
+	anchorA, anchorB := ">"+keyA+"</a>", ">"+keyB+"</a>"
+	if !strings.Contains(body, anchorA) {
+		t.Errorf("family=%q filter dropped its own entity %q (no %q in the rendered rows)", famA, keyA, anchorA)
 	}
-	if strings.Contains(body, ">"+keyB+"<") {
-		t.Errorf("family=%q filter leaked a %q-family entity %q", famA, famB, keyB)
+	if strings.Contains(body, anchorB) {
+		t.Errorf("family=%q filter leaked the %q-family entity %q (found %q in the rendered rows)",
+			famA, famB, keyB, anchorB)
+	}
+
+	// Exact count control: the filtered render must hold every row of famA and
+	// nothing else, which a per-key spot check cannot say.
+	const rowAnchor = `<td class="mono"><a href=`
+	if got, want := strings.Count(body, rowAnchor), len(keysA); got != want {
+		t.Errorf("family=%q filter rendered %d entity rows, want exactly %d (every %s entity and no other)",
+			famA, got, want, famA)
 	}
 
 	// A non-existent facet value yields the empty-state row, not a leak of everything.
@@ -181,9 +201,10 @@ func TestDetail_AllFourSections(t *testing.T) {
 	}
 }
 
-// TestDetail_CtxRecompute pins the ?ctx display-only VRAM recompute (in-scope §17.5 display,
-// NOT the deferred v0.2.9 calculator): the param adds a recomputed column but never changes
-// which entity is shown.
+// TestDetail_CtxRecompute pins the ?ctx display-only VRAM recompute on the DETAIL page:
+// the param adds a recomputed column but never changes which entity is shown. This is the
+// model-first direction (you have an entity, you ask what a context costs); the
+// budget-first direction lives on /calculator and is covered by its own tests.
 func TestDetail_CtxRecompute(t *testing.T) {
 	e := detailFixture()
 	s := newTestServer(t, []bestiary.Entity{e})
@@ -217,18 +238,20 @@ func TestDetail_StripParams_NoQuant(t *testing.T) {
 	}
 }
 
-// TestSeriesExplorer_WalksTree is the R9 "explorer walks series→releases→entities" case: the
-// /series page renders the disclosure tree over SeriesAll()/ReleasesOf()/EntitiesOf(), and a
-// concrete series→release→entity path is present with a navigable entity link. Offline.
+// TestSeriesExplorer_WalksTree is the "explorer walks series→releases→entities" case. The
+// explorer MOVED from the retired /series to /families, which absorbed its content; the
+// assertions below are the ones it already made — every series' anchor is present, and a
+// concrete series→release→entity path renders with a navigable entity link — so a green run
+// here is evidence the page was REFACTORED rather than rewritten. Offline.
 func TestSeriesExplorer_WalksTree(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
 		t.Skip("no registry entities")
 	}
 	s := newTestServer(t, entities)
-	rec := get(t, s, "/series", "text/html")
+	rec := get(t, s, "/families", "text/html")
 	if rec.Code != 200 {
-		t.Fatalf("GET /series = %d, want 200", rec.Code)
+		t.Fatalf("GET /families = %d, want 200", rec.Code)
 	}
 	body := rec.Body.String()
 
@@ -269,8 +292,9 @@ func TestSeriesExplorer_WalksTree(t *testing.T) {
 }
 
 // TestSeriesLink_DetailToExplorer pins the cross-view link integrity: the anchor a detail
-// page links to (/series#<anchor>) is exactly an anchor the explorer emits, so the "series"
-// section on a detail page always resolves to a real spot in the tree.
+// page links to (/families#<anchor>) is exactly an anchor the explorer emits, so the
+// "series" section on a detail page always resolves to a real spot in the tree. seriesAnchor
+// is UNCHANGED across the move, which is what makes the retarget a pure change of path.
 func TestSeriesLink_DetailToExplorer(t *testing.T) {
 	entities := bestiary.Entities()
 	if len(entities) == 0 {
@@ -281,11 +305,11 @@ func TestSeriesLink_DetailToExplorer(t *testing.T) {
 	e := entities[0]
 	detail := get(t, s, e.Ref.IRI(entityRoutePrefix), "text/html").Body.String()
 	anchor := seriesAnchor(bestiary.SeriesOf(e.Ref))
-	wantLink := `href="/series#` + anchor + `"`
+	wantLink := `href="/families#` + anchor + `"`
 	if !strings.Contains(detail, wantLink) {
 		t.Errorf("detail page missing series link %q", wantLink)
 	}
-	explorer := get(t, s, "/series", "text/html").Body.String()
+	explorer := get(t, s, "/families", "text/html").Body.String()
 	if !strings.Contains(explorer, `id="`+anchor+`"`) {
 		t.Errorf("explorer missing the anchor %q the detail page links to", anchor)
 	}

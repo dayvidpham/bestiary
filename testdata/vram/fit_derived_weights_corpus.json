@@ -1,0 +1,232 @@
+{
+  "cases": [
+    {
+      "name": "zero-bpw none yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "none"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[none] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization none has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "zero-bpw awq yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "awq"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[awq] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization awq has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "zero-bpw gptq yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "gptq"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[gptq] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization gptq has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "zero-bpw int8 yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "int8"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[int8] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization int8 has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "zero-bpw int4 yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "int4"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[int4] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization int4 has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "zero-bpw other yields no figure",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "other"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "quantization.go quantBitsPerWeight[other] == 0; BitsPerWeight documents the six members whose effective bits-per-weight is configuration-dependent and not ingested"
+      },
+      "mutation": {
+        "description": "quantization other has a zero bits-per-weight: the refusal is returned instead of a zero-byte figure that would read as fitting any budget"
+      }
+    },
+    {
+      "name": "30b at q4_k_m",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "q4_k_m"
+      },
+      "expected": {
+        "bytes": 18337500000,
+        "ok": true
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "hand-computed: 30,000,000,000 params x 4.89 bits-per-weight / 8 bits-per-byte = 18,337,500,000 bytes (bits-per-weight from quantization.go quantBitsPerWeight, cited to the llama.cpp tools/quantize README)"
+      },
+      "mutation": {
+        "description": "a derivable quantization at a positive attested total: the estimate is params x bpw / 8, never a file size"
+      }
+    },
+    {
+      "name": "30b at f16",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "f16"
+      },
+      "expected": {
+        "bytes": 60000000000,
+        "ok": true
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "hand-computed: 30,000,000,000 params x 16.0 bits-per-weight / 8 bits-per-byte = 60,000,000,000 bytes (bits-per-weight from quantization.go quantBitsPerWeight, cited to the llama.cpp tools/quantize README)"
+      },
+      "mutation": {
+        "description": "a derivable quantization at a positive attested total: the estimate is params x bpw / 8, never a file size"
+      }
+    },
+    {
+      "name": "30b at q8_0",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "q8_0"
+      },
+      "expected": {
+        "bytes": 31875000000,
+        "ok": true
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "hand-computed: 30,000,000,000 params x 8.5 bits-per-weight / 8 bits-per-byte = 31,875,000,000 bytes (bits-per-weight from quantization.go quantBitsPerWeight, cited to the llama.cpp tools/quantize README)"
+      },
+      "mutation": {
+        "description": "a derivable quantization at a positive attested total: the estimate is params x bpw / 8, never a file size"
+      }
+    },
+    {
+      "name": "30b at iq1_s",
+      "input": {
+        "total_params": 30000000000,
+        "quant": "iq1_s"
+      },
+      "expected": {
+        "bytes": 7500000000,
+        "ok": true
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "manual",
+        "ref": "hand-computed: 30,000,000,000 params x 2.0 bits-per-weight / 8 bits-per-byte = 7,500,000,000 bytes (bits-per-weight from quantization.go quantBitsPerWeight, cited to the llama.cpp tools/quantize README)"
+      },
+      "mutation": {
+        "description": "a derivable quantization at a positive attested total: the estimate is params x bpw / 8, never a file size"
+      }
+    },
+    {
+      "name": "ParamShapeNull total yields no figure",
+      "input": {
+        "total_params": -1,
+        "quant": "q4_k_m"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "bestiary.go ParamShapeNull == -1 is the in-domain NULL sentinel meaning upstream published no total parameter count"
+      },
+      "mutation": {
+        "description": "the total is the NULL sentinel: refuse rather than treat -1 as a count"
+      }
+    },
+    {
+      "name": "zero total yields no figure",
+      "input": {
+        "total_params": 0,
+        "quant": "q4_k_m"
+      },
+      "expected": {
+        "bytes": 0,
+        "ok": false
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "boundary",
+        "ref": "a zero total parameter count is not an attested fact; fit.go DerivedWeightsBytes refuses non-positive totals"
+      },
+      "mutation": {
+        "description": "a zero total: refuse rather than emit a zero-byte row"
+      }
+    }
+  ]
+}

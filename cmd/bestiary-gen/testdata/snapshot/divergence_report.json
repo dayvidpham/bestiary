@@ -1,10 +1,16 @@
 {
-  "total_multi_provider_ids": 864,
-  "total_divergent_ids": 0,
+  "total_multi_provider_ids": 908,
+  "total_divergent_ids": 4,
   "cat_a_vendor_case_count": 0,
-  "cat_b_bare_gen_split_count": 0,
-  "cat_c_member_variant_count": 0,
-  "cat_d_genuine_mislabel_count": 0,
-  "genuine_mislabel_pairs": [],
-  "snapshot_commit": "6a41e313"
+  "cat_b_bare_gen_split_count": 2,
+  "cat_c_member_variant_count": 1,
+  "cat_d_genuine_mislabel_count": 1,
+  "genuine_mislabel_pairs": [
+    {
+      "family_a": "aura",
+      "family_b": "fugu",
+      "count": 1
+    }
+  ],
+  "snapshot_commit": "bf55e760"
 }

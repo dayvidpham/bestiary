@@ -698,33 +698,63 @@ func TestNoFetch_MissingVendoredCatalog_ActionableError(t *testing.T) {
 // ledger for cross-provider (Family,Variant,Version) divergences over the COMMITTED
 // snapshot. The hardened gate asserts SET-EQUALITY: the divergent-ID set produced by the
 // production pipeline must equal EXACTLY this set. Each row carries a one-line
-// justification. The only justified residual is the embedded-family nemotron
-// (the ID leads with "llama" but the canonical family is "nemotron"; GH-followup).
-// SET-equality (not count) catches a DIFFERENT id going divergent while nemotron converges
-// — count would stay 1, the set would change. Do NOT pad this map to force green: every
+// justification.
+// SET-equality (not count) catches a DIFFERENT id going divergent while another converges
+// — the count could stay put while the set changes. Do NOT pad this map to force green: every
 // row must be independently justified; an unexpected divergence is a STOP-and-surface.
-// Now EMPTY. The sole prior residual
-// (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family nemotron via the curated
-// idFamilyOverrides entry — both providers converge on (nemotron,v1.5,3.3). Cross-provider
-// (Family,Variant,Version) divergence is now ZERO, so the divergent-ID SET is empty and this
-// justified-residual ledger is empty too (SET-equality holds at the empty set).
-var crossProviderJustifiedResidual = map[string]string{}
+//
+// The prior residual (nvidia/llama-3.3-nemotron-super-49b-v1.5) was FOLDED to family
+// nemotron via the curated idFamilyOverrides entry — both providers converge on
+// (nemotron,v1.5,3.3) — so it is gone from the set.
+//
+// The ledger now carries FOUR rows, all of them surfaced by the corpus refresh that
+// reground the committed snapshot on the vendored codegen catalog (5,765 records, up from
+// the 4,979-record stale fixture). Every one is a REAL upstream disagreement about the
+// raw family a provider publishes for a shared model ID — the stale fixture predated the
+// providers that disagree, so it hid them. None is a pipeline regression: each row's
+// tuples are exactly what the two upstream raw-family spellings decompose to, and they
+// are carried as honest residuals rather than papered over with curation (curating them
+// would move entity keys, which this corpus refresh must not do).
+var crossProviderJustifiedResidual = map[string]string{
+	"text-embedding-3-small": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): openai/azure/azure-cognitive-services publish raw family \"text-embedding\" → (text-embedding,small,3), while sap-ai-core publishes NO raw family, so the ID-driven path reads the family token as \"text-embedding-3\" → (text-embedding-3,small,3). Two spellings of one model, not a decomposition regression.",
+	"text-embedding-3-large": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): same empty-raw-vs-populated-raw split as text-embedding-3-small — openai/azure/azure-cognitive-services say \"text-embedding\", sap-ai-core says nothing and the ID yields \"text-embedding-3\".",
+	"poolside/laguna-s-2.1":  "REAL UPSTREAM DIVERGENCE: poolside labels its own model raw family \"laguna\" → (laguna,\"\",\"\"), while openrouter and vercel label it \"laguna-s\" → (laguna-s,\"\",2.1). The lab and its resellers disagree on where the line designator ends.",
+	"sakana/fugu-ultra":      "REAL UPSTREAM MISLABEL: pioneer and openrouter publish raw family \"fugu\" → (fugu,ultra,\"\"); vercel publishes \"aura\" → (aura,\"\",\"\") for the same Fugu Ultra id. This is the one genuine family mislabel in the refreshed corpus (the aura↔fugu pair in the divergence report).",
+}
 
 // crossProviderResidualUnaccountedCeiling pins the at-scale count of
 // ReasonResidualUnaccountedTokens over the committed snapshot.
 // Today only the non-gating stdout smoke (main.go) sees this; pinning it catches a
 // non-fixture-family residual regression (the seed-flash class) that would otherwise slip
-// every gate. Currently measured = 243; assert ≤ ceiling (tighten-only; a legitimate
-// reduction passes, a regression that re-drops sole-residual/member coverage trips it).
-const crossProviderResidualUnaccountedCeiling = 243
+// every gate. Measured = 282 parse failures over the 5,765-record refreshed snapshot
+// (was 243 over the 4,979-record stale fixture — the +39 are new upstream ids, not a
+// pipeline regression: the diff gate reads changed=0, so no record's decomposition moved).
+// Assert ≤ ceiling (tighten-only; a legitimate reduction passes, a regression that
+// re-drops sole-residual/member coverage trips it).
+//
+// 282 -> 303 with the redundant leading-token strip. This ceiling counts tokens the
+// decomposition did not ACCOUNT FOR, and a stripped prefix is by construction one of
+// them: the whole point of the strip is that the token's fact lives on a DIFFERENT axis
+// (Provider, or the Creator the family declares), so the (family, variant, version,
+// modifier) tuple does not and should not absorb it. The +21 is therefore a measurement
+// of the strip's reach, not a loss of coverage — and the companion floor below moves the
+// other way in the same run, from 4,064 to 4,229 populated versions, which is the fact
+// the strip was made for. A residual regression of the kind this ceiling exists to catch
+// would raise the residual WITHOUT raising the version floor.
+const crossProviderResidualUnaccountedCeiling = 303
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
 // production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
-// stale 1681/293 figures). Currently measured = 3401 over 4979 records. Assert ≥ floor
+// stale 1681/293 figures). Measured = 4,229 records with a populated Version over the
+// 5,765-record refreshed snapshot (was 4,064 before the redundant leading-token strip,
+// and 3,401 over the older 4,979-record fixture). The +165 is the strip's yield: an id
+// that repeats its provider's or its lab's name in front of the model name pushed the
+// version scan one token late, so the artifact keyed an UNDATED sibling of the entity it
+// belongs to; with the prefix gone the scan lands on the version the vendor published. Assert ≥ floor
 // (loosen-only: more version coverage passes; a regression that drops version-presence
 // — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
 // ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
-const crossProviderPopulatedVersionFloor = 3401
+const crossProviderPopulatedVersionFloor = 4229
 
 // TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
 // consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape
@@ -814,7 +844,7 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 
 	// GATE-AGREEMENT cross-check: this hardened gate and TestSnapshotAnalysis decompose
 	// identical data via the identical pipeline, so the divergent count must match the
-	// pinned divergenceExact (0). A mismatch means the two gates DISAGREE — a gate-logic bug.
+	// pinned divergenceExact (4). A mismatch means the two gates DISAGREE — a gate-logic bug.
 	if len(divergent) != len(crossProviderJustifiedResidual) {
 		t.Errorf("divergent-ID count = %d, justified-residual ledger size = %d — SET-equality broken (see per-ID errors above)",
 			len(divergent), len(crossProviderJustifiedResidual))
@@ -827,6 +857,12 @@ func TestStaticDataset_CrossProviderConsistency(t *testing.T) {
 			"  Investigate ParseFamilyDetailed; if the increase is intentional, bump the ceiling with justification.",
 			residualUnaccounted, crossProviderResidualUnaccountedCeiling)
 	}
+
+	// At-scale census log: the three figures this gate pins, each with its unit and
+	// corpus size, so a refresh can re-pin them from the run rather than by guesswork.
+	t.Logf("at-scale census over %d snapshot records: residual-unaccounted=%d (ceiling %d), populated-version=%d (floor %d)",
+		len(records), residualUnaccounted, crossProviderResidualUnaccountedCeiling,
+		populatedVersion, crossProviderPopulatedVersionFloor)
 
 	// POPULATED-VERSION FLOOR PIN: catch a version-presence regression.
 	if populatedVersion < crossProviderPopulatedVersionFloor {
@@ -1674,7 +1710,36 @@ func deterministicFixtureJSON(t *testing.T) []byte {
 // Each call re-randomizes the Go map iteration order (both the providers models and the
 // metadata map), which is the nondeterminism source the codegen ordering guarantees
 // defend against.
+// codegenArtifacts is EVERY output one fixture codegen run produces — the three
+// generated .go sources AND the committed non-.go emissions. It exists because the
+// reproducibility guards below could previously only see the .go sources, so a
+// committed JSON report emitted from a map range (or stamped with a wall clock) would
+// have gone unguarded no matter how many iterations they ran.
+//
+// A slice that adds a new committed emission extends this struct and the byte-identity
+// loop that consumes it; the emission itself must therefore be reachable as a PURE
+// build* function returning bytes, never only as a file writer.
+type codegenArtifacts struct {
+	// staticSrc, constantsSrc and metadataSrc are the generated .go sources.
+	staticSrc    []byte
+	constantsSrc []byte
+	metadataSrc  []byte
+	// creatorProvidersUnserved and creatorsLabDisagreements are the committed
+	// creator-dimension JSON reports (parse/data/creator_providers_unserved.json and
+	// parse/data/creators_lab_disagreements.json).
+	creatorProvidersUnserved []byte
+	creatorsLabDisagreements []byte
+}
+
+// runFixtureCodegen returns just the three generated .go sources, for the many callers
+// that only assert on those. It is a thin shim over runFixtureCodegenArtifacts.
 func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (staticSrc, constantsSrc, metadataSrc []byte) {
+	t.Helper()
+	a := runFixtureCodegenArtifacts(t, fixtureJSON, lastSynced)
+	return a.staticSrc, a.constantsSrc, a.metadataSrc
+}
+
+func runFixtureCodegenArtifacts(t *testing.T, fixtureJSON []byte, lastSynced string) codegenArtifacts {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -1710,19 +1775,31 @@ func runFixtureCodegen(t *testing.T, fixtureJSON []byte, lastSynced string) (sta
 		slugToConst[slug] = providerConstName(slug, meta.Name)
 	}
 
-	staticSrc, err = generateSource(models, slugToConst)
+	var out codegenArtifacts
+	out.staticSrc, err = generateSource(models, slugToConst)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateSource: %v", err)
 	}
-	constantsSrc, err = generateEntitiesConstantsSource(models, metadata)
+	out.constantsSrc, err = generateEntitiesConstantsSource(models, metadata)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateEntitiesConstantsSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateEntitiesConstantsSource: %v", err)
 	}
-	metadataSrc, err = generateMetadataSource(metadata)
+	out.metadataSrc, err = generateMetadataSource(metadata)
 	if err != nil {
-		t.Fatalf("runFixtureCodegen: generateMetadataSource: %v", err)
+		t.Fatalf("runFixtureCodegenArtifacts: generateMetadataSource: %v", err)
 	}
-	return staticSrc, constantsSrc, metadataSrc
+	// The committed non-.go emissions, built through the SAME pure functions the
+	// writers call, so what this harness proves byte-identical is exactly what lands
+	// on disk.
+	out.creatorProvidersUnserved, err = buildCreatorProvidersUnserved(models)
+	if err != nil {
+		t.Fatalf("runFixtureCodegenArtifacts: buildCreatorProvidersUnserved: %v", err)
+	}
+	out.creatorsLabDisagreements, err = buildCreatorsLabDisagreements(metadata)
+	if err != nil {
+		t.Fatalf("runFixtureCodegenArtifacts: buildCreatorsLabDisagreements: %v", err)
+	}
+	return out
 }
 
 // TestCodegen_Reproducible_ByteIdentical verifies that N=100 successive codegen runs
@@ -1777,7 +1854,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	fixtureJSON := deterministicFixtureJSON(t)
 
 	// Reference run (iteration 0). Every run uses the SAME deterministic stamp `ts`.
-	refStatic, refConstants, refMetadata := runFixtureCodegen(t, fixtureJSON, ts)
+	refArtifacts := runFixtureCodegenArtifacts(t, fixtureJSON, ts)
+	refStatic, refConstants, refMetadata := refArtifacts.staticSrc, refArtifacts.constantsSrc, refArtifacts.metadataSrc
 
 	// The metadata bake must emit rows in ascending MetadataID order regardless of the
 	// map-iteration order the fixture's models.json view arrived in. Assert the sorted
@@ -1880,7 +1958,8 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 	// map-order leakage, or an unstable collision ordinal). run()'s stamp SOURCE is outside
 	// this test's reach (see the fencing-boundary note above).
 	for i := 1; i < N; i++ {
-		staticSrc, constantsSrc, metadataSrc := runFixtureCodegen(t, fixtureJSON, ts)
+		iterArtifacts := runFixtureCodegenArtifacts(t, fixtureJSON, ts)
+		staticSrc, constantsSrc, metadataSrc := iterArtifacts.staticSrc, iterArtifacts.constantsSrc, iterArtifacts.metadataSrc
 
 		if !bytes.Equal(refStatic, staticSrc) {
 			t.Fatalf("iteration %d: generateSource output is not byte-identical to the reference\n"+
@@ -1909,6 +1988,28 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				"  Why: the metadata bake did not impose a deterministic MetadataID order\n"+
 				"  Where: generateMetadataSource sort.Slice(baked, ...) on MetadataID\n"+
 				"  How to fix: ensure generateMetadataSource sorts by MetadataID before emitting",
+				i+1)
+		}
+
+		// The committed non-.go emissions. Both are built from map ranges (the
+		// creator→provider served set; the family→lab evidence accumulation), so an
+		// omitted sort in output position shows up here and NOWHERE else: neither
+		// TestCodegen_Reproducible_ByteIdentical's .go comparisons nor
+		// TestCodegen_UpToDate's golden excerpts can reach a JSON report.
+		if !bytes.Equal(refArtifacts.creatorProvidersUnserved, iterArtifacts.creatorProvidersUnserved) {
+			t.Fatalf("iteration %d: buildCreatorProvidersUnserved output is not byte-identical to the reference\n"+
+				"  What: the curated creator→provider coverage report changed between runs\n"+
+				"  Why: the report consulted a wall clock, or emitted rows in map-iteration order\n"+
+				"  Where: buildCreatorProvidersUnserved\n"+
+				"  How to fix: keep the explicit sort.Slice on (creator, provider) and emit no timestamp",
+				i+1)
+		}
+		if !bytes.Equal(refArtifacts.creatorsLabDisagreements, iterArtifacts.creatorsLabDisagreements) {
+			t.Fatalf("iteration %d: buildCreatorsLabDisagreements output is not byte-identical to the reference\n"+
+				"  What: the models.dev lab-derivation disagreement report changed between runs\n"+
+				"  Why: the derivation emitted families in map-iteration order, or a row's labs list was left unsorted\n"+
+				"  Where: bestiary.DeriveCreatorLabDisagreements / buildCreatorsLabDisagreements\n"+
+				"  How to fix: keep the sort.Slice on family and the sort.Strings on each row's labs",
 				i+1)
 		}
 
@@ -2785,14 +2886,21 @@ func TestFixturePerReasonCounts(t *testing.T) {
 // --------------------------------------------------------------------------
 
 // TestQuantVRAM_Llama33_70b is the 70B anchor: llama-3.3-70b-instruct bakes
-// VRAMBytes = weights + KV at context 131072 with partial=false for all three quants.
+// VRAMBytes = weights + KV at context 131072 with partial=false on each quant
+// that carries the curated architecture facts.
+//
+// The quant SET is fetch-owned — the offline refresh writes every quant the
+// registry publishes — while the architecture facts are curation-owned and exist
+// for three of them. So the anchor asserts by quant, not by position: the three
+// arch-curated quants carry hand-computable VRAM, and every other row is a
+// measured weight with no arch facts and therefore a partial estimate.
 //
 // Expected values (hand-computed):
 //
 //	KV = 2 * 80 * 8 * 128 * 131072 * 2 = 42,949,672,960 bytes
-//	q4_k_m: VRAMBytes = 43,033,509,888 + 42,949,672,960 = 85,983,182,848
-//	q8_0:   VRAMBytes = 75,176,521,728 + 42,949,672,960 = 118,126,194,688
-//	f16:    VRAMBytes = 141,166,166,016 + 42,949,672,960 = 184,115,838,976
+//	q4_k_m: VRAMBytes = 42,520,398,528 + 42,949,672,960 = 85,470,071,488
+//	q8_0:   VRAMBytes = 74,975,054,528 + 42,949,672,960 = 117,924,727,488
+//	f16:    VRAMBytes = 141,117,917,888 + 42,949,672,960 = 184,067,590,848
 func TestQuantVRAM_Llama33_70b(t *testing.T) {
 	const modelID = bestiary.ModelID("llama-3.3-70b-instruct")
 	const bakeCtx = 131072 // curated context_window from quant_vram.json
@@ -2805,25 +2913,25 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 		partial       bool
 	}
 
-	want := []wantRow{
-		{
+	want := map[bestiary.Quantization]wantRow{
+		bestiary.QuantQ4_K_M: {
 			quant:         bestiary.QuantQ4_K_M,
-			weightsBytes:  43_033_509_888,
-			vramBytes:     85_983_182_848,
+			weightsBytes:  42_520_398_528,
+			vramBytes:     85_470_071_488,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
-		{
+		bestiary.QuantQ8_0: {
 			quant:         bestiary.QuantQ8_0,
-			weightsBytes:  75_176_521_728,
-			vramBytes:     118_126_194_688,
+			weightsBytes:  74_975_054_528,
+			vramBytes:     117_924_727_488,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
-		{
+		bestiary.QuantF16: {
 			quant:         bestiary.QuantF16,
-			weightsBytes:  141_166_166_016,
-			vramBytes:     184_115_838_976,
+			weightsBytes:  141_117_917_888,
+			vramBytes:     184_067_590_848,
 			vramCtxTokens: bakeCtx,
 			partial:       false,
 		},
@@ -2834,21 +2942,29 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 	if rawRows == nil {
 		t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows from quant_vram.json", modelID)
 	}
-	if len(rawRows) != len(want) {
-		t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", modelID, len(rawRows), len(want))
+	const wantRows = 12 // the registry's published quant set for this model
+	if len(rawRows) != wantRows {
+		t.Fatalf("QuantVRAMFor(%q): got %d rows, want %d", modelID, len(rawRows), wantRows)
 	}
 
 	// Bake each row using EstimateVRAMBytes at the curated bake context.
+	seen := 0
 	for i, row := range rawRows {
 		baked := row
 		baked.VRAMBytes = bestiary.EstimateVRAMBytes(row.WeightsBytes, bakeCtx, row.Layers, row.KVHeads, row.HeadDim)
 		baked.VRAMContextTokens = bakeCtx
 		baked.VRAMEstimatePartial = bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
 
-		w := want[i]
-		if baked.Quant != w.quant {
-			t.Errorf("row %d: Quant = %v, want %v", i, baked.Quant, w.quant)
+		w, curated := want[baked.Quant]
+		if !curated {
+			// A measured quant with no curated arch facts: weights-only, partial.
+			if baked.VRAMBytes != baked.WeightsBytes || !baked.VRAMEstimatePartial {
+				t.Errorf("row %d (%v): arch-absent row baked VRAMBytes=%d partial=%v, want %d and true",
+					i, baked.Quant, baked.VRAMBytes, baked.VRAMEstimatePartial, baked.WeightsBytes)
+			}
+			continue
 		}
+		seen++
 		if baked.WeightsBytes != w.weightsBytes {
 			t.Errorf("row %d (%v): WeightsBytes = %d, want %d", i, baked.Quant, baked.WeightsBytes, w.weightsBytes)
 		}
@@ -2871,6 +2987,9 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 				row.Layers, row.KVHeads, row.HeadDim)
 		}
 	}
+	if seen != len(want) {
+		t.Errorf("matched %d arch-curated quants, want %d; the curated arch facts must survive every refresh", seen, len(want))
+	}
 
 	// ParamSize check.
 	if ps := bestiary.ParamSizeFor(modelID); ps != "70b" {
@@ -2885,7 +3004,8 @@ func TestQuantVRAM_Llama33_70b(t *testing.T) {
 // TestQuantVRAM_SmallModel covers small models where arch facts are absent
 // (exercises partial path) and ParamSize is populated.
 //
-// llama-3.2-3b-instruct: two quant rows, arch facts absent.
+// llama-3.2-3b-instruct: every quant the registry publishes, arch facts absent
+// on all of them (the quant set is fetch-owned, the arch facts curation-owned).
 // llama-3.3-8b-instruct: param-size-only entry (empty rows array); QuantVRAMFor
 // returns nil but ParamSizeFor returns "8b" — demonstrates the (Family,Version,
 // Modifier) wrong-merge split without fabricated GGUF weights.
@@ -2896,8 +3016,8 @@ func TestQuantVRAM_SmallModel(t *testing.T) {
 		if rows == nil {
 			t.Fatalf("QuantVRAMFor(%q) returned nil; expected curated rows", modelID)
 		}
-		if len(rows) != 2 {
-			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 2", modelID, len(rows))
+		if len(rows) != 15 {
+			t.Fatalf("QuantVRAMFor(%q): got %d rows, want 15", modelID, len(rows))
 		}
 
 		// Arch facts should be absent (all zero) for this model.
@@ -2970,17 +3090,37 @@ func TestQuantVRAM_PartialWhenArchAbsent(t *testing.T) {
 	})
 
 	t.Run("arch_present_yields_not_partial", func(t *testing.T) {
-		// llama-3.3-70b-instruct has full arch facts.
+		// llama-3.3-70b-instruct carries curated arch facts on the three quants that
+		// were curated by hand; the refresh added measured weights for the rest of the
+		// registry's quant set, which have none. Both classes must be present, and each
+		// must land on its own side of the predicate — a corpus where one class vanished
+		// would pass a one-sided assertion vacuously.
 		rows := bestiary.QuantVRAMFor("llama-3.3-70b-instruct")
 		if rows == nil {
 			t.Fatal("QuantVRAMFor(llama-3.3-70b-instruct) returned nil; need curated rows")
 		}
+		archComplete, archAbsent := 0, 0
 		for i, row := range rows {
 			partial := bestiary.VRAMEstimateIsPartial(row.Layers, row.KVHeads, row.HeadDim)
-			if partial {
-				t.Errorf("row %d: VRAMEstimatePartial=true with arch facts present (layers=%d kvHeads=%d headDim=%d); want false",
+			if row.Layers != 0 && row.KVHeads != 0 && row.HeadDim != 0 {
+				archComplete++
+				if partial {
+					t.Errorf("row %d: VRAMEstimatePartial=true with arch facts present (layers=%d kvHeads=%d headDim=%d); want false",
+						i, row.Layers, row.KVHeads, row.HeadDim)
+				}
+				continue
+			}
+			archAbsent++
+			if !partial {
+				t.Errorf("row %d: VRAMEstimatePartial=false with arch facts absent (layers=%d kvHeads=%d headDim=%d); want true",
 					i, row.Layers, row.KVHeads, row.HeadDim)
 			}
+		}
+		if archComplete != 3 {
+			t.Errorf("arch-complete rows = %d, want 3 (the curated q4_k_m/q8_0/f16 facts)", archComplete)
+		}
+		if archAbsent != 9 {
+			t.Errorf("arch-absent rows = %d, want 9 (the refresh's measured quants)", archAbsent)
 		}
 	})
 }
@@ -3254,9 +3394,15 @@ func TestCodegen_QuantVRAMLiteral_Deterministic(t *testing.T) {
 	if !strings.Contains(lit1, "QuantF16") {
 		t.Errorf("quantVRAMLiteral: missing QuantF16 in output\nliteral: %s", lit1)
 	}
-	// VRAMEstimatePartial must be false for these arch-complete rows.
-	if strings.Contains(lit1, "VRAMEstimatePartial: true") {
-		t.Errorf("quantVRAMLiteral: unexpected VRAMEstimatePartial: true for arch-complete rows\nliteral: %s", lit1)
+	// The partial flag must render both ways, tracking each row's arch facts: the
+	// three curated quants are complete (false), the refresh's measured quants have
+	// no curated arch facts (true). A literal carrying only one of the two would mean
+	// the flag stopped tracking the row it describes.
+	if !strings.Contains(lit1, "VRAMEstimatePartial: false") {
+		t.Errorf("quantVRAMLiteral: no VRAMEstimatePartial: false row; the arch-curated quants must bake complete\nliteral: %s", lit1)
+	}
+	if !strings.Contains(lit1, "VRAMEstimatePartial: true") {
+		t.Errorf("quantVRAMLiteral: no VRAMEstimatePartial: true row; the arch-absent measured quants must bake partial\nliteral: %s", lit1)
 	}
 }
 

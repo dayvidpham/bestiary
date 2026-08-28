@@ -24,9 +24,20 @@
     "pro": "identity",
     "precision": "identity",
     "realtime": "attribute",
+    "free": "attribute",
     "livetranslate": "identity",
     "translate": "identity",
     "hd": "identity"
+  },
+  "series_tiers": {
+    "mimo": [
+      "flash",
+      "tts",
+      "voiceclone",
+      "voicedesign",
+      "free",
+      "ultraspeed"
+    ]
   },
   "family_overrides": {
     "claude": {
@@ -46,9 +57,18 @@
     "minimax": {
       "fast": "attribute",
       "turbo": "attribute"
+    },
+    "mimo": {
+      "tts": "identity",
+      "voiceclone": "identity",
+      "voicedesign": "identity",
+      "ultraspeed": "attribute"
     }
   },
   "_comment_translate": "translate is IDENTITY-class and newly added to modifiers.json so extractModifier peels it. Cohere ships Command A Translate (cohere/command-a-translate-08-2025, https://docs.cohere.com/docs/command-a-translate) as a DISTINCT model from base Command A (cohere/command-a-03-2025) and Command A Vision — a separate weights/behavior artifact for machine translation, so the token belongs in the entity key ({translate}), not as a per-instance runtime attribute. Without the peel the served command-a-translate-08-2025 collapses onto the coarse command/a key and OVERWRITES the base Command A metadata (the collision the modelsdev_aliases.json _comment warns against). Collateral scan (catalog snapshot 2026-07-23): the only tail-position 'translate' token is command-a-translate; nvidia/riva-translate-4b-instruct-v1_1 carries it MID-id (broken by the following size token, never reached by the tail-inward peel) and qwen3-livetranslate-flash-realtime uses the distinct longer 'livetranslate' token (matched longest-first) — zero collateral.",
+  "_comment_free": "free is ATTRIBUTE-class: it names a PRICING/SERVING tier a provider offers for an existing model, not a different weights/behavior artifact — the same model served at no cost is the same model. It is also newly added to modifiers.json so extractModifier peels it from the tail, and it is removed as a curated families.json member of glm/kimi/minimax/nemotron so the per-family member-guard stops re-promoting it to a variant (qwen keeps its free member and is covered by deferredUnreachableMembers). One id is DELIBERATELY carved out of the demotion and pinned upstream of it in the exact-ID family-override map: ling-2.6-flash-free, whose entity key ling/flash-free@2.6 is preserved verbatim; a curated free row here or in family_overrides.json cannot reach it, because the trailing-modifier trim runs first. See the parse.go pin for the full reasoning.",
+  "_comment_series_tiers": "series_tiers is the PER-FAMILY extension of the curated series-tier token set that lives in code (parse.go seriesTierModifiers). It is consulted ONLY inside splitSeriesVariant, i.e. only within the letter-prefix series decomposition, and ONLY for the family it is listed under. The per-family scoping is the whole point: the code-side set is shared by every letter-series family, so adding a token there to serve one family silently reclassifies the same token for the others (an earlier attempt to add these mimo tokens globally changed six times as many keys as intended). None of these tokens may be added to modifiers.json either: tts is already a family key in family_enforce.json, so a global modifier promotion of it collides with the family, and voiceclone/voicedesign/ultraspeed have no meaning outside this family. free appears here because the series machinery has to consume it as a tier for this family to keep decomposing the -free ids; its global attribute class (see _comment_free) is what keeps it out of the entity key.",
+  "_comment_mimo_tiers": "The mimo family overrides: tts/voiceclone/voicedesign are IDENTITY-class. Xiaomi ships MiMo-V2.5-TTS, -TTS-VoiceClone and -TTS-VoiceDesign as distinct speech artifacts, not runtime knobs on the base text model, so each belongs in the entity key. ultraspeed is ATTRIBUTE-class: it names a serving-speed tier on the SAME pro artifact (xiaomi/mimo-v2.5-pro-ultraspeed rejoins the pro entity), which is why it must be registered both as a tier token above and as an attribute here \u2014 the tier registration is what lets the id decompose at all, and the attribute class is what keeps it out of the key.",
   "_comment_hd": "hd is IDENTITY-class: OpenAI documents tts-1-hd as a distinct, higher-quality text-to-speech model separate from tts-1 (https://platform.openai.com/docs/models/tts-1-hd), so the two are different artifacts and hd belongs in the entity key ({hd}), not as a per-instance runtime attribute. The token is also newly added to modifiers.json so extractModifiers peels it; the only catalog id carrying an 'hd' token today is openai/tts-1-hd (zero collateral).",
-  "_comment_turbo_demotions": "Evidence for the kimi and minimax turbo->attribute demotions (the glm precedent). KIMI: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so turbo names a serving speed tier, not a different artifact; the lab's own turbo-preview announcement describes it as the same model at higher output speed (archived: https://web.archive.org/web/20251205134314/https://kimi-k2.org/blog/08-kimi-k2-turbo-preview). MINIMAX: graded LOWER CONFIDENCE — there is no repo-identity proof. The evidence is the rev-2 URL census, in which the M2.7 and M2.5-highspeed serving names resolve back to the plain M2.7 / M2.5 repos, plus the lab-practice inference that minimax markets turbo the way it markets highspeed (already an attribute). If a future census shows minimax shipping distinct turbo weights, this row is the one to revisit first."
+  "_comment_turbo_demotions": "Evidence for the kimi and minimax turbo->attribute demotions (the glm precedent). KIMI: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so turbo names a serving speed tier, not a different artifact; the lab's own turbo-preview announcement describes it as the same model at higher output speed (archived: https://web.archive.org/web/20251205134314/https://kimi-k2.org/blog/08-kimi-k2-turbo-preview). MINIMAX: re-verified 2026-08-25 and UPGRADED from the earlier lower-confidence grade — the repo-identity proof that was previously missing now exists. Sources examined 2026-08-25: https://huggingface.co/MiniMaxAI/MiniMax-M2.7 publishes a SINGLE M2.7 weights repo — there is no MiniMax-M2.7-Turbo and no MiniMax-M2.7-highspeed repo, so every fast-serving name for this version resolves back to the one artifact; and https://platform.minimax.io/docs/guides/text-generation documents the lab's own speed tier in its own words as \"M2.7 Highspeed: Same performance, faster and more agile (output speed approximately 100 tps)\" against roughly 60 tps for the standard tier, i.e. an inference-layer tier of the same model, priced at 2x. The catalog census closes the loop: turbo rides on EXACTLY ONE instance, minimax/minimax-m2.7-turbo served by nanogpt, and its row is spec-identical to the -highspeed rows it sits BESIDE on that very entity: minimax/m@2.7 carries 54 instances, 15 of them M2.7 -highspeed spellings (25 -highspeed ids across the family's M2.5 and M2.7 lines together), and the turbo row matches the seven canonical M2.7 -highspeed rows (fastrouter, llmgateway, merge-gateway, minimax, minimax-cn, novita-ai, orcarouter) EXACTLY on every axis — 0.6/2.4 per MTok, 204800 context, 131072 max output — against the plain M2.7's 0.3/1.2, the same doubling the lab charges for its speed tier. That is the highspeed signature exactly. The lab's own first-party minimax and minimax-cn providers name that tier highspeed, never turbo, and NO provider ships both a turbo and a highspeed row for the same version, so turbo cannot be a distinct artifact standing alongside highspeed; it is nanogpt's label for that tier. highspeed is already attribute-class in the global table, so classing turbo as an attribute for this family is the consistent reading. Revisit only if a census ever shows minimax publishing distinct turbo weights."
 }

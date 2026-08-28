@@ -1,0 +1,70 @@
+{
+  "_comment": "Every entity key retired by the ling/inkling/kling collision split, pinned against the MEASURED retired-key split rather than a uniform expectation. Two keys retire, and they do NOT behave the same way on the two seams: `kling-v2@6` is a hard 404 on both, while bare `ling` is a 404 only on the exact-key --by-entity seam and answers ErrAmbiguous on the looser `show` seam. The difference is not split-ness; it is that the `ling` FAMILY survives the retirement with five live inclusionAI children (ling#1t, ling@2.6#1t, ling/flash@2.0, ling/flash@2.6, ling/flash-free@2.6), so the bare family token still resolves to a live set. Turning it into a 404 would break the same live-family lookup that `show gpt`, `show claude` and `show mimo` rely on, so it is pinned here as the measured expectation. The five surviving inclusionAI keys are asserted byte-identical by the companion test. Each case also carries the MEASURED migration record: `retired_instances` is the exact set of provider instances the key held immediately before the split (spelled `<provider>|<model id>`, read off the pre-lever generated catalog), and `successors` is the set of entity keys those instances now belong to. Bare `ling` is the widest split in this epoch: it held 14 instances of two unrelated product lines and fans out to NINE successors. The successor set is re-derived from `retired_instances` against the live registry on every run and compared against this record, and the CHANGELOG migration table is compared against it too, so the three cannot drift apart silently. See TESTING.md.",
+  "cases": [
+    {
+      "name": "retired_ling_bare",
+      "input": "ling",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": [
+          "baseten|thinkingmachines/inkling",
+          "openrouter|thinkingmachines/inkling",
+          "thinkingmachines|inkling",
+          "togetherai|thinkingmachines/Inkling",
+          "venice|inkling",
+          "vercel|klingai/kling-v2.5-turbo-i2v",
+          "vercel|klingai/kling-v2.5-turbo-t2v",
+          "vercel|klingai/kling-v2.6-i2v",
+          "vercel|klingai/kling-v2.6-motion-control",
+          "vercel|klingai/kling-v2.6-t2v",
+          "vercel|klingai/kling-v3.0-i2v",
+          "vercel|klingai/kling-v3.0-motion-control",
+          "vercel|klingai/kling-v3.0-t2v",
+          "vercel|thinkingmachines/inkling"
+        ],
+        "successors": [
+          "inkling",
+          "kling/i2v@2.5{turbo}",
+          "kling/t2v@2.5{turbo}",
+          "kling/i2v@2.6",
+          "kling/motion-control@2.6",
+          "kling/t2v@2.6",
+          "kling/i2v@3.0",
+          "kling/motion-control@3.0",
+          "kling/t2v@3.0"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The one MEASURED deviation the policy anticipates is a key whose FAMILY outlives it: the bare family token still has live children, so the looser `show` seam answers ErrAmbiguous instead. That is recorded here as measured, never \"fixed\" into a 404."
+      },
+      "mutation": {
+        "description": "SPLITS across nine successors, the widest fan-out in this epoch. Bare `ling` never held an inclusionAI model: all 14 of its instances were rows the upstream catalog had stamped with raw_family \"ling\" while their own ids named a different product line. Six are Thinking Machines' Inkling and re-home to `inkling`; eight are vercel's klingai video models and re-home to one `kling/<shape>` key each. The key empties and retires, but the FAMILY does not: inclusionAI's five sized/variant ling keys are untouched, which is exactly why the `show` seam answers ambiguous rather than not-found here"
+      }
+    },
+    {
+      "name": "retired_kling_v2_at_6",
+      "input": "kling-v2@6",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": [
+          "qiniu-ai|kling-v2-6"
+        ],
+        "successors": [
+          "kling@2.6"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on both seams — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets. The one MEASURED deviation the policy anticipates is a key whose FAMILY outlives it: the bare family token still has live children, so the looser `show` seam answers ErrAmbiguous instead. That is recorded here as measured, never \"fixed\" into a 404."
+      },
+      "mutation": {
+        "description": "a pure RE-KEY of a one-instance phantom. qiniu-ai ships this row with no upstream family, so the leading-token pipeline built the whole key itself and got both halves wrong: it glued the dash-spelled major onto the family token (kling-v2) and read the orphaned minor as the entire version (6). The exact-ID pin corrects both, and the row joins the eight klingai rows under the real kling family at kling@2.6. Family kling-v2 disappears with it — it was never a family, and both seams hard-404 because nothing of it survives"
+      }
+    }
+  ]
+}

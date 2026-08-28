@@ -79,14 +79,14 @@ func TestSchemaFile_VersionAndModifierType(t *testing.T) {
 }
 
 // TestBestiarySchemaVersion_Exact asserts that BestiarySchemaVersion equals
-// exactly "0.6.0" — bumped ONCE for the additive v0.2.8 creator dimension
-// (ModelInfo.Creator / Entity.Creator + the Creator $def), the multi-attestation
-// naming model ($defs NomenAttestation/AttestationAuthority/IngestMethod +
-// Nomen.Attestations), and the "oci" CanonicalScheme token. Every addition is
-// optional/zero-value, so the bump is backward-compatible.
+// exactly "0.7.0" — bumped ONCE for v0.2.10, covering BOTH additive changes of that
+// epoch: NomenAttestation.ArchivedURL (the harvested layer's archive.org snapshot of
+// its live SourceURL) and Entity.MetadataAll (the multi-metadata read projection).
+// One epoch, one bump, one paragraph in version.go; a second bump for the second
+// addition would be the defect this pin exists to catch.
 // Update this test when a new schema version is released.
 func TestBestiarySchemaVersion_Exact(t *testing.T) {
-	const want = "0.6.0"
+	const want = "0.7.0"
 	if bestiary.BestiarySchemaVersion != want {
 		t.Errorf(
 			"BestiarySchemaVersion = %q, want %q;\n"+
@@ -181,6 +181,41 @@ func TestUpstreamGitRemote_NonEmpty(t *testing.T) {
 				"  where: bestiary.UpstreamGitRemote (version.go)\n"+
 				"  how to fix: use a URL starting with \"git@\" (SSH) or \"https://\" (HTTPS)",
 			v,
+		)
+	}
+}
+
+// TestReleaseVersion_Exact pins ReleaseVersion to the release this tree builds.
+// The pin is the mechanism that makes the version bump un-skippable: the release
+// branch cuts the CHANGELOG stanza and bumps this const together, and this test
+// fails until both happen. Update it (and version.go) on the release branch.
+func TestReleaseVersion_Exact(t *testing.T) {
+	const want = "0.2.10"
+	if bestiary.ReleaseVersion != want {
+		t.Errorf(
+			"ReleaseVersion = %q, want %q;\n"+
+				"  what went wrong: the module release constant does not match this tree's release\n"+
+				"  why: version.go was not bumped on the release branch, or was bumped too far\n"+
+				"  where: bestiary.ReleaseVersion (version.go)\n"+
+				"  how to fix: set ReleaseVersion = %q in version.go and update this pin in lockstep",
+			bestiary.ReleaseVersion, want, want,
+		)
+	}
+}
+
+// TestReleaseVersion_Semver verifies ReleaseVersion is a bare semver with no
+// leading "v": it is embedded verbatim in outbound User-Agent strings, where a
+// stray "v" or a non-semver token misreports the build to a registry operator.
+func TestReleaseVersion_Semver(t *testing.T) {
+	re := regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$`)
+	if !re.MatchString(bestiary.ReleaseVersion) {
+		t.Errorf(
+			"ReleaseVersion %q does not match bare semver (no leading \"v\");\n"+
+				"  what went wrong: value does not satisfy regexp %q\n"+
+				"  why: the const was set to a tag-shaped or non-semver string\n"+
+				"  where: bestiary.ReleaseVersion (version.go)\n"+
+				"  how to fix: strip any leading \"v\" — tag v0.2.10 means ReleaseVersion = \"0.2.10\"",
+			bestiary.ReleaseVersion, re.String(),
 		)
 	}
 }

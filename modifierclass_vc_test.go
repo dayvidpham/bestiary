@@ -1,7 +1,9 @@
 package bestiary_test
 
 import (
+	"encoding/json"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -18,49 +20,93 @@ func modJoinCanon(mods []string) string {
 // VC6 — every modifier in the curated inventory classifies to its pinned class
 // ----------------------------------------------------------------------------
 
-// TestVC6_InventoryTokensPinned pins the class of every token in the curated
-// 21-token inventory (global, family-agnostic). ATTRIBUTE tokens are per-instance
-// presentation/runtime knobs; IDENTITY tokens distinguish the model artifact. The
-// AMBIGUOUS tokens (turbo/fast/chat/pro/precision) default to IDENTITY globally —
-// the safe over-split — and are demoted to ATTRIBUTE only by a per-family override
-// (see VC7). mini/flash stay IDENTITY-class this epoch (size axis deferred).
+// TestVC6_InventoryTokensPinned asserts that every token in the curated global
+// modifier-class inventory classifies to the class the curation file gives it, with the
+// inventory DERIVED from parse/data/modifier_class.json rather than restated here.
+// ATTRIBUTE tokens are per-instance presentation/runtime/pricing knobs; IDENTITY tokens
+// distinguish the model artifact. The AMBIGUOUS tokens (turbo/fast/chat/pro/precision)
+// default to IDENTITY globally — the safe over-split — and are demoted to ATTRIBUTE only
+// by a per-family override (see VC7). mini/flash stay IDENTITY-class this epoch (size
+// axis deferred).
 //
-// RE-PINNED for the ReleaseStage migration: preview/latest/original left the
-// modifier-class inventory (24 → 21 tokens) — they MIGRATED to the dedicated stage
-// axis and are asserted separately below. They must NOT classify as attribute (that
-// vocabulary moved) and, critically, must be routed out of the entity key BEFORE the
-// unknown->Identity fail-safe would otherwise promote them (now that they are absent
-// from modifier_class.json).
-//
-// Single source of truth: parse/data/modifier_class.json is canonical for the
-// classification. The token lists below enumerate the same inventory so a reader
-// can cross-check "all 21 pinned" at a glance; if the JSON changes, update both.
+// Single source of truth, enforced rather than described: parse/data/modifier_class.json
+// is canonical for the classification, and this test reads it. Adding, removing or
+// re-classifying a global token needs NO edit here and cannot leave the guard stale —
+// which is exactly what the previous hand-maintained token list did (it sat at 21 while
+// the file held 25, gated by nothing). Two things are still stated in code, because a
+// derivation cannot catch them: the load-bearing floor below (tokens whose curation is
+// itself the invariant, so silently deleting a row is caught) and the migrated stage
+// tokens, which are DELIBERATELY absent from the file and must still be routed out of
+// the entity key before the unknown->Identity fail-safe would promote them.
 func TestVC6_InventoryTokensPinned(t *testing.T) {
-	attribute := []string{
-		"thinking", "think", "highspeed", "lightning",
+	raw, err := os.ReadFile("parse/data/modifier_class.json")
+	if err != nil {
+		t.Fatalf("read curated modifier-class table: %v\n"+
+			"  What: the inventory this test derives from could not be read\n"+
+			"  Where: parse/data/modifier_class.json, read from the package directory\n"+
+			"  How to fix: run the test from the module root, or restore the curated file", err)
 	}
-	identity := []string{
-		// curated identity
-		"instruct", "non-reasoning", "vision", "code", "omni", "multimodal",
-		"deep-research", "base",
-		// ambiguous tokens — global default is identity (safe over-split)
-		"turbo", "fast", "chat", "pro", "precision",
-		// stay-identity / extras
-		"mini", "flash", "reasoning", "distill",
+	var file struct {
+		Global map[string]string `json:"global"`
+	}
+	if err := json.Unmarshal(raw, &file); err != nil {
+		t.Fatalf("parse curated modifier-class table: %v\n"+
+			"  What: parse/data/modifier_class.json is not valid JSON in the expected shape\n"+
+			"  How to fix: validate the file — the loader degrades silently on this, the test does not", err)
+	}
+	if len(file.Global) == 0 {
+		t.Fatal("curated global modifier-class inventory is empty — the file loaded but classified nothing")
 	}
 
-	if total := len(attribute) + len(identity); total != 21 {
-		t.Fatalf("inventory size = %d, want 21 pinned tokens", total)
-	}
-
-	for _, tok := range attribute {
-		if got := bestiary.ClassifyModifier(tok, ""); got != bestiary.ModifierClassAttribute {
-			t.Errorf("ClassifyModifier(%q, \"\") = %v, want ModifierClassAttribute", tok, got)
+	// Set equality, both directions: every curated token classifies to its curated class,
+	// and the classification of a curated token is never the other class. Running the
+	// comparison over the file's own key set is what makes the inventory self-updating.
+	wantClass := map[string]bestiary.ModifierClass{}
+	for tok, cls := range file.Global {
+		switch cls {
+		case "attribute":
+			wantClass[strings.ToLower(tok)] = bestiary.ModifierClassAttribute
+		case "identity":
+			wantClass[strings.ToLower(tok)] = bestiary.ModifierClassIdentity
+		default:
+			t.Errorf("curated token %q carries class %q, want \"identity\" or \"attribute\" — "+
+				"the loader SKIPS an unrecognized class string, so this row would silently "+
+				"fall through to the unknown->Identity fail-safe", tok, cls)
 		}
 	}
-	for _, tok := range identity {
-		if got := bestiary.ClassifyModifier(tok, ""); got != bestiary.ModifierClassIdentity {
-			t.Errorf("ClassifyModifier(%q, \"\") = %v, want ModifierClassIdentity", tok, got)
+	for tok, want := range wantClass {
+		if got := bestiary.ClassifyModifier(tok, ""); got != want {
+			t.Errorf("ClassifyModifier(%q, \"\") = %v, want %v (curated global class)", tok, got, want)
+		}
+	}
+
+	// Load-bearing floor: these tokens must remain curated, with these classes. This is
+	// NOT the inventory (it never grows with the file) — it is the subset whose presence
+	// is itself an invariant, so a deletion cannot pass the set-equality check above by
+	// simply removing the row. Each entry names why it is load-bearing.
+	floor := map[string]bestiary.ModifierClass{
+		"thinking":  bestiary.ModifierClassAttribute, // reasoning-mode knob; identity would split every thinking pair
+		"free":      bestiary.ModifierClassAttribute, // pricing/serving tier; identity would re-split the free-tier keys
+		"realtime":  bestiary.ModifierClassAttribute, // serving mode, not a distinct artifact
+		"instruct":  bestiary.ModifierClassIdentity,  // distinct post-trained artifact
+		"base":      bestiary.ModifierClassIdentity,  // distinct pre-instruct artifact
+		"turbo":     bestiary.ModifierClassIdentity,  // AMBIGUOUS: global default is the safe over-split
+		"fast":      bestiary.ModifierClassIdentity,  // AMBIGUOUS: demoted per-family only (see VC7)
+		"chat":      bestiary.ModifierClassIdentity,  // AMBIGUOUS
+		"pro":       bestiary.ModifierClassIdentity,  // AMBIGUOUS
+		"precision": bestiary.ModifierClassIdentity,  // AMBIGUOUS
+		"mini":      bestiary.ModifierClassIdentity,  // stays identity this epoch (size axis deferred)
+		"flash":     bestiary.ModifierClassIdentity,  // stays identity this epoch (size axis deferred)
+	}
+	for tok, want := range floor {
+		got, ok := wantClass[tok]
+		if !ok {
+			t.Errorf("load-bearing token %q is absent from the curated global inventory — "+
+				"removing it drops the token to the unknown->Identity fail-safe", tok)
+			continue
+		}
+		if got != want {
+			t.Errorf("load-bearing token %q is curated %v, want %v", tok, got, want)
 		}
 	}
 
@@ -502,16 +548,21 @@ func TestVC12_BackwardCompat(t *testing.T) {
 //
 // Turbo is IDENTITY by global default, and rightly so: gpt-4-turbo is a different
 // artifact from gpt-4. It is demoted per-family only where curation established the
-// token names a serving speed tier over the SAME artifact. Evidence differs in
-// strength between the two families and the corpus records that honestly:
+// token names a serving speed tier over the SAME artifact. Both families now rest on
+// repo-identity evidence, and the curated entry carries the sources and dates:
 //
 //   - kimi: moonshot serves kimi-k2-thinking and kimi-k2-thinking-turbo from the
 //     IDENTICAL Kimi-K2-Thinking HuggingFace repo — same weights, so the turbo
 //     spelling cannot denote a different artifact. Repo-identity evidence.
-//   - minimax: no repo-identity proof. The rev-2 URL census resolves the M2.7 and
-//     M2.5-highspeed serving names back to the plain repos, and minimax markets
-//     turbo the way it markets highspeed (already an attribute). Inference, graded
-//     lower — flagged in the curated entry so it is the first row to revisit.
+//   - minimax: re-verified 2026-08-25 and upgraded from its earlier lower-confidence
+//     grade, which had rested on inference alone. MiniMaxAI publishes a SINGLE M2.7
+//     weights repo — no -Turbo and no -highspeed repo — so every fast-serving name for
+//     the version resolves back to one artifact, and the lab's own docs describe the
+//     highspeed tier as the same performance at roughly 100 tps against 60, i.e. an
+//     inference-layer tier priced at 2x. Turbo rides on exactly ONE instance, nanogpt's
+//     minimax-m2.7-turbo, whose row is spec-identical to the -highspeed rows at the same
+//     doubled price; the lab's own first-party endpoints call that tier highspeed, never
+//     turbo, and no provider ships both spellings for one version. Repo-identity evidence.
 //
 // The three entities that merged are asserted by key, because a demotion that
 // silently failed to merge them would leave the classification "correct" while the

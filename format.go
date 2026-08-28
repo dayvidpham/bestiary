@@ -409,18 +409,31 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 			e.PURLMissedNamespace)
 	}
 
-	// Section 1: Canonical rows — up to ambiguousMaxCanonical, each prefixed with "* ".
-	// Filter candidates to only canonical-provider rows (Provider == Family.CanonicalProvider()).
-	// Dedup by (Family, Variant, Version) so each model appears once.
+	// Section 1: the two ORIGINATING axes, rendered as separate sections in
+	// preference order — Creator first, then Canonical.
+	//
+	// The axes are distinct facts and the listing says so rather than collapsing them:
+	// Creator answers "which lab made this and where does that lab serve it", Canonical
+	// answers "which provider is the curated originating host for this family". They
+	// frequently coincide (Anthropic both creates and hosts Claude) and frequently do
+	// not (Meta creates Llama; the curated canonical provider for llama is "local").
+	// Each section is suppressed INDEPENDENTLY when it has no rows, so a family with a
+	// creator but no canonical provider renders only Creator, and vice versa — neither
+	// a bare header nor an orphaned legend is ever emitted.
+	//
+	// A row is assigned to at most ONE section, Creator winning, so a provider that is
+	// both the creator's surface and the family's canonical provider is listed once.
+	// Dedup by (Family, Variant, Version) so each model appears once, and the dedup is
+	// SHARED across both sections for the same reason.
 	type groupKey struct {
 		family  string
 		variant string
 		version string
 	}
 	seenGroup := make(map[groupKey]struct{})
-	var canonicalRows []ModelRef
+	var creatorRows, canonicalRows []ModelRef
 	for _, c := range e.Candidates {
-		if c.Provider == "" || c.Provider != c.Family.CanonicalProvider() {
+		if isRehostProvider(c.Family, c.Provider) {
 			continue
 		}
 		key := groupKey{
@@ -432,14 +445,39 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 			continue
 		}
 		seenGroup[key] = struct{}{}
-		canonicalRows = append(canonicalRows, c)
+		if isCreatorProvider(c.Family, c.Provider) {
+			creatorRows = append(creatorRows, c)
+		} else {
+			canonicalRows = append(canonicalRows, c)
+		}
 	}
 
-	// Fix: when canonicalRows is empty (unknown canonical
-	// provider for this family, e.g. "minimax"), omit the legend and the Canonical
-	// section entirely. A bare empty "Canonical:" header with an orphaned legend is
-	// misleading — the user sees no canonical rows and no explanation. When canonical
-	// rows are present, the legend + section together form a coherent unit.
+	if len(creatorRows) > 0 {
+		// Legend line — only shown when there are creator rows to explain.
+		fmt.Fprintf(w, "\n+ = served by the creating lab\n")
+
+		fmt.Fprintf(w, "\nCreator:\n")
+		displayCreator := creatorRows
+		creatorOverflow := 0
+		if len(creatorRows) > ambiguousMaxCanonical {
+			creatorOverflow = len(creatorRows) - ambiguousMaxCanonical
+			displayCreator = creatorRows[:ambiguousMaxCanonical]
+		}
+		for _, c := range displayCreator {
+			fmt.Fprintf(w, "+ %s\n", c.Format(SchemeCanonical))
+		}
+		if creatorOverflow > 0 {
+			// "… and N more", not the Canonical section's "+N more": the Creator rows
+			// are themselves prefixed "+ ", so "+3 more" would read as a fourth row.
+			fmt.Fprintf(w, "… and %d more\n", creatorOverflow)
+		}
+	}
+
+	// When canonicalRows is empty (unknown canonical provider for this family, e.g.
+	// "minimax"), omit the legend and the Canonical section entirely. A bare empty
+	// "Canonical:" header with an orphaned legend is misleading — the user sees no
+	// canonical rows and no explanation. When canonical rows are present, the legend +
+	// section together form a coherent unit.
 	if len(canonicalRows) > 0 {
 		// Legend line — only shown when there are canonical rows to explain.
 		fmt.Fprintf(w, "\n* = canonical provider\n")
@@ -457,14 +495,16 @@ func FormatAmbiguous(w io.Writer, e *ErrAmbiguous) {
 		if canonicalOverflow > 0 {
 			fmt.Fprintf(w, "+%d more\n", canonicalOverflow)
 		}
-	} else {
-		// No canonical-provider rows (unmapped family, e.g. "llama": there is a
-		// canonical CREATOR — Meta — but no canonical provider). Without this section
-		// the only thing rendered above the wrapped error's "the matching candidates
-		// are listed above" would be the bare provider slugs of "Also rehosted by:",
+	}
+
+	if len(creatorRows) == 0 && len(canonicalRows) == 0 {
+		// NEITHER originating axis produced a row: the family has no creator surface
+		// among the candidates AND no canonical-provider row. Without this section the
+		// only thing rendered above the wrapped error's "the matching candidates are
+		// listed above" would be the bare provider slugs of "Also rehosted by:",
 		// making that claim FALSE — a slug is not a candidate. List the candidate
 		// ENTITY forms directly (deduped by identity key) so "candidates" names actual
-		// model identities for every family class, not just canonical-mapped ones.
+		// model identities for every family class, not just first-party-hosted ones.
 		seenKey := make(map[string]struct{})
 		var candKeys []string
 		for _, c := range e.Candidates {

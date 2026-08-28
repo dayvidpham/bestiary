@@ -1,0 +1,32 @@
+{{/* palette-options renders the combobox popup's contents: the <li role="option"> rows the
+     server patches into #palette-results. It is the ONE rendering of the option list, used
+     both by the SSE fragment set and (via "palette-prompt") by the layout's initial state,
+     so the dialog cannot open showing markup the server would never send.
+
+     Options carry NO tabindex: the pointer moves by aria-activedescendant while DOM focus
+     stays in the input, which is what lets a reader keep typing while arrowing. A focusable
+     option would break that by pulling focus out of the field. */}}
+{{define "palette-options" -}}
+{{if .Options -}}
+{{range .Options}}
+<li id="{{.OptionID}}" role="option" aria-selected="false" class="palette-opt" data-path="{{.Path}}">
+  <span class="palette-key mono">{{.Key}}</span>
+  <span class="palette-attr muted">{{if .Creator}}{{.Creator}}{{else}}—{{end}}{{if .Family}} · {{.Family}}{{end}}</span>
+</li>
+{{end}}
+{{if .Truncated}}
+<li role="presentation" class="palette-note muted">showing {{len .Options}} of {{.Total}} matching entities — narrow the search to see the rest</li>
+{{end}}
+{{- else if .Query -}}
+<li role="presentation" class="palette-note muted">no entities match “{{.Query}}”.</li>
+{{- else -}}
+{{template "palette-prompt"}}
+{{- end}}
+{{- end}}
+
+{{/* palette-prompt is the dialog's OPENING state: nothing typed, so nothing is offered.
+     Pre-loading arbitrary entities here would put a row under Enter that the reader never
+     chose. Defined once and shared with the layout so the two states cannot drift. */}}
+{{define "palette-prompt" -}}
+<li role="presentation" class="palette-note muted">type to search entities</li>
+{{- end}}

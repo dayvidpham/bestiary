@@ -1,0 +1,34 @@
+{{define "content" -}}
+<h1 class="mono">bestiary</h1>
+<p class="muted">
+  {{plural .EntityCount "entity" "entities"}} · {{plural .SeriesCount "series" "series"}} ·
+  {{plural .FamilyCount "family" "families"}} · {{plural .CreatorCount "creator" "creators"}}.
+  Walk from the lab that trained the weights down to a single entity. Offline, read-only.
+  <a href="/entities">dense browser ›</a> · <a href="/families">every series ›</a>
+</p>
+
+{{/* A native <details> disclosure tree — no client router, because a hierarchy walk is a
+     nested list and nothing here needs to re-render. Attributed creators open by default so
+     the page reads as a hierarchy on arrival rather than as a row of closed boxes; the
+     single unattributed remainder stays collapsed at the bottom, because "we do not know
+     who trained these" is a footnote to the page, not its opening statement. */}}
+<div class="tree">
+  {{range .Creators}}
+  <details class="creator-node"{{if .Attributed}} open{{end}}>
+    <summary class="mono">
+      <span class="creator-name">{{.Name}}</span>
+      <span class="muted">· {{plural (len .Families) "family" "families"}} · {{plural .EntityCount "entity" "entities"}}</span>
+    </summary>
+    {{range .Families}}
+    <details class="family-node">
+      <summary class="mono">
+        <span class="family-name">{{.Name}}</span>
+        <span class="muted">· {{plural .EntityCount "entity" "entities"}}</span>
+      </summary>
+      {{range .Series}}{{template "series-subtree" .}}{{end}}
+    </details>
+    {{end}}
+  </details>
+  {{end}}
+</div>
+{{- end}}

@@ -133,9 +133,43 @@ type entityJSON struct {
 	Nomina []bestiary.Nomen
 }
 
-// seriesView is the data model for the series/release explorer: the full Series → Release →
-// entity tree, walked from SeriesAll()/ReleasesOf()/EntitiesOf().
-type seriesView struct {
+// treeView is the data model for the FRONT PAGE: the Creator > Family > Series >
+// entities tree. It is the browsable entry point — a reader who has not yet
+// decided what they are looking for starts from the lab that trained the weights,
+// not from a nine-hundred-row table.
+type treeView struct {
+	Title           string
+	DatastarVersion string
+	Creators        []creatorNode
+	CreatorCount    int
+	FamilyCount     int
+	SeriesCount     int
+	EntityCount     int
+}
+
+// creatorNode is one lab at the root of the tree. Attributed is false for the
+// single remainder group of families with no curated creator: it renders last and
+// COLLAPSED, because "we do not know who trained these" is a footnote to the page,
+// not its opening statement.
+type creatorNode struct {
+	Name        string
+	Attributed  bool
+	Families    []familyNode
+	EntityCount int
+}
+
+// familyNode is one family beneath a creator, holding its versioned lines.
+type familyNode struct {
+	Name        string
+	Series      []seriesNode
+	EntityCount int
+}
+
+// familiesView is the data model for /families: the flat, creator-agnostic
+// Series -> Release -> entities walk. It is the same substrate the front-page tree
+// nests, rendered one level shallower for a reader who already knows the family
+// and wants the whole line at once.
+type familiesView struct {
 	Title           string
 	DatastarVersion string
 	Series          []seriesNode
@@ -143,23 +177,37 @@ type seriesView struct {
 	EntityCount     int
 }
 
-// seriesNode is one Series in the explorer tree: its display name, a stable same-page
-// anchor, and its releases.
+// seriesNode is ONE versioned line with the base hoist applied, and it is shared
+// by both pages so there is a single rendering of the hierarchy rather than two
+// that could drift.
+//
+// Hoisted carries the un-named release's entities directly; Releases carries only
+// NAMED releases. There is deliberately no "(base)" release here: the un-named
+// release is not a member of the line alongside the named ones, it is the line
+// itself, and giving it a node invented a level that does not exist.
+//
+// Anchor is emitted only where the page owns the anchor namespace (/families), so
+// a detail page's series link always resolves to exactly one place.
 type seriesNode struct {
 	Display     string
 	Anchor      string
+	Hoisted     []entityRef
 	Releases    []releaseNode
 	EntityCount int
+	// Mixed is true when the line has BOTH hoisted entities and named releases.
+	// The two sit at different levels of the hierarchy while rendering adjacent
+	// on screen, so the template must mark the hoisted group visually; a
+	// base-only line has nothing to distinguish it from and is left plain.
+	Mixed bool
 }
 
-// releaseNode is one Release within a Series: its display name (the bare line renders as
-// "(base)") and the entities that belong to it.
+// releaseNode is one NAMED release within a Series: its name and its entities.
 type releaseNode struct {
 	Name     string
 	Entities []entityRef
 }
 
-// entityRef is a minimal entity link (key + route path) for the explorer leaves.
+// entityRef is a minimal entity link (key + route path) for the tree leaves.
 type entityRef struct {
 	Key  string
 	Path string
@@ -387,15 +435,33 @@ func fracOf(n, d int64) int {
 // "/assets/*" instead — "/sse/" names the transport (this is specifically the datastar
 // SSE wiring seam, not a general entities collection endpoint one might expect to
 // support other verbs/methods), and "/assets/" is the more conventional name for a
-// same-origin static-asset mount. "/series" is the series/release explorer. Later work
-// builds on these shipped names — changing them now would be a breaking change to the
-// route table, not a cosmetic rename.
+// same-origin static-asset mount. Later work builds on these shipped names — changing
+// them now would be a breaking change to the route table, not a cosmetic rename.
+//
+// "/" is the Creator > Family > Series > entities tree and "/entities" is the dense
+// browser that used to live at "/": a reader arriving with no query in mind needs a
+// hierarchy to walk, not a nine-hundred-row table, while a reader who knows what they
+// want still has the table one click away.
+//
+// "/calculator" is the budget-first fit page and "/sse/calculator" its patch seam, named
+// on the same two conventions as the pair above: "/sse/" names the transport, and the page
+// route names the question the page answers rather than the data it reads.
+//
+// "/series" is GONE, not redirected. Its content was absorbed by "/families", which
+// emits the SAME series anchors, so the detail-page links that pointed into the old
+// explorer resolve at the new path. A retired route returns a hard 404: an alias would
+// keep a dead name alive in links and bookmarks indefinitely, which is the thing
+// retiring it was meant to stop.
 func (s *Server) routes() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", s.handleIndex)
+	mux.HandleFunc("GET /{$}", s.handleTree)
+	mux.HandleFunc("GET /entities", s.handleEntities)
+	mux.HandleFunc("GET /families", s.handleFamilies)
 	mux.HandleFunc("GET "+entityRoutePrefix, s.handleEntity)
+	mux.HandleFunc("GET /calculator", s.handleCalculator)
 	mux.HandleFunc("GET /sse/entities", s.handleEntitiesSSE)
-	mux.HandleFunc("GET /series", s.handleSeries)
+	mux.HandleFunc("GET /sse/calculator", s.handleCalculatorSSE)
+	mux.HandleFunc("GET /sse/palette", s.handlePaletteSSE)
 	mux.Handle("GET /assets/", http.FileServerFS(assetsFS))
 	s.handler = mux
 }
@@ -403,10 +469,12 @@ func (s *Server) routes() {
 // ServeHTTP makes Server an http.Handler (so httptest can drive it with no port bind).
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.handler.ServeHTTP(w, r) }
 
-// handleIndex renders the entity browser: the dense sortable table over every entity, the
-// filter rail, and the SSE-patched results container seeded with the default-ordered rows.
-func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	s.render(w, "index", indexView{
+// handleEntities renders the entity browser: the dense sortable table over every entity,
+// the filter rail, and the SSE-patched results container seeded with the default-ordered
+// rows. It served "/" until the front page became the tree; the browser itself is
+// unchanged, only its address.
+func (s *Server) handleEntities(w http.ResponseWriter, r *http.Request) {
+	s.render(w, "entities", indexView{
 		Title:           "catalog",
 		DatastarVersion: DatastarJSVersion,
 		EntityCount:     len(s.entities),
@@ -430,7 +498,9 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEntity(w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, entityRoutePrefix)
 	if key == "" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// A bare /entity/ names no entity; send the caller to the browser, which is
+		// the page that lists them, rather than to the tree.
+		http.Redirect(w, r, "/entities", http.StatusSeeOther)
 		return
 	}
 	e, ok := s.byKey[key]
@@ -593,49 +663,264 @@ func containsStr(xs []string, x string) bool {
 	return false
 }
 
-// handleSeries renders the series/release explorer: the full Series → Release → entity tree,
-// walked from SeriesAll()/ReleasesOf()/EntitiesOf(). It is a native <details> disclosure
-// tree (no client router, no chart — a hierarchy walk is a nested list). Entity leaves link
-// to their detail pages; each Series carries a stable anchor a detail page's "series"
-// section links back to.
-func (s *Server) handleSeries(w http.ResponseWriter, r *http.Request) {
-	series := bestiary.SeriesAll()
-	nodes := make([]seriesNode, 0, len(series))
-	total := 0
-	for _, ser := range series {
-		relNodes := make([]releaseNode, 0)
-		count := 0
-		for _, rel := range bestiary.ReleasesOf(ser) {
-			ents := bestiary.EntitiesOf(rel)
-			refs := make([]entityRef, 0, len(ents))
-			for _, e := range ents {
-				refs = append(refs, entityRef{
-					Key:  e.Ref.String(),
-					Path: e.Ref.IRI(entityRoutePrefix),
-				})
-			}
-			name := rel.Name
-			if name == "" {
-				name = "(base)"
-			}
-			relNodes = append(relNodes, releaseNode{Name: name, Entities: refs})
-			count += len(refs)
+// ===== Command palette =====================================================================
+//
+// The palette is entity SEARCH AND NAVIGATE, and nothing else. It deliberately carries no
+// page-navigation or view-action commands: a palette that also runs actions has to explain
+// which of its rows change the page and which change the app, and the moment it does, a
+// keystroke that used to open an entity can start doing something else. Every row here
+// resolves to one entity URL, so Enter always means the same thing.
+//
+// It reuses the SSE fragment seam the browser already uses (ReadSignals -> NewSSE ->
+// PatchElements); only the target element differs (#palette-results, not #entity-results).
+
+// paletteMaxResults caps how many options one patch renders. A combobox popup is scanned,
+// not paged, so a hundred rows would be noise; the cap is surfaced to the reader (the
+// fragment states the total when it truncates) rather than silently swallowing matches.
+const paletteMaxResults = 10
+
+// paletteQuery is the view-state the palette SSE endpoint reads from the Datastar signals:
+// the one free-text term the combobox input is bound to. Like the browser's signals this is
+// NON-IDENTITY view-state — it selects which options are offered, never which entity a
+// chosen option denotes.
+type paletteQuery struct {
+	PaletteQuery string `json:"paletteQuery"`
+}
+
+// paletteOption is one rendered combobox option: the canonical key the reader recognizes,
+// the same-origin route Enter navigates to (== EntityRef.IRI(entityRoutePrefix), the exact
+// path /entity/ dereferences), and the two attribution facets that disambiguate keys that
+// read alike. OptionID is the DOM id the input's aria-activedescendant points at; it is
+// minted server-side so the pointer target and the rendered row can never disagree.
+type paletteOption struct {
+	OptionID string
+	Key      string
+	Path     string
+	Family   string
+	Creator  string
+}
+
+// paletteView is the fragment's data model. Total is the match count BEFORE the cap, so a
+// truncated list can say so; Query is echoed to distinguish "nothing typed yet" (the
+// opening state of the dialog) from "nothing matches what you typed".
+type paletteView struct {
+	Query   string
+	Options []paletteOption
+	Total   int
+}
+
+// Truncated reports whether the cap hid matches, i.e. whether the fragment must tell the
+// reader that Total is larger than what it listed.
+func (v paletteView) Truncated() bool { return v.Total > len(v.Options) }
+
+// handlePaletteSSE is the palette's wiring seam: read the one search signal, rank the
+// matching entities, and PatchElements the option list into #palette-results. It is the
+// same SDK path as handleEntitiesSSE against a different target, which is why the palette
+// needed no new route KIND, no client router and no new dependency.
+func (s *Server) handlePaletteSSE(w http.ResponseWriter, r *http.Request) {
+	var q paletteQuery
+	// Tolerant read: an absent/empty signal is the dialog's opening state, not an error.
+	_ = datastar.ReadSignals(r, &q)
+
+	var buf bytes.Buffer
+	if err := s.fragments.ExecuteTemplate(&buf, "palette-options", s.palette(q)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sse := datastar.NewSSE(w, r)
+	_ = sse.PatchElements(
+		buf.String(),
+		datastar.WithSelector("#palette-results"),
+		datastar.WithMode(datastar.ElementPatchModeInner),
+	)
+}
+
+// palette ranks the corpus against the search term and returns at most paletteMaxResults
+// options, plus the uncapped match total.
+//
+// The rank is a relevance order, not a new identity: a term that PREFIXES a canonical key
+// is what the reader almost always meant, so those come first; a term found anywhere else
+// in the key comes next; a term that only matched the attribution (family or creator) comes
+// last, because that reader typed a lab, not a model. Within a rank the corpus DEFAULT
+// order (Family then key, established in buildRows) breaks the tie, so the same term always
+// yields the same list.
+//
+// An empty term matches NOTHING: an opening palette that pre-loads ten arbitrary entities
+// invites a reader to press Enter on a row they did not choose.
+func (s *Server) palette(q paletteQuery) paletteView {
+	term := strings.ToLower(strings.TrimSpace(q.PaletteQuery))
+	v := paletteView{Query: strings.TrimSpace(q.PaletteQuery)}
+	if term == "" {
+		return v
+	}
+
+	type ranked struct {
+		row  entityRow
+		rank int
+	}
+	hits := make([]ranked, 0, paletteMaxResults)
+	for _, r := range s.rows {
+		rk, ok := paletteRank(r, term)
+		if !ok {
+			continue
 		}
-		total += count
-		nodes = append(nodes, seriesNode{
-			Display:     ser.String(),
-			Anchor:      seriesAnchor(ser),
-			Releases:    relNodes,
-			EntityCount: count,
+		v.Total++
+		hits = append(hits, ranked{row: r, rank: rk})
+	}
+	// Stable: s.rows is already in the default order, so equal ranks keep it.
+	sort.SliceStable(hits, func(i, j int) bool { return hits[i].rank < hits[j].rank })
+	if len(hits) > paletteMaxResults {
+		hits = hits[:paletteMaxResults]
+	}
+
+	v.Options = make([]paletteOption, 0, len(hits))
+	for i, h := range hits {
+		v.Options = append(v.Options, paletteOption{
+			OptionID: paletteOptionID(i),
+			Key:      h.row.Key,
+			Path:     h.row.Path,
+			Family:   h.row.Family,
+			Creator:  h.row.Creator,
 		})
 	}
-	s.render(w, "series", seriesView{
-		Title:           "series",
+	return v
+}
+
+// paletteRank scores one row against an already-lowercased, non-empty term: 0 for a key
+// prefix, 1 for a key substring, 2 for an attribution (family/creator) substring. ok is
+// false when the row does not match at all.
+func paletteRank(r entityRow, term string) (int, bool) {
+	key := strings.ToLower(r.Key)
+	switch {
+	case strings.HasPrefix(key, term):
+		return 0, true
+	case strings.Contains(key, term):
+		return 1, true
+	case strings.Contains(strings.ToLower(r.Family), term),
+		strings.Contains(strings.ToLower(r.Creator), term):
+		return 2, true
+	}
+	return 0, false
+}
+
+// paletteOptionID mints the DOM id of the i-th option. The ids are positional and dense
+// (0..n-1) because the combobox pointer moves by POSITION: the browser-side handler walks
+// the rendered options and writes the chosen one's id into aria-activedescendant, so an id
+// that encoded the entity key instead would buy nothing and would have to be escaped.
+func paletteOptionID(i int) string { return fmt.Sprintf("palette-opt-%d", i) }
+
+// handleTree renders the FRONT PAGE: the Creator > Family > Series > entities tree,
+// walked from the root package's CreatorGroups() projection. It is a native <details>
+// disclosure tree (no client router — a hierarchy walk is a nested list). Attributed
+// creators render expanded; the single unattributed remainder renders collapsed at the
+// bottom.
+//
+// The tree emits NO series anchors: /families owns that namespace, so a detail page's
+// series link resolves to exactly one page rather than two that both claim the id.
+func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
+	groups := bestiary.CreatorGroups()
+	nodes := make([]creatorNode, 0, len(groups))
+	var families, series, total int
+	for _, cg := range groups {
+		famNodes := make([]familyNode, 0, len(cg.Families))
+		for _, fg := range cg.Families {
+			serNodes := make([]seriesNode, 0, len(fg.Series))
+			for _, sg := range fg.Series {
+				serNodes = append(serNodes, newSeriesNode(sg, ""))
+			}
+			series += len(serNodes)
+			famNodes = append(famNodes, familyNode{
+				Name:        string(fg.Family),
+				Series:      serNodes,
+				EntityCount: fg.EntityCount,
+			})
+		}
+		families += len(famNodes)
+		total += cg.EntityCount
+		name := string(cg.Creator)
+		attributed := cg.Creator != bestiary.CreatorNone
+		if !attributed {
+			// The label reads under a text-transform:uppercase rule, where a
+			// noun-first phrasing scans backwards; the bare adjective is what
+			// a reader glancing at the collapsed group needs. The entity page
+			// uses the same bare wording so the site stays consistent.
+			name = "unattributed"
+		}
+		nodes = append(nodes, creatorNode{
+			Name:        name,
+			Attributed:  attributed,
+			Families:    famNodes,
+			EntityCount: cg.EntityCount,
+		})
+	}
+	s.render(w, "tree", treeView{
+		Title:           "bestiary",
+		DatastarVersion: DatastarJSVersion,
+		Creators:        nodes,
+		CreatorCount:    len(nodes),
+		FamilyCount:     families,
+		SeriesCount:     series,
+		EntityCount:     total,
+	})
+}
+
+// handleFamilies renders the flat Series -> Release -> entities walk, absorbing what the
+// retired /series explorer showed. It emits the same per-series anchors that explorer did,
+// so every detail page's series link still resolves.
+func (s *Server) handleFamilies(w http.ResponseWriter, r *http.Request) {
+	groups := bestiary.SeriesGroups()
+	nodes := make([]seriesNode, 0, len(groups))
+	total := 0
+	for _, sg := range groups {
+		nodes = append(nodes, newSeriesNode(sg, seriesAnchor(sg.Series)))
+		total += sg.EntityCount
+	}
+	s.render(w, "families", familiesView{
+		Title:           "families",
 		DatastarVersion: DatastarJSVersion,
 		Series:          nodes,
 		SeriesCount:     len(nodes),
 		EntityCount:     total,
 	})
+}
+
+// newSeriesNode converts one hoisted SeriesGroup into its render node. It is the SINGLE
+// conversion both pages use, which is what keeps them from drifting: the base hoist has one
+// implementation in the projection and one rendering here, so a "(base)" node cannot
+// reappear on one page only.
+//
+// anchor is empty for a page that does not own the anchor namespace.
+func newSeriesNode(sg bestiary.SeriesGroup, anchor string) seriesNode {
+	n := seriesNode{
+		Display:     sg.Series.String(),
+		Anchor:      anchor,
+		Hoisted:     entityRefs(sg.Hoisted),
+		EntityCount: sg.EntityCount,
+		Mixed:       sg.Shape() == bestiary.SeriesShapeMixed,
+	}
+	n.Releases = make([]releaseNode, 0, len(sg.Releases))
+	for _, rg := range sg.Releases {
+		n.Releases = append(n.Releases, releaseNode{
+			Name:     rg.Release.Name,
+			Entities: entityRefs(rg.Entities),
+		})
+	}
+	return n
+}
+
+// entityRefs projects entities onto their (key, route path) link pairs. The path is minted
+// with the same EntityRef.IRI(entityRoutePrefix) grammar the route dereferences, so a tree
+// leaf and the page it opens can never disagree.
+func entityRefs(ents []bestiary.Entity) []entityRef {
+	out := make([]entityRef, 0, len(ents))
+	for _, e := range ents {
+		out = append(out, entityRef{
+			Key:  e.Ref.String(),
+			Path: e.Ref.IRI(entityRoutePrefix),
+		})
+	}
+	return out
 }
 
 // seriesAnchor renders a stable, URL-fragment-safe same-page anchor for a Series. It is a
@@ -680,4 +965,263 @@ func (s *Server) render(w http.ResponseWriter, page string, data any) {
 func negotiateJSON(accept string) bool {
 	accept = strings.ToLower(accept)
 	return strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html")
+}
+
+// ---- The budget-first fit calculator ----------------------------------------
+
+// The calculator's presets. A budget the reader has not yet touched must still produce a
+// page that answers something, and the headroom preset is deliberately NON-ZERO: the
+// shipped VRAM formula carries no runtime-overhead term, so a fit verdict computed from
+// a raw lower bound would say "yes" for models that run out of memory in practice. The
+// slack is surfaced as a control the reader owns rather than smuggled into the datum.
+const (
+	calcDefaultBudgetGiB   = 24
+	calcDefaultHeadroomGiB = 2
+	// calcMaxRows caps what the page RENDERS, never what FitOver computes. The cap is
+	// stated on the page whenever it bites (see calcView.Truncated) — a silently
+	// truncated table reads as "this is everything", which is the one thing a coverage
+	// statement exists to prevent.
+	calcMaxRows = 200
+	bytesPerGiB = int64(1) << 30
+)
+
+// calcQuery is the view-state the calculator SSE endpoint reads from the Datastar
+// signals. Every field arrives as a string because that is what a bound form control
+// produces; each is parsed tolerantly, so a malformed value degrades to the default view
+// rather than to a 400 (the parseCtx precedent). This is NON-IDENTITY view-state: it
+// selects which rows are listed, never which entity a link denotes.
+type calcQuery struct {
+	Budget     string `json:"budget"`
+	Headroom   string `json:"headroom"`
+	MinContext string `json:"minContext"`
+}
+
+// filter turns the raw signals into the library's FitFilter. Budget and headroom are read
+// in GiB because that is the unit a reader knows their card in; the library works in
+// bytes throughout and never sees the GiB figure.
+func (q calcQuery) filter() bestiary.FitFilter {
+	budget := parseGiB(q.Budget, calcDefaultBudgetGiB)
+	headroom := parseGiB(q.Headroom, calcDefaultHeadroomGiB)
+	return bestiary.FitFilter{
+		Budget: bestiary.FitBudget{
+			TotalBytes:    int64(budget * float64(bytesPerGiB)),
+			HeadroomBytes: int64(headroom * float64(bytesPerGiB)),
+		},
+		MinContext: parseNonNegativeInt(q.MinContext),
+	}
+}
+
+// parseGiB reads a GiB figure from a bound form control. A missing, non-numeric or
+// negative value yields the preset; zero is honored, because a reader who deliberately
+// sets the headroom to nothing has said something and must be believed.
+func parseGiB(s string, preset float64) float64 {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return preset
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil || v < 0 {
+		return preset
+	}
+	return v
+}
+
+// parseNonNegativeInt reads an optional token count. Anything unreadable is no
+// constraint, never an error.
+func parseNonNegativeInt(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
+// calcRow is the render view of one fit row: every cell precomputed, so the template
+// makes no decisions and the same strings are asserted by the tests the reader sees.
+type calcRow struct {
+	Key      string
+	Path     string
+	Provider string
+	Quant    string
+	// Weights is the weights figure, e.g. "17.1 GB".
+	Weights string
+	// Context is the max-affordable-context cell. It is a token count, the literal
+	// "unknown", or "no context budget remaining" -- never an unbounded figure.
+	Context string
+	// Bound names which limit produced Context; empty when Context carries no figure.
+	Bound string
+	// Badge is the honesty label, naming every qualification that applies. It is empty
+	// only for a fully-measured row with a computable KV term.
+	Badge string
+	// BadgeTitle is the badge's long-form explanation.
+	BadgeTitle string
+	// Derived is true when the weights figure is an estimate rather than a file size.
+	Derived bool
+}
+
+// fitCoverage carries the four denominators the coverage statement is rendered from. The
+// sentence on the page interpolates these fields; it never contains a literal count,
+// because a literal goes stale the first time the corpus moves.
+type fitCoverage struct {
+	Considered int
+	Measured   int
+	Derived    int
+	Excluded   int
+}
+
+// calcView is the data model for the calculator page.
+type calcView struct {
+	Title           string
+	DatastarVersion string
+	// BudgetGiB / HeadroomGiB / MinContext seed the form controls with the values the
+	// current render used, so the page and its signals never disagree on first paint.
+	BudgetGiB   string
+	HeadroomGiB string
+	MinContext  string
+	// Available is the budget actually spendable on weights, "NN.N GB".
+	Available string
+	Rows      []calcRow
+	Coverage  fitCoverage
+	// RowsTotal is how many rows fit the budget; RowsShown is how many are rendered.
+	// They differ only when the render cap bites, which Truncated reports in words.
+	RowsTotal int
+	RowsShown int
+	Truncated bool
+}
+
+// handleCalculator renders the budget-first calculator: the reader states a VRAM budget
+// and an adjustable headroom, and the page lists what fits, largest first. It is the
+// direction-reversal of the detail page's context recompute -- there you pick a model and
+// ask how much VRAM; here you state the VRAM and ask what runs.
+func (s *Server) handleCalculator(w http.ResponseWriter, r *http.Request) {
+	q := calcQuery{
+		Budget:     r.URL.Query().Get("budget"),
+		Headroom:   r.URL.Query().Get("headroom"),
+		MinContext: r.URL.Query().Get("minContext"),
+	}
+	s.render(w, "calculator", s.calcView(q))
+}
+
+// handleCalculatorSSE is the datastar wiring seam for the calculator: it reads the budget
+// signals, re-runs the fit, and PatchElements the ranked table into #calc-results. The
+// coverage statement is patched with it, because the denominators are part of the answer
+// and must never lag the table they describe.
+func (s *Server) handleCalculatorSSE(w http.ResponseWriter, r *http.Request) {
+	var q calcQuery
+	// Tolerant read: absent signals are not an error (the initial load has none).
+	_ = datastar.ReadSignals(r, &q)
+
+	var buf bytes.Buffer
+	if err := s.fragments.ExecuteTemplate(&buf, "calc-results", s.calcView(q)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	sse := datastar.NewSSE(w, r)
+	_ = sse.PatchElements(
+		buf.String(),
+		datastar.WithSelector("#calc-results"),
+		datastar.WithMode(datastar.ElementPatchModeInner),
+	)
+}
+
+// calcView runs the fit and projects it for rendering. It is the ONE place the page's
+// numbers come from, so the initial render and every SSE patch agree by construction.
+func (s *Server) calcView(q calcQuery) calcView {
+	f := q.filter()
+	res := bestiary.FitOver(s.entities, f)
+
+	shown := res.Rows
+	if len(shown) > calcMaxRows {
+		shown = shown[:calcMaxRows]
+	}
+	rows := make([]calcRow, 0, len(shown))
+	for _, r := range shown {
+		rows = append(rows, newCalcRow(r))
+	}
+	return calcView{
+		Title:           "calculator",
+		DatastarVersion: DatastarJSVersion,
+		BudgetGiB:       trimFloat(float64(f.Budget.TotalBytes) / float64(bytesPerGiB)),
+		HeadroomGiB:     trimFloat(float64(f.Budget.HeadroomBytes) / float64(bytesPerGiB)),
+		MinContext:      strconv.Itoa(f.MinContext),
+		Available:       vramLabel(f.Budget.Available()),
+		Rows:            rows,
+		Coverage: fitCoverage{
+			Considered: res.EntitiesConsidered,
+			Measured:   res.EntitiesMeasured,
+			Derived:    res.EntitiesDerived,
+			Excluded:   res.EntitiesExcluded,
+		},
+		RowsTotal: len(res.Rows),
+		RowsShown: len(rows),
+		Truncated: len(res.Rows) > len(rows),
+	}
+}
+
+// newCalcRow projects one library row into display strings. Every honesty qualification
+// the library typed is spelled out here in words: a derived figure says so, a weights-only
+// bound says so, and the two say so TOGETHER when both apply, because a reader who sees
+// only one of them has been told half the truth.
+func newCalcRow(r bestiary.FitRow) calcRow {
+	key := r.Ref.String()
+	out := calcRow{
+		Key:      key,
+		Path:     r.Ref.IRI(entityRoutePrefix),
+		Provider: string(r.Provider),
+		Quant:    r.Quant.String(),
+		Weights:  vramLabel(r.WeightsBytes),
+		Derived:  r.WeightsBasis == bestiary.BasisDerived,
+	}
+	if r.QuantRaw != "" {
+		out.Quant = r.QuantRaw
+	}
+	switch {
+	case r.Bound == bestiary.ContextBoundUnknown:
+		out.Context = "unknown"
+	case r.NoContextBudget():
+		out.Context = "no context budget remaining"
+	default:
+		out.Context = commaInt(int64(r.MaxContext)) + " tokens"
+		out.Bound = r.Bound.String() + "-bound"
+	}
+	switch {
+	case out.Derived:
+		out.Badge = "derived · weights-only"
+		out.BadgeTitle = "derived: weights estimated from the attested total parameter count " +
+			"times bits-per-weight, not a measured file size. weights-only: the KV-cache term " +
+			"is omitted because no architecture facts are published for this entity, so real " +
+			"VRAM will be higher."
+	case r.Partial:
+		out.Badge = "weights-only"
+		out.BadgeTitle = "weights-only lower bound: the KV-cache term is omitted because at " +
+			"least one architecture fact is absent, so real VRAM will be higher."
+	}
+	return out
+}
+
+// trimFloat renders a GiB figure without a trailing ".0", so a whole-number budget seeds
+// its form control as "24" rather than "24.0".
+func trimFloat(v float64) string {
+	return strconv.FormatFloat(v, 'f', -1, 64)
+}
+
+// commaInt groups an integer with thousands separators. A six-figure token count is the
+// kind of number a reader compares at a glance, and an ungrouped one defeats that.
+func commaInt(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	neg := strings.HasPrefix(s, "-")
+	if neg {
+		s = s[1:]
+	}
+	var b strings.Builder
+	for i, r := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			b.WriteByte(',')
+		}
+		b.WriteRune(r)
+	}
+	if neg {
+		return "-" + b.String()
+	}
+	return b.String()
 }

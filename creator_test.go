@@ -9,8 +9,10 @@ import (
 
 // creatorSeed is the UAT-confirmed Family→Creator mapping ("seed as listed"),
 // asserted verbatim so a curation change to parse/data/creators.json that drops or
-// re-points one of the nine labs is caught. VARIANT families (glm-air, gpt-mini, …)
-// are deliberately absent from the seed and resolve to CreatorNone (see
+// re-points one of these nine labs is caught. It is deliberately NOT the whole table
+// — the table has since grown a lab-derived group and a hand-curated group — it is
+// the original UAT set, held fixed as a regression floor. VARIANT families (glm-air,
+// gpt-mini, …) remain absent and resolve to CreatorNone (see
 // TestFamilyCreator_UnmappedIsNone).
 var creatorSeed = map[bestiary.Family]bestiary.Creator{
 	"llama":         bestiary.CreatorMeta,
@@ -34,7 +36,8 @@ var creatorSeed = map[bestiary.Family]bestiary.Creator{
 }
 
 // TestFamilyCreator_SeedMappings pins the nine UAT-confirmed lab mappings: each
-// seeded family resolves through the curated creators.json to its expected Creator.
+// seeded family still resolves through the curated creators.json to its expected
+// Creator after every later expansion of the table.
 func TestFamilyCreator_SeedMappings(t *testing.T) {
 	for fam, want := range creatorSeed {
 		if got := fam.Creator(); got != want {
@@ -88,13 +91,50 @@ func TestCreator_TextCodecRoundTrips(t *testing.T) {
 	}
 }
 
-// TestCreator_IsKnownAndCreators asserts the well-known set is exactly the nine
-// seeded labs, that Creators() returns a defensive copy, and that CreatorNone / an
+// TestCreator_IsKnownAndCreators pins the size of the well-known Creator set, checks
+// that Creators() returns a defensive copy, and checks that CreatorNone / an
 // arbitrary token are NOT known.
+//
+// The pin is DERIVED, not copied forward. The set has three provenance groups and the
+// count is their sum, measured from this repository state:
+//
+//	  9  hand-curated seed labs (meta, openai, anthropic, google, mistral, cohere,
+//	     deepseek, alibaba, zhipu)
+//	+ 15  tokens from the models.dev lab-prefix derivation. The catalog carries 24
+//	     distinct lab prefixes; 8 of them (alibaba, anthropic, cohere, deepseek,
+//	     google, meta, mistral, openai) are already seed labs and "zhipuai" is a
+//	     spelling variant of the seeded "zhipu" and is deliberately NOT applied —
+//	     24 − 8 − 1 = 15. "thinkingmachines" was the 16th prefix and the deferral
+//	     that made this 14: it was withheld only because a curated alias pointed
+//	     Inkling at the "ling" family, so applying it would have credited Thinking
+//	     Machines with inclusionAI's Ling line. The collision split ends that — the
+//	     alias now points at "inkling", the lab evidence reaches its own family
+//	     unambiguously, and the withhold list is empty.
+//	+ 19  tokens hand-curated for families the metadata join never reaches
+//	     (01ai, ai21, amazon, baai, baichuan, baidu, blackforestlabs, bytedance,
+//	     elevenlabs, ibm, ideogram, inclusionai, nousresearch, recraft, reka,
+//	     runway, stabilityai, upstage, voyageai)
+//	= 43
+//
+// 41 → 43 with the ling/inkling/kling collision split, one token in each derived
+// group and for a different reason each time. "thinkingmachines" joins group 2
+// because the split frees the lab derivation to attribute Inkling to the lab that
+// trained it. "inclusionai" joins group 3 because the same split leaves "ling"
+// with NO lab-scoped metadata row at all — the one row that ever reached it was
+// the mislabelled Inkling — so its originator can no longer be derived and has to
+// be authored by hand. "kling" is deliberately left unattributed: naming its lab
+// is a separate curation decision, not part of splitting the collision.
 func TestCreator_IsKnownAndCreators(t *testing.T) {
+	const (
+		seedLabs        = 9
+		labDerived      = 15
+		curatedUnreach  = 19
+		wantCreatorsLen = seedLabs + labDerived + curatedUnreach // 43
+	)
 	all := bestiary.Creators()
-	if len(all) != 9 {
-		t.Fatalf("Creators() returned %d entries, want 9", len(all))
+	if len(all) != wantCreatorsLen {
+		t.Fatalf("Creators() returned %d entries, want %d (%d seed + %d lab-derived + %d curated-unreached)",
+			len(all), wantCreatorsLen, seedLabs, labDerived, curatedUnreach)
 	}
 	for _, c := range all {
 		if !c.IsKnown() {

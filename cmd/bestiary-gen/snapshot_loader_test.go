@@ -159,13 +159,23 @@ type testingTB interface {
 // It is the sibling of LoadSnapshotRecords and deliberately NOT a replacement. The two
 // corpora answer different questions and both are needed:
 //
-//   - the frozen testdata snapshot is a HISTORICAL BASELINE. The path-unification diff,
-//     the drift analysis and the divergence report all measure change RELATIVE to it, so
-//     it must stay pinned in the past — regrounding it would erase the very baseline
-//     those assertions compare against.
+//   - the frozen testdata snapshot is the FIXED MEASUREMENT BASELINE. The path-unification
+//     diff, the drift analysis and the divergence report all measure change RELATIVE to it,
+//     so it must hold still WHILE a change is being measured.
 //   - the vendored catalog is the data codegen actually consumes. A guard asking "is this
 //     curated entry grounded in real data?" means the data the bake reads, so grounding it
 //     in a fixture that has since fallen behind reports live entries as dead.
+//
+// "Holds still" is not "never moves". A baseline is NEVER regrounded to make a red gate
+// green — that erases the evidence the gate exists to produce. But a DECLARED CORPUS
+// REFRESH is a reviewed act: the two corpora are reground together, in one commit, with a
+// published diff and a stated disposition for every ledger entry the re-capture
+// invalidates. Letting the fixture fall arbitrarily far behind the vendored catalog is
+// its own dishonesty — it hides real upstream divergences (the refresh that reground this
+// fixture on the catalog surfaced four, previously invisible because the providers that
+// disagree postdated the capture) and it makes every "grounded in real data" verdict a
+// verdict about data the bake no longer reads. See the HONESTY CONTRACT at the top of
+// path_unification_test.go for the full rule and the recorded capture points.
 //
 // Both are committed files read from disk with no network access, so this stays as
 // hermetic and deterministic as the frozen loader.

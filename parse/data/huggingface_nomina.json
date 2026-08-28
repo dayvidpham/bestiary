@@ -804,7 +804,10 @@
       "value": "XiaomiMiMo/MiMo-V2-Flash",
       "resolves_to": {
         "family": "mimo",
-        "variant": "flash"
+        "version": "2",
+        "modifier": [
+          "flash"
+        ]
       },
       "source_url": "https://huggingface.co/XiaomiMiMo/MiMo-V2-Flash"
     },
@@ -812,7 +815,6 @@
       "value": "XiaomiMiMo/MiMo-V2.5",
       "resolves_to": {
         "family": "mimo",
-        "variant": "v",
         "version": "2.5"
       },
       "source_url": "https://huggingface.co/XiaomiMiMo/MiMo-V2.5"
@@ -821,7 +823,6 @@
       "value": "XiaomiMiMo/MiMo-V2.5-Pro",
       "resolves_to": {
         "family": "mimo",
-        "variant": "v",
         "version": "2.5",
         "modifier": [
           "pro"
@@ -1479,6 +1480,7 @@
       "resolves_to": {
         "family": "mistral",
         "variant": "large",
+        "version": "3",
         "param_size": "675b",
         "modifier": [
           "instruct"

@@ -174,12 +174,14 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	// and a diagnostic message that names the missed namespace.
 	if purlLooseFallback {
 		// Build a deduplicated candidate list from all matches (group by ID).
-		// Fix: prefer the canonical provider as the
-		// per-ID representative. When iterating matches, if the current match is the
-		// canonical provider for its family, upgrade the stored representative (even
-		// if we've already seen this ID). This mirrors the multi-group logic at
-		// resolve.go:267-276 so FormatAmbiguous Section 1 is never empty for a model
-		// that IS hosted by its canonical provider.
+		// Prefer the most-preferred provider as the per-ID representative: when the
+		// current match ranks strictly better than the stored representative it
+		// replaces it. The ranking is creator-distribution first, then canonical
+		// provider, then rehost (providerPreferenceFor), so a first-party row wins
+		// over a rehost and the canonical-provider preference this site already had
+		// still applies beneath it. This mirrors the multi-group logic in
+		// selectRepresentative so FormatAmbiguous's Creator and Canonical sections are
+		// never empty for a model that IS hosted first-party.
 		candidateMap := make(map[ModelID]ModelRef)
 		var candidateOrder []ModelID
 		for _, m := range matches {
@@ -187,13 +189,10 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 			if !seen {
 				candidateOrder = append(candidateOrder, m.ID)
 				candidateMap[m.ID] = m
-			} else {
-				// Upgrade to the canonical provider when the stored rep is not canonical
-				// and the current match is the canonical provider for this family.
-				canonProv := m.Family.CanonicalProvider()
-				if canonProv != "" && m.Provider == canonProv && existing.Provider != canonProv {
-					candidateMap[m.ID] = m
-				}
+				continue
+			}
+			if providerPreferenceScore(m.Family, m.Provider) < providerPreferenceScore(existing.Family, existing.Provider) {
+				candidateMap[m.ID] = m
 			}
 		}
 		candidates := make([]ModelRef, 0, len(candidateOrder))
@@ -320,7 +319,27 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 		// rather than filtered — long-standing behavior this change does not touch —
 		// so those inputs land on SchemeHuggingFace and likewise skip the preference.)
 		if scheme == SchemeCanonical && len(matches) > 0 {
-			canonicalProv := matches[0].Family.CanonicalProvider()
+			fam := matches[0].Family
+			// Creator axis FIRST: when the family's creator operates a curated
+			// distribution surface that is present in the match set, narrow to the
+			// most-preferred such surface — the earliest entry in the creator's
+			// curated list, so the winner is a curation decision. Narrowing to ONE
+			// provider (rather than to the creator's whole surface set) is what keeps
+			// this layer shape-compatible with the canonical-provider preference
+			// beneath it: both answer "which single host does `bestiary show` render".
+			matchProviders := make([]Provider, 0, len(matches))
+			for _, m := range matches {
+				matchProviders = append(matchProviders, m.Provider)
+			}
+			if creatorProv, ok := preferredCreatorProvider(fam, matchProviders); ok {
+				if filtered := filterByProvider(matches, creatorProv); len(filtered) > 0 {
+					return filtered, nil
+				}
+			}
+			// Canonical-provider preference, UNCHANGED, as the layer beneath: it still
+			// runs in full for a family with no creator, no curated distribution row,
+			// or no creator-hosted row in this match set.
+			canonicalProv := fam.CanonicalProvider()
 			if canonicalProv != "" {
 				filtered := filterByProvider(matches, canonicalProv)
 				if len(filtered) > 0 {
@@ -352,14 +371,17 @@ func Resolve(input string, opts ...ResolveOption) ([]ModelRef, error) {
 	}
 }
 
-// collectRehostProviders returns the distinct providers from refs that are NOT
-// the canonical/originating provider for their family. Providers are deduplicated
-// in stable first-seen order. This is used to populate ErrAmbiguous.RehostProviders.
+// collectRehostProviders returns the distinct providers from refs that host a model
+// FIRST-PARTY for neither of the two originating axes: they are neither one of the
+// family creator's curated distribution surfaces nor the family's canonical provider.
+// Providers are deduplicated in stable first-seen order. This is used to populate
+// ErrAmbiguous.RehostProviders, whose "Also rehosted by" listing would otherwise name
+// a lab's own hosting surface as a rehost of its own weights.
 func collectRehostProviders(refs []ModelRef) []Provider {
 	seen := make(map[Provider]struct{})
 	var out []Provider
 	for _, m := range refs {
-		if m.Provider == m.Family.CanonicalProvider() {
+		if !isRehostProvider(m.Family, m.Provider) {
 			continue
 		}
 		if _, dup := seen[m.Provider]; dup {
@@ -557,13 +579,19 @@ func parseContextN(id ModelID) string {
 // cross-provider-hosted models (all sharing the same canonical identity).
 //
 // Tiebreak order:
-//  1. Prefer the row whose Provider equals Family.CanonicalProvider() for the
-//     family (as defined in family.go). This ensures the originating publisher
-//     appears as the representative rather than an arbitrary rehost.
-//  2. When no canonical provider is present in the group (or CanonicalProvider
-//     returns ""), fall back to the lexicographically-smallest Provider string.
-//     This guarantees a deterministic result regardless of slice order or map
-//     iteration order.
+//  1. Prefer the row whose Provider is one of the family CREATOR's curated
+//     distribution surfaces (Creator.Providers). The originator answering for its own
+//     weights is the most representative row there is.
+//  2. Otherwise prefer the row whose Provider equals Family.CanonicalProvider() for
+//     the family (as defined in family.go). This axis is unchanged and still applies
+//     in full; it simply sits beneath the creator axis.
+//  3. When neither is present in the group, fall back to the
+//     lexicographically-smallest Provider string. This guarantees a deterministic
+//     result regardless of slice order or map iteration order.
+//
+// Steps 1 and 2 scan in group order and take the FIRST row at the best rank present,
+// which is deterministic because the group itself is built in a deterministic order;
+// step 3 is order-independent by construction.
 //
 // Panics on an empty group (caller invariant: groups always contain ≥1 ref).
 func selectRepresentative(group []ModelRef) ModelRef {
@@ -573,20 +601,17 @@ func selectRepresentative(group []ModelRef) ModelRef {
 	if len(group) == 1 {
 		return group[0]
 	}
-	// Prefer canonical provider row.
-	canonProv := group[0].Family.CanonicalProvider()
-	if canonProv != "" {
-		for _, r := range group {
-			if r.Provider == canonProv {
-				return r
-			}
-		}
-	}
-	// Lexicographic tiebreak: smallest Provider string for determinism.
+	// Single pass over the shared preference score: the best-scoring row wins, and
+	// equal scores fall back to the lexicographically-smallest Provider string. The
+	// score already encodes creator-distribution (by curated primacy index) above
+	// canonical-provider above rehost, so a tie can only be two rehosts — exactly the
+	// case the lexicographic rule was written for.
 	rep := group[0]
+	repScore := providerPreferenceScore(rep.Family, rep.Provider)
 	for _, r := range group[1:] {
-		if r.Provider < rep.Provider {
-			rep = r
+		score := providerPreferenceScore(r.Family, r.Provider)
+		if score < repScore || (score == repScore && r.Provider < rep.Provider) {
+			rep, repScore = r, score
 		}
 	}
 	return rep
@@ -630,9 +655,38 @@ func normalizeInput(input string, scheme CanonicalScheme) string {
 // is not an exact ID, enabling lookups like "claude" to return multiple
 // candidates (triggering ErrAmbiguous).
 func matchModels(matchInput string, scheme CanonicalScheme) []ModelRef {
+	out := matchModelsPass(matchInput, scheme, matchPassStrict)
+	// Set-level fallback gate. The repair pass runs ONLY when the strict pass
+	// returned zero matches across the WHOLE registry — "nothing matched" is a
+	// property of the SET, never of one model. Gating per-model would let a
+	// rebind widen a set that already had a strict member, turning a unique
+	// resolution into an ambiguity; gating on the set makes every new behaviour
+	// reachable only from what was previously ErrNotFound. This single site
+	// covers both Resolve call paths (the primary match and the bare-family
+	// SchemeCanonical retry).
+	if len(out) == 0 && scheme == SchemeCanonical {
+		out = matchModelsPass(matchInput, scheme, matchPassRebindBase)
+		// Base-first preference, also a set-level property: a rebound version segment
+		// names the VARIANT-EMPTY artifact whenever one exists, so the last-resort pass
+		// that lets the same segment reach variant-carrying candidates runs only when
+		// no variant-empty candidate matched anywhere. That is what keeps
+		// "ant/ling/2.6" a unique resolution (a variant-empty ling@2.6 exists, so the
+		// flash variants never enter) while still letting a family whose version has NO
+		// variant-empty artifact resolve to its tier siblings as a correctly-scoped
+		// ambiguity instead of a bare not-found.
+		if len(out) == 0 {
+			out = matchModelsPass(matchInput, scheme, matchPassRebindVariant)
+		}
+	}
+	return out
+}
+
+// matchModelsPass runs one match pass over the static registry under the given
+// pass discipline. matchPassStrict is byte-for-byte the pre-repair behaviour.
+func matchModelsPass(matchInput string, scheme CanonicalScheme, pass matchPass) []ModelRef {
 	var out []ModelRef
 	for _, m := range staticModels {
-		if modelMatches(m, matchInput, scheme) {
+		if modelMatches(m, matchInput, scheme, pass) {
 			out = append(out, m.Ref())
 		}
 	}
@@ -655,8 +709,9 @@ func isExactIDInput(matchInput string, matches []ModelRef) bool {
 	return true
 }
 
-// modelMatches reports whether model m matches matchInput under scheme.
-func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
+// modelMatches reports whether model m matches matchInput under scheme, running
+// canonical segment matching under the given pass discipline.
+func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme, pass matchPass) bool {
 	switch scheme {
 	case SchemeRaw:
 		// Exact model ID match.
@@ -676,7 +731,7 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 		}
 		// Try canonical segment matching: "family/variant@date" form.
 		// Parse the matchInput into (family, variant, date) segments.
-		if matchCanonicalSegments(m, matchInput) {
+		if matchCanonicalSegmentsPass(m, matchInput, pass) {
 			return true
 		}
 		return false
@@ -716,6 +771,73 @@ func modelMatches(m ModelInfo, matchInput string, scheme CanonicalScheme) bool {
 //     ("{instruct}[turbo]") and the legacy combined form ("[instruct,turbo]")
 //     round-trip to the same model.
 func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
+	return matchCanonicalSegmentsPass(m, matchInput, matchPassStrict)
+}
+
+// matchPass names which of the two canonical-matching passes is running.
+//
+// The two passes are not two policies: matchPassStrict is byte-for-byte the
+// behaviour that shipped before the segment-binding repair, and every repair rule
+// is reachable only under matchPassFallback, which the caller runs only after the
+// strict pass returned zero matches over the whole registry. A closed enum rather
+// than a bare bool so a call site reads as a named discipline, not as an
+// unexplained true/false.
+type matchPass int
+
+const (
+	// matchPassStrict is the primary pass: positional segment binding exactly as
+	// it was before the repair. No rebind rule fires here.
+	matchPassStrict matchPass = iota
+	// matchPassRebindBase is the repair pass: rules 1, 2' and 3 below are live, and
+	// a rebound version segment addresses the VARIANT-EMPTY artifact only. It runs
+	// only when the strict pass matched nothing anywhere in the registry.
+	matchPassRebindBase
+	// matchPassRebindVariant is the last-resort pass: identical to
+	// matchPassRebindBase except that a rebound version segment may also reach
+	// variant-CARRYING candidates. It runs only when matchPassRebindBase matched
+	// nothing anywhere in the registry, so it can never widen a set that a
+	// variant-empty artifact already answered.
+	matchPassRebindVariant
+)
+
+// isRebind reports whether p is one of the two repair passes.
+func (p matchPass) isRebind() bool {
+	return p == matchPassRebindBase || p == matchPassRebindVariant
+}
+
+// matchCanonicalSegmentsPass is matchCanonicalSegments under an explicit pass
+// discipline.
+//
+// # The three repair rules (matchPassFallback only)
+//
+// Positional binding cannot address a variant-empty entity through a provider
+// prefix, because the residue left by a provider strip is re-read positionally
+// with no memory of which slot the un-stripped form implied. Three rules repair
+// that, all confined to the fallback pass:
+//
+//   - Rule 1 — 2-segment provider strip, guarded on m.Provider == segments[0].
+//     Provider.IsKnown() would NOT do: "mistral", "minimax", "meta", "google" and
+//     "openai" are all known providers AND family-shaped tokens, so an
+//     is-a-provider test would strip a family segment. Equality against the
+//     candidate model's own Provider is what narrows "openai/gpt@5.1" to the
+//     openai-served rows instead of every host of the family.
+//   - Rule 2' — variant-empty version binding. When a trailing segment landed in
+//     the variant slot but the candidate has no variant, rebind it to the version
+//     slot. Written as a rebind, NEVER as an abort: returning false for a
+//     variant-empty candidate loses thousands of probes the rebind resolves.
+//   - Rule 3 — date-as-version rebind, GATED on providerStripped (set by all
+//     three strip arms). "@4.5" binds to the date slot, but a provider-qualified
+//     ref usually means the version. Ungated, this rule swallows bare entity keys
+//     ("llama@3.3#70b", "glm@4.6") into model resolution, which silently costs
+//     those keys their `show` entity view — measured at hundreds of keys. The gate
+//     couples the rule to a provider-shaped input, which no entity key renders.
+//
+// The gate is a property of the INPUT SHAPE rather than of entity-key-ness; an
+// entity key that one day renders a leading provider segment would re-expose the
+// problem. Trying the entity fallback ahead of model resolution, or having the
+// fallback pass skip inputs that parse as a valid entity key, would make the
+// property intrinsic; neither is done here.
+func matchCanonicalSegmentsPass(m ModelInfo, matchInput string, pass matchPass) bool {
 	// Extract the trailing "[attributes]" bracket segment.
 	// Must be done BEFORE stripping the "{identity-mods}" brace and the "@date"
 	// suffix so neither is confused with the modifier segments.
@@ -764,12 +886,23 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	// When 3 segments are present (provider/family/variant or family/variant/version),
 	// try segment[0] as provider: if it does not match the model's Family but segment[1]
 	// does, skip segment[0] as a provider prefix.
-	if len(segments) == 4 {
+	// providerStripped records that a leading provider segment was consumed, by
+	// ANY of the three arms below. Rule 3 reads it; see the doc comment for why the
+	// broad reading (all three arms, not only the new one) is the load-bearing one.
+	providerStripped := false
+	switch {
+	case len(segments) == 4:
 		// 4 segments: always treat segment[0] as provider.
 		segments = segments[1:]
-	} else if len(segments) == 3 && string(m.Family) != segments[0] && string(m.Family) == segments[1] {
+		providerStripped = true
+	case len(segments) == 3 && string(m.Family) != segments[0] && string(m.Family) == segments[1]:
 		// 3 segments: first is provider (doesn't match Family), second is family.
 		segments = segments[1:]
+		providerStripped = true
+	case pass.isRebind() && len(segments) == 2 && m.Provider == Provider(segments[0]):
+		// Rule 1: 2 segments, first is this candidate's own provider.
+		segments = segments[1:]
+		providerStripped = true
 	}
 
 	familyFilter := segments[0]
@@ -781,6 +914,32 @@ func matchCanonicalSegments(m ModelInfo, matchInput string) bool {
 	}
 	if len(segments) >= 3 {
 		versionFilter = segments[2]
+	}
+
+	if pass.isRebind() {
+		// Rule 2': the trailing segment landed in the variant slot, but this
+		// candidate is variant-empty, so the only slot it could have meant is the
+		// version. Rebind rather than abort — a candidate that still does not match
+		// falls through to the ordinary checks and is rejected there.
+		if variantFilter != "" && versionFilter == "" &&
+			(m.Variant == "" || pass == matchPassRebindVariant) {
+			versionFilter, variantFilter = variantFilter, ""
+		}
+		// Rule 3: "@token" bound to the date slot, but on a provider-qualified input
+		// it means the version. Gated on providerStripped so a bare entity key never
+		// enters model resolution through this door.
+		//
+		// It carries rule 2''s variant-emptiness discipline: when the ref named NO
+		// variant, "provider/family@version" addresses the variant-EMPTY artifact, so
+		// the rebind is offered only to variant-empty candidates. Without that clause
+		// "openai/gpt@5.1" would also list the codex and codex-mini variants, widening
+		// the ambiguity past the ref the user actually wrote. When a variant WAS named
+		// (e.g. "302ai/claude/haiku@4.5") the variant slot is already pinned, so the
+		// rebind applies unconditionally.
+		if providerStripped && dateFilter != "" && versionFilter == "" && m.Date != dateFilter &&
+			(variantFilter != "" || m.Variant == "" || pass == matchPassRebindVariant) {
+			versionFilter, dateFilter = dateFilter, ""
+		}
 	}
 
 	// Family must match.

@@ -149,11 +149,13 @@ func TestStoreMigrate_V5toV6(t *testing.T) {
 		t.Errorf("post-migration version = %d, want %d", version, currentSchemaVersion)
 	}
 	// Version canary: forces a review of this v5→v6 migration test whenever the schema
-	// version constant moves. Now 8 (v0.2.8 store v8: nomen_attestations child + creators
-	// dimension). Opening a v5 fixture chains v5→v6→v7→v8; this test asserts the v6 leg's
-	// tables survive that chain (assertV6Tables below), while the version lands at 8.
-	if currentSchemaVersion != 8 {
-		t.Errorf("currentSchemaVersion = %d, want 8", currentSchemaVersion)
+	// version constant moves. Now 9 (v0.2.10 store v9: the nomen_attestations
+	// archived_url column). Opening a v5 fixture chains v5→v6→v7→v8→v9; this test
+	// asserts the v6 leg's tables survive that chain (assertV6Tables below), while the
+	// version lands at 9. Reviewed for v9: the v8→v9 leg is a single additive ALTER
+	// TABLE ADD COLUMN on nomen_attestations, so it cannot disturb any v6 table.
+	if currentSchemaVersion != 9 {
+		t.Errorf("currentSchemaVersion = %d, want 9", currentSchemaVersion)
 	}
 
 	assertV6Tables(t, store.conn)

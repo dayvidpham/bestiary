@@ -1,15 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/internal/politebot"
 )
 
 // --------------------------------------------------------------------------
@@ -104,6 +110,25 @@ func TestNormalizeOllamaName(t *testing.T) {
 // --------------------------------------------------------------------------
 // THE JOIN — fixture-level behaviors
 // --------------------------------------------------------------------------
+
+// TestJoinArmString drives joinArm.String() over every member of the closed
+// precedence enum and over the out-of-range fallback, loaded from
+// testdata/enum/join_arm_string_corpus.json.
+func TestJoinArmString(t *testing.T) {
+	corpus := loadOllamaCorpus[int, string](t, ollamaJoinArmStringCorpusJSON, 6)
+	ollamaRequireInputCoverage(t, corpus, map[int]string{
+		int(joinArmAlias):     "alias",
+		int(joinArmCommunity): "community",
+		-1:                    "joinarm(-1)",
+	})
+	for _, c := range corpus.Cases {
+		t.Run(c.Name, func(t *testing.T) {
+			if got := joinArm(c.Input).String(); got != c.Expected {
+				t.Errorf("joinArm(%d).String() = %q, want %q", c.Input, got, c.Expected)
+			}
+		})
+	}
+}
 
 func TestJoin_PlainDecompositionJoins(t *testing.T) {
 	r := joinOllama("llama3.3:70b-instruct", cannedCatalog(), nil, nil, emptyCurated)
@@ -599,4 +624,311 @@ func keysOf(m map[string]ollamaAlias) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// --------------------------------------------------------------------------
+// The outbound seam: current-version User-Agent, >=1s cadence, zero network
+// --------------------------------------------------------------------------
+
+// recordingDoer is a canned transport: it records the request it was handed and
+// answers with a fixed body, so the outbound seam can be asserted without a
+// socket ever being opened.
+type recordingDoer struct {
+	reqs []*http.Request
+	body string
+}
+
+func (d *recordingDoer) Do(req *http.Request) (*http.Response, error) {
+	d.reqs = append(d.reqs, req)
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(d.body)),
+		Header:     make(http.Header),
+	}, nil
+}
+
+// fakeClock is an injected monotonic clock + sleeper: sleeping advances the clock
+// instead of blocking, so the >=1s cadence is asserted without real wall-clock.
+type fakeClock struct {
+	now   time.Time
+	slept []time.Duration
+}
+
+func (f *fakeClock) Now() time.Time { return f.now }
+func (f *fakeClock) Sleep(d time.Duration) {
+	f.slept = append(f.slept, d)
+	f.now = f.now.Add(d)
+}
+
+// TestUserAgent_NamesCurrentReleaseVersion is the drift guard the literal lacked:
+// the User-Agent must name the release this tree builds, so an operator reading
+// registry logs sees the version that actually made the request. The tool sat at
+// "0.2.4" for three releases because the version was spelled here by hand.
+func TestUserAgent_NamesCurrentReleaseVersion(t *testing.T) {
+	want := "bestiary-ollama/" + bestiary.ReleaseVersion
+	if !strings.HasPrefix(userAgent, want+" ") {
+		t.Errorf("userAgent = %q, want prefix %q;\n"+
+			"  what went wrong: the User-Agent does not name the current release\n"+
+			"  where: userAgent (cmd/bestiary-ollama/main.go)\n"+
+			"  how to fix: derive the version segment from bestiary.ReleaseVersion, never a literal",
+			userAgent, want)
+	}
+	// A contact URL is the other half of a polite identity: attribution is useless
+	// to an operator who cannot reach the author.
+	if !strings.Contains(userAgent, "https://github.com/dayvidpham/bestiary") {
+		t.Errorf("userAgent = %q, want a contact URL; a bare name gives an operator no way to reach us", userAgent)
+	}
+	// No stale version may survive anywhere in the string.
+	if strings.Contains(userAgent, "0.2.4") && bestiary.ReleaseVersion != "0.2.4" {
+		t.Errorf("userAgent = %q still carries the stale literal 0.2.4", userAgent)
+	}
+}
+
+// TestPoliteClient_UserAgentAndCadence drives the SAME constructor run() uses,
+// with an injected transport and fake clock: the first request does not sleep,
+// the second sleeps >=1s, and every request carries the current-version UA. No
+// socket is opened and no real time elapses.
+func TestPoliteClient_UserAgentAndCadence(t *testing.T) {
+	rd := &recordingDoer{body: `{}`}
+	fc := &fakeClock{now: time.Unix(1700000000, 0)}
+	c := newPoliteClient(
+		politebot.WithDoer(rd),
+		politebot.WithClock(fc.Now),
+		politebot.WithSleep(fc.Sleep),
+	)
+
+	ctx := context.Background()
+	if _, err := c.Get(ctx, registryBase+"/v2/library/llama3.3/manifests/70b", manifestAccept); err != nil {
+		t.Fatalf("Get 1: %v", err)
+	}
+	if len(fc.slept) != 0 {
+		t.Fatalf("first request slept %v, want no sleep before the very first request", fc.slept)
+	}
+	if _, err := c.Get(ctx, libraryBase+"/library/llama3.3/tags", ""); err != nil {
+		t.Fatalf("Get 2: %v", err)
+	}
+	if len(fc.slept) != 1 {
+		t.Fatalf("second request slept %d times, want exactly 1 (the cadence gap)", len(fc.slept))
+	}
+	if fc.slept[0] < time.Second {
+		t.Errorf("inter-request sleep = %v, want >= 1s (a hard project constraint on outbound traffic)", fc.slept[0])
+	}
+	if len(rd.reqs) != 2 {
+		t.Fatalf("recorded %d requests, want 2", len(rd.reqs))
+	}
+	for i, req := range rd.reqs {
+		if got := req.Header.Get("User-Agent"); got != userAgent {
+			t.Errorf("request %d User-Agent = %q, want %q", i, got, userAgent)
+		}
+	}
+}
+
+// TestPackageTests_MakeNoNetworkRequests is the structural half of the zero-network
+// guarantee: every live HTTP call in this package funnels through newPoliteClient,
+// and a client whose transport refuses to dial proves the tests never reach one.
+// A test that tried to use the real network would fail here rather than silently
+// hitting registry.ollama.ai.
+func TestPackageTests_MakeNoNetworkRequests(t *testing.T) {
+	var dialed bool
+	c := newPoliteClient(politebot.WithDoer(doerFunc(func(req *http.Request) (*http.Response, error) {
+		dialed = true
+		return nil, fmt.Errorf("refusing to dial %s: package tests must make zero network requests", req.URL)
+	})))
+	if _, err := c.Get(context.Background(), registryBase+"/v2/library/llama3.3/manifests/70b", manifestAccept); err == nil {
+		t.Fatal("Get returned no error through a refusing transport; the seam is not the only outbound path")
+	}
+	if !dialed {
+		t.Fatal("the refusing transport was never consulted; Get does not route through the injected Doer")
+	}
+}
+
+// doerFunc adapts a function to politebot.Doer.
+type doerFunc func(*http.Request) (*http.Response, error)
+
+func (f doerFunc) Do(req *http.Request) (*http.Response, error) { return f(req) }
+
+// --------------------------------------------------------------------------
+// One entry per model_id (the file's keying contract)
+// --------------------------------------------------------------------------
+
+// TestBuildOutput_OneEntryPerModelID pins the file's KEYING CONTRACT: model_id is
+// the join key codegen matches on, so a model_id may appear at most once. Two
+// DISTINCT Ollama identities routinely resolve to ONE catalog ID — Ollama's bare
+// size tag `llama3.1:405b` and its explicit `llama3.1:405b-instruct` are the same
+// model, and the bare tag reaches the same entity through the instruct fallback.
+// Grouping by the Ollama identity alone emitted one entry per tag, so a real
+// refresh wrote the same model_id two and three times, each carrying a DIFFERENT
+// subset of the quants; codegen would join whichever it saw last and the rest of
+// the measured weights would silently vanish.
+//
+// The contract: one entry, the union of the quants, and no measured row lost.
+func TestBuildOutput_OneEntryPerModelID(t *testing.T) {
+	tags := []fetchedTag{
+		// Explicit-instruct identity: an exact mechanical join.
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888, Digest: "sha256:a"},
+		// Bare size identity: reaches the SAME catalog ID via the instruct fallback,
+		// and carries a quant the explicit identity does not.
+		{OllamaID: "llama3.3:70b-q8_0", WeightsBytes: 75176521728, Digest: "sha256:b"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	seen := map[string]int{}
+	for _, m := range out.Models {
+		seen[strings.ToLower(m.ModelID)]++
+	}
+	for id, n := range seen {
+		if n > 1 {
+			t.Errorf("model_id %q appears %d times;\n"+
+				"  what went wrong: the output violates the file's keying contract (one entry per model_id)\n"+
+				"  why: two Ollama identities resolved to one catalog ID and were emitted separately\n"+
+				"  where: buildOutput (cmd/bestiary-ollama/main.go)\n"+
+				"  how to fix: coalesce groups by their OUTPUT model id and union their quant rows", id, n)
+		}
+	}
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	if len(llama.Rows) != 2 || llama.Rows[0].Quant != "q4_k_m" || llama.Rows[1].Quant != "q8_0" {
+		t.Fatalf("coalesced entry must carry the UNION of both identities' quants, sorted: %+v", llama.Rows)
+	}
+}
+
+// TestBuildOutput_CoalescePrefersTheStrongerJoin pins WHICH measurement survives
+// when two Ollama identities that resolve to one catalog ID publish the same
+// quant with different weights (they are separately-built manifests of the same
+// model and differ by a few KB). The identity that joined on its own decomposition
+// outranks one that needed the bare-size instruct fallback: it names the entity
+// exactly rather than by Ollama's default-tag convention. The loser still
+// contributes every quant the winner lacks — a disagreement resolves a row, it
+// never drops a measurement.
+func TestBuildOutput_CoalescePrefersTheStrongerJoin(t *testing.T) {
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-q4_K_M", WeightsBytes: 111, Digest: "sha256:fallback"},
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 222, Digest: "sha256:exact"},
+		{OllamaID: "llama3.3:70b-q2_K", WeightsBytes: 333, Digest: "sha256:only-on-fallback"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	byQuant := map[string]quantRowOut{}
+	for _, r := range llama.Rows {
+		byQuant[r.Quant] = r
+	}
+	if got := byQuant["q4_k_m"].WeightsBytes; got != 222 {
+		t.Errorf("q4_k_m weights_bytes = %d, want 222 (the exact-join identity wins the conflict)", got)
+	}
+	if got := byQuant["q4_k_m"].Digest; got != "sha256:exact" {
+		t.Errorf("q4_k_m digest = %q, want the exact-join identity's digest", got)
+	}
+	if got := byQuant["q2_k"].WeightsBytes; got != 333 {
+		t.Errorf("q2_k weights_bytes = %d, want 333 (a quant only the loser measured is still kept)", got)
+	}
+}
+
+// --------------------------------------------------------------------------
+// The quant token written to the corpus is the CANONICAL enum name
+// --------------------------------------------------------------------------
+
+// TestBuildOutput_CanonicalQuantToken pins that a row's `quant` is the canonical
+// Quantization wire name, not the raw Ollama tag token. Ollama publishes 16-bit
+// float as `fp16`; the canonical name is `f16` and `fp16` is deliberately NOT in
+// the enum's name table, so the loader (ValidateQuantVRAMTable) REJECTS a corpus
+// carrying it — writing the raw token would produce a file codegen cannot read.
+// Normalising here is the documented obligation of an ingest layer.
+//
+// It also keeps the merge honest: curation is keyed by quant, so a curated `f16`
+// row's architecture facts survive a refresh that reports the same quant as
+// `fp16`, instead of vanishing with a row that appears to have been retired.
+func TestBuildOutput_CanonicalQuantToken(t *testing.T) {
+	existing := quantFileOut{
+		SchemaVersion: quantVRAMSchemaVersion,
+		Models: []quantModelOut{{
+			ModelID: "llama-3.3-70b-instruct",
+			Rows: []quantRowOut{
+				{Quant: "f16", WeightsBytes: 1, Layers: 80, KVHeads: 8, HeadDim: 128},
+			},
+		}},
+	}
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-instruct-fp16", WeightsBytes: 141117917888, Digest: "sha256:fp16"},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, existing)
+
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil {
+		t.Fatalf("expected the joined llama entry, got %+v", out.Models)
+	}
+	if len(llama.Rows) != 1 {
+		t.Fatalf("want exactly 1 row (fp16 IS the curated f16 quant, not a second one): %+v", llama.Rows)
+	}
+	r := llama.Rows[0]
+	if r.Quant != "f16" {
+		t.Errorf("row quant = %q, want %q;\n"+
+			"  what went wrong: the raw Ollama tag token was written instead of the canonical enum name\n"+
+			"  why: parse/data/quant_vram.json is validated against the Quantization name table, which has no \"fp16\"\n"+
+			"  where: buildOutput (cmd/bestiary-ollama/main.go)\n"+
+			"  how to fix: write the canonical name of the detected Quantization", r.Quant, "f16")
+	}
+	if r.WeightsBytes != 141117917888 {
+		t.Errorf("weights_bytes = %d, want the refreshed figure (weights are fetch-owned)", r.WeightsBytes)
+	}
+	if r.Layers != 80 || r.KVHeads != 8 || r.HeadDim != 128 {
+		t.Errorf("curated arch facts lost across the fp16/f16 spelling: layers=%d kv_heads=%d head_dim=%d, want 80/8/128",
+			r.Layers, r.KVHeads, r.HeadDim)
+	}
+}
+
+// TestBuildOutput_DropsUnnameableQuant pins the refusal: a quant-looking token
+// with no canonical name (Ollama could publish a scheme this build predates)
+// resolves to the QuantizationOther escape, which curated data may not use. The
+// row is DROPPED rather than written, because writing it produces a corpus the
+// loader rejects outright — one unreadable row would take the whole catalog down.
+// The tag's siblings are unaffected.
+func TestBuildOutput_DropsUnnameableQuant(t *testing.T) {
+	tags := []fetchedTag{
+		{OllamaID: "llama3.3:70b-instruct-q4_K_M", WeightsBytes: 43033509888},
+		{OllamaID: "llama3.3:70b-instruct-iq9_zz", WeightsBytes: 999},
+	}
+	out, _ := buildOutput(tags, cannedCatalog(), nil, nil, emptyCurated, emptyExisting)
+
+	for _, m := range out.Models {
+		for _, r := range m.Rows {
+			var q bestiary.Quantization
+			if err := q.UnmarshalText([]byte(r.Quant)); err != nil {
+				t.Errorf("row quant %q on %q is not a canonical Quantization name: %v", r.Quant, m.ModelID, err)
+			}
+			if q == bestiary.QuantizationOther {
+				t.Errorf("row quant %q on %q resolved to the Other escape; curated rows may not use it", r.Quant, m.ModelID)
+			}
+		}
+	}
+	var llama *quantModelOut
+	for i := range out.Models {
+		if out.Models[i].ModelID == "llama-3.3-70b-instruct" {
+			llama = &out.Models[i]
+		}
+	}
+	if llama == nil || len(llama.Rows) != 1 || llama.Rows[0].Quant != "q4_k_m" {
+		t.Fatalf("the nameable sibling must survive alone: %+v", llama)
+	}
 }

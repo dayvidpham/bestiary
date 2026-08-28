@@ -42,7 +42,7 @@ func TestParseData_RegexesValid(t *testing.T) {
 // is authoritative: if you add an override to the JSON, add a case there.
 func TestParseFamily_Overrides(t *testing.T) {
 	t.Parallel()
-	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 60)
+	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 59)
 	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"claude-opus":         {Family: "claude", Variant: "opus"},
 		"gpt-oss":             {Family: "gpt", Variant: "oss"},
@@ -3148,14 +3148,22 @@ func TestMustNotRegress_RealVersions(t *testing.T) {
 // reclassify the SAME token when it is a VARIANT of a NON-series family
 // (gpt-5-mini, gemini-2.5-flash, qwen-turbo, llama-*-instruct stay variants).
 //
-// MULTI-MODIFIER cases (tier + thinking/vision, or 2+ tiers) are NOT pinned here:
-// the Modifier field is single-valued and the multiplicity rule is pending — those
-// keep the series split + the existing thinking/vision modifier and DROP the tier
-// (pending a ruling, not resolved unilaterally).
+// The corpus also pins the three things the per-family series-tier extension added,
+// each by VALUE at this seam rather than only end-to-end at the entity census:
+//   - the four curated mimo tokens (tts/voiceclone/voicedesign/ultraspeed), singly
+//     and in the two-tier combinations the Modifier LIST exists to carry;
+//   - the negative control — kimi/minimax do NOT promote a token curated for mimo,
+//     and a family with no series_tiers row is untouched;
+//   - the promotion GATE: a letter-IN-key family still promotes at most one tier and
+//     only with no capability modifier co-occurring (kimi-k2.7-code-highspeed keeps
+//     an empty Modifier), while mimo promotes in the same shape.
+//
+// mimo-v2.5-fast-flash is the switch-arm ORDER falsifier: swap the two arms in
+// splitSeriesVariant and only that case (and its empty-raw twin) goes red.
 func TestSeriesTierModifier(t *testing.T) {
 	t.Parallel()
 
-	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesTierModifierCorpusJSON, 16)
+	corpus := loadParseCorpus[rawIDInput, fvvmExpected](t, seriesTierModifierCorpusJSON, 38)
 	requireInputCoverage(t, corpus, map[rawIDInput]fvvmExpected{
 		// tier -> modifier, variant stays the pure series-letter.
 		{Raw: "kimi", ID: "kimi-k2-instruct"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "instruct"},
@@ -3163,6 +3171,19 @@ func TestSeriesTierModifier(t *testing.T) {
 		{Raw: "gpt", ID: "openai/gpt-5-mini"}: {Family: "gpt", Variant: "mini", Version: "5", Mod: ""},
 		// multi-modifier composes losslessly.
 		{Raw: "kimi-thinking", ID: "kimi-k2-thinking-turbo"}: {Family: "kimi", Variant: "k", Version: "2", Mod: "thinking,turbo"},
+		// each of the four per-family series_tiers tokens, by value, at the seam.
+		{Raw: "mimo", ID: "mimo-v2-tts"}:           {Family: "mimo", Variant: "", Version: "2", Mod: "tts"},
+		{Raw: "mimo", ID: "mimo-v2.5-voiceclone"}:  {Family: "mimo", Variant: "", Version: "2.5", Mod: "voiceclone"},
+		{Raw: "mimo", ID: "mimo-v2.5-voicedesign"}: {Family: "mimo", Variant: "", Version: "2.5", Mod: "voicedesign"},
+		{Raw: "mimo", ID: "mimo-v2.5-ultraspeed"}:  {Family: "mimo", Variant: "", Version: "2.5", Mod: "ultraspeed"},
+		// negative control: the same token is NOT a tier for a sibling letter-series family.
+		{Raw: "kimi", ID: "kimi-k2-tts"}:              {Family: "kimi", Variant: "", Version: "", Mod: ""},
+		{Raw: "minimax", ID: "minimax-m2-voiceclone"}: {Family: "minimax", Variant: "", Version: "", Mod: ""},
+		// the switch-arm order falsifier (see splitSeriesVariant's ARM-ORDER note).
+		{Raw: "mimo", ID: "mimo-v2.5-fast-flash"}: {Family: "mimo", Variant: "", Version: "2.5", Mod: "fast,flash"},
+		// the letter-in-key single-tier gate and its multi-tier contrast.
+		{Raw: "kimi-k2", ID: "kimi-k2.7-code-highspeed"}: {Family: "kimi", Variant: "k", Version: "2.7", Mod: ""},
+		{Raw: "mimo", ID: "mimo-v2.5-code-highspeed"}:    {Family: "mimo", Variant: "", Version: "2.5", Mod: "highspeed"},
 	})
 	runFamilyDetailedTupleCorpus(t, corpus)
 }
@@ -3589,8 +3610,14 @@ func TestWhisperTrailingVersionRecovery_FamilyGated(t *testing.T) {
 
 		// (2) MUTATION-PROOF — non-whisper "-vN" tags MUST NOT be promoted.
 		// claude-opus-4-6-v1's "-v1" is a Bedrock packaging revision; the real version is 4.6,
-		// extracted by the normal path. The recovery must NOT overwrite it with "1".
-		{"", "anthropic.claude-opus-4-6-v1", "anthropic.claude", "4.6"},
+		// extracted by the normal path. The recovery must NOT overwrite it with "1" — that is
+		// what this row fences, and it still holds. The FAMILY moved from "anthropic.claude" to
+		// "claude" when the redundant leading-token strip landed: the id is Bedrock's
+		// region-less profile form "<vendor>.<model>", and the vendor segment names the lab the
+		// Creator axis already attributes claude to, so it is dropped from the decomposition
+		// input. "anthropic.claude" was never a family — it was the dotted namespace glued onto
+		// the real one.
+		{"", "anthropic.claude-opus-4-6-v1", "claude", "4.6"},
 		// elevenlabs/nova/morph/deepseek/recraft trailing -vN must stay Version="" (untouched).
 		{"", "elevenlabs/elevenlabs-v2.5-turbo", "elevenlabs", ""},
 		{"", "amazon/nova-lite-v1", "nova", ""},

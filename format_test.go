@@ -411,10 +411,13 @@ func makeAmbiguousRefs(n int, duplicateTuples bool) []bestiary.ModelRef {
 }
 
 // TestFormatAmbiguous_Truncation verifies that FormatAmbiguous truncates the
-// canonical candidate list after N=5 and emits a "+M more" hint.
+// originating candidate list after N=5 and emits an overflow hint.
 //
-// Two-section layout: canonical cap is now 5.
-// Uses canonical Anthropic refs (Provider==CanonicalProvider) so Section 1 is populated.
+// Uses claude/anthropic refs. Anthropic both CREATES and hosts Claude, so "anthropic"
+// is one of the creator's curated distribution surfaces and these rows render in the
+// CREATOR section — whose overflow hint reads "… and N more" rather than the Canonical
+// section's "+N more" (the creator rows are themselves prefixed "+ ", so "+3 more"
+// would read as a fourth row). The cap itself is shared.
 func TestFormatAmbiguous_Truncation(t *testing.T) {
 	// Create 8 canonical anthropic/claude refs — after cap-5, "+3 more" expected.
 	candidates := make([]bestiary.ModelRef, 8)
@@ -438,9 +441,9 @@ func TestFormatAmbiguous_Truncation(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Must contain "+3 more" (8 - 5 = 3).
-	if !strings.Contains(output, "+3 more") {
-		t.Errorf("FormatAmbiguous(8 canonical candidates): output should contain '+3 more' hint; got:\n%s", output)
+	// Must contain "… and 3 more" (8 - 5 = 3).
+	if !strings.Contains(output, "… and 3 more") {
+		t.Errorf("FormatAmbiguous(8 creator candidates): output should contain '… and 3 more' hint; got:\n%s", output)
 	}
 	// Must NOT list variant-5 through variant-7 (beyond cap-5).
 	for i := 5; i < 8; i++ {
@@ -564,18 +567,19 @@ func TestFormatAmbiguous_GroupingAndTruncation(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// After dedup (all distinct) and cap at 5: "+3 more" must appear.
-	if !strings.Contains(output, "+3 more") {
-		t.Errorf("FormatAmbiguous(8 canonical groups): should truncate to 5+'+3 more'; got:\n%s", output)
+	// After dedup (all distinct) and cap at 5: the creator-section overflow hint
+	// "… and 3 more" must appear (these anthropic-hosted claude rows are creator rows).
+	if !strings.Contains(output, "… and 3 more") {
+		t.Errorf("FormatAmbiguous(8 creator groups): should truncate to 5 + '… and 3 more'; got:\n%s", output)
 	}
 }
 
 // TestFormatAmbiguous_RemedHintUpdated verifies that FormatAmbiguous never
 // references the deprecated --scheme=raw flag.
 //
-// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely
-// (bestiary-7nbuw): it now lives solely in the CLI's wrapped ErrAmbiguous
-// message (cmd/bestiary/main.go runShow), so it is no longer asserted here —
+// The --format=raw exact-ID tip itself moved out of FormatAmbiguous entirely:
+// it now lives solely in the CLI's wrapped ErrAmbiguous message
+// (cmd/bestiary/main.go runShow), so it is no longer asserted here —
 // see TestShow_Ambiguous for that assertion, and
 // TestFormatAmbiguous_V4_FooterInstructions for the footer's remaining
 // "bestiary list" instruction.
@@ -762,7 +766,14 @@ func TestFormatModels_Table(t *testing.T) {
 // The list is ordered with rehosts first, then the canonical anthropic row,
 // to guarantee the test catches ordering bugs (canonical must surface at top
 // even when it appears last in input).
-func makeClaudeAmbiguousRefs(numRehostGroups int) []bestiary.ModelRef {
+// The canonical-section tests below deliberately use family "llama" with
+// ProviderLocal, NOT claude/anthropic. Both are canonical-provider pairs, but
+// anthropic is ALSO one of the Anthropic creator's curated distribution surfaces, so
+// a claude/anthropic row is rendered in the CREATOR section and never reaches the
+// Canonical one. llama's curated canonical provider is "local", which is not a Meta
+// distribution surface, so it is the pair that exercises the canonical axis ALONE —
+// which is exactly what these tests are about. The creator section has its own tests.
+func makeCanonicalOnlyAmbiguousRefs(numRehostGroups int) []bestiary.ModelRef {
 	rehostProviders := []string{
 		"deepinfra", "perplexity-agent", "azure-cognitive-services",
 		"nano-gpt", "together-ai", "fireworks", "groq", "anyscale",
@@ -772,38 +783,38 @@ func makeClaudeAmbiguousRefs(numRehostGroups int) []bestiary.ModelRef {
 	for i := 0; i < numRehostGroups; i++ {
 		prov := rehostProviders[i%len(rehostProviders)]
 		refs = append(refs, bestiary.ModelRef{
-			ID:       bestiary.ModelID(fmt.Sprintf("claude-rehost-%d", i)),
+			ID:       bestiary.ModelID(fmt.Sprintf("llama-rehost-%d", i)),
 			Provider: bestiary.Provider(prov + fmt.Sprintf("-%d", i)),
-			Family:   "claude",
+			Family:   "llama",
 			Variant:  fmt.Sprintf("rehost-variant-%d", i),
 			Version:  "",
 			Date:     "2025-01-01",
 		})
 	}
-	// Canonical anthropic row — appended LAST so canonical-sort logic must lift it.
+	// Canonical row — appended LAST so canonical-sort logic must lift it.
 	refs = append(refs, bestiary.ModelRef{
-		ID:       "claude-opus-4-20250514",
-		Provider: bestiary.ProviderAnthropic, // "anthropic"
-		Family:   "claude",
-		Variant:  "opus",
-		Version:  "4",
+		ID:       "llama-3.3-70b",
+		Provider: bestiary.ProviderLocal, // "local" == Family("llama").CanonicalProvider()
+		Family:   "llama",
+		Variant:  "",
+		Version:  "3.3",
 		Date:     "2025-05-14",
 	})
 	return refs
 }
 
 // TestFormatAmbiguous_CanonicalRowPresent verifies that when the candidate list
-// contains an anthropic (canonical) row mixed with rehosts, FormatAmbiguous
-// surfaces the anthropic row in the output.
+// contains a canonical-provider row mixed with rehosts, FormatAmbiguous surfaces the
+// canonical row in the output.
 //
 // Fix 1 — this test FAILS before the impl sorts canonical rows
 // to the top (when >10 groups exist, canonical gets truncated away).
 func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
 	// 12 rehost groups + 1 canonical = 13 groups total → exceeds N=10.
-	// Before the fix, the canonical anthropic row (added last) is cut by truncation.
-	candidates := makeClaudeAmbiguousRefs(12)
+	// Before the fix, the canonical row (added last) is cut by truncation.
+	candidates := makeCanonicalOnlyAmbiguousRefs(12)
 	e := &bestiary.ErrAmbiguous{
-		Input:      "claude",
+		Input:      "llama",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -812,10 +823,10 @@ func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// The canonical provider "anthropic" must appear in the output.
-	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+	// The canonical provider must appear in the output.
+	if !strings.Contains(output, string(bestiary.ProviderLocal)) {
 		t.Errorf("FormatAmbiguous: canonical provider %q missing from output;\nGot:\n%s",
-			bestiary.ProviderAnthropic, output)
+			bestiary.ProviderLocal, output)
 	}
 }
 
@@ -825,9 +836,9 @@ func TestFormatAmbiguous_CanonicalRowPresent(t *testing.T) {
 // Fix 1 — this test FAILS before the impl adds a visual marker
 // to canonical rows.
 func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
-	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical, well within N=10
+	candidates := makeCanonicalOnlyAmbiguousRefs(3) // 3 rehosts + 1 canonical, well within N=10
 	e := &bestiary.ErrAmbiguous{
-		Input:      "claude",
+		Input:      "llama",
 		Scheme:     bestiary.SchemeCanonical,
 		Candidates: candidates,
 	}
@@ -836,20 +847,19 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// The canonical anthropic row must carry a visual marker.
-	// The impl uses a "*" PREFIX at the start of each canonical row in Section 1.
-	// Check that the line containing "anthropic" also contains the marker "*".
+	// The canonical row must carry a visual marker.
+	// The impl uses a "*" PREFIX at the start of each canonical row.
 	lines := strings.Split(output, "\n")
 	var canonicalLine string
 	for _, l := range lines {
-		if strings.Contains(l, string(bestiary.ProviderAnthropic)) {
+		if strings.Contains(l, string(bestiary.ProviderLocal)+"/") {
 			canonicalLine = l
 			break
 		}
 	}
 	if canonicalLine == "" {
 		t.Fatalf("FormatAmbiguous: no line containing canonical provider %q found in output;\nGot:\n%s",
-			bestiary.ProviderAnthropic, output)
+			bestiary.ProviderLocal, output)
 	}
 	if !strings.Contains(canonicalLine, "*") {
 		t.Errorf("FormatAmbiguous: canonical row missing '*' marker;\ncanonical line: %q\nFull output:\n%s",
@@ -864,14 +874,14 @@ func TestFormatAmbiguous_CanonicalRowMarked(t *testing.T) {
 // precedes Section 2 ("Also rehosted by:"). The canonical provider appears in Section 1
 // (from Candidates), while rehost names appear in Section 2 (from RehostProviders).
 func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
-	candidates := makeClaudeAmbiguousRefs(3) // 3 rehosts + 1 canonical anthropic row
+	candidates := makeCanonicalOnlyAmbiguousRefs(3) // 3 rehosts + 1 canonical row
 	// Populate RehostProviders from the non-canonical candidates.
 	rehostProviders := make([]bestiary.Provider, 3)
 	for i := 0; i < 3; i++ {
 		rehostProviders[i] = bestiary.Provider("deepinfra-" + fmt.Sprintf("%d", i))
 	}
 	e := &bestiary.ErrAmbiguous{
-		Input:           "claude",
+		Input:           "llama",
 		Scheme:          bestiary.SchemeCanonical,
 		Candidates:      candidates,
 		RehostProviders: rehostProviders,
@@ -897,10 +907,10 @@ func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
 			canonicalPos, rehostPos, output)
 	}
 
-	// Canonical provider "anthropic" must appear in the output (Section 1).
-	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+	// The canonical provider must appear in the output (Canonical section).
+	if !strings.Contains(output, string(bestiary.ProviderLocal)) {
 		t.Errorf("FormatAmbiguous: canonical provider %q missing from output;\nGot:\n%s",
-			bestiary.ProviderAnthropic, output)
+			bestiary.ProviderLocal, output)
 	}
 }
 
@@ -911,15 +921,15 @@ func TestFormatAmbiguous_CanonicalSortedToTop(t *testing.T) {
 // Two-section layout: canonical cap is now 5.
 func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
 	// 1 canonical + 12 rehosts in Candidates; RehostProviders for Section 2.
-	// The canonical anthropic row must appear in Section 1.
-	candidates := makeClaudeAmbiguousRefs(12) // 12 rehosts + 1 anthropic
+	// The canonical row must appear in the Canonical section.
+	candidates := makeCanonicalOnlyAmbiguousRefs(12) // 12 rehosts + 1 canonical row
 	// Build a realistic RehostProviders list.
 	rehostProviders := make([]bestiary.Provider, 7)
 	for i := 0; i < 7; i++ {
 		rehostProviders[i] = bestiary.Provider(fmt.Sprintf("rehost-%d", i))
 	}
 	e := &bestiary.ErrAmbiguous{
-		Input:           "claude",
+		Input:           "llama",
 		Scheme:          bestiary.SchemeCanonical,
 		Candidates:      candidates,
 		RehostProviders: rehostProviders,
@@ -929,10 +939,10 @@ func TestFormatAmbiguous_CanonicalSurvivesTruncation(t *testing.T) {
 	bestiary.FormatAmbiguous(&buf, e)
 	output := buf.String()
 
-	// Canonical provider "anthropic" must appear in Section 1.
-	if !strings.Contains(output, string(bestiary.ProviderAnthropic)) {
+	// The canonical provider must appear in the Canonical section.
+	if !strings.Contains(output, string(bestiary.ProviderLocal)) {
 		t.Errorf("FormatAmbiguous: canonical provider %q not in output;\nGot:\n%s",
-			bestiary.ProviderAnthropic, output)
+			bestiary.ProviderLocal, output)
 	}
 	// Rehost overflow: 7 - 5 = 2 → "+2 more" for Section 2.
 	if !strings.Contains(output, "+2 more") {
@@ -1000,7 +1010,7 @@ func TestFormatAmbiguous_PURLMissedNamespaceNote_AbsentWhenEmpty(t *testing.T) {
 func TestFormatAmbiguous_PURLMissedNamespaceNote_BeforeTable(t *testing.T) {
 	// Use makeClaudeAmbiguousRefs (includes one canonical anthropic row) so that
 	// the Canonical: section appears in output and ordering can be verified.
-	candidates := makeClaudeAmbiguousRefs(2)
+	candidates := makeCanonicalOnlyAmbiguousRefs(2)
 	e := &bestiary.ErrAmbiguous{
 		Input:               "claude-opus-4-5",
 		Scheme:              bestiary.SchemePURL,
@@ -1040,16 +1050,16 @@ func makeAmbiguousWithRehosts(numCanonical int, rehostProviders []bestiary.Provi
 	candidates := make([]bestiary.ModelRef, numCanonical)
 	for i := 0; i < numCanonical; i++ {
 		candidates[i] = bestiary.ModelRef{
-			ID:       bestiary.ModelID(fmt.Sprintf("claude-canonical-%d", i)),
-			Provider: bestiary.ProviderAnthropic,
-			Family:   "claude",
+			ID:       bestiary.ModelID(fmt.Sprintf("llama-canonical-%d", i)),
+			Provider: bestiary.ProviderLocal,
+			Family:   "llama",
 			Variant:  fmt.Sprintf("variant-%d", i),
 			Version:  "1",
 			Date:     "2025-01-01",
 		}
 	}
 	return &bestiary.ErrAmbiguous{
-		Input:           "claude",
+		Input:           "llama",
 		Scheme:          bestiary.SchemeCanonical,
 		Candidates:      candidates,
 		RehostProviders: rehostProviders,
@@ -1306,10 +1316,10 @@ func TestFormatAmbiguous_V4_RehostSection_OnePerLine(t *testing.T) {
 // TestFormatAmbiguous_V4_FooterInstructions verifies that the footer contains
 // the "bestiary list" instruction.
 //
-// The footer's other former instruction, --format=raw, was removed
-// (bestiary-7nbuw): it duplicated the CLI's wrapped ErrAmbiguous narrowing-list
-// tip verbatim, so it now lives in exactly one place — the CLI message tested
-// by TestShow_Ambiguous — rather than repeated here too.
+// The footer's other former instruction, --format=raw, was removed because it
+// duplicated the CLI's wrapped ErrAmbiguous narrowing-list tip verbatim, so it
+// now lives in exactly one place — the CLI message tested by TestShow_Ambiguous
+// — rather than repeated here too.
 func TestFormatAmbiguous_V4_FooterInstructions(t *testing.T) {
 	e := makeAmbiguousWithRehosts(2, []bestiary.Provider{"deepinfra"})
 
@@ -1336,7 +1346,7 @@ func TestFormatAmbiguous_V4_PURLNote_StillPresent(t *testing.T) {
 	e := &bestiary.ErrAmbiguous{
 		Input:               "claude-opus-4-5",
 		Scheme:              bestiary.SchemePURL,
-		Candidates:          makeClaudeAmbiguousRefs(2),
+		Candidates:          makeCanonicalOnlyAmbiguousRefs(2),
 		PURLMissedNamespace: "nonexistent-v4",
 		RehostProviders:     nil,
 	}

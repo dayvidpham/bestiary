@@ -3,7 +3,7 @@
   "$id": "https://github.com/dayvidpham/bestiary/bestiary.schema.json",
   "title": "ModelInfo",
   "description": "Metadata for a single AI model as produced by the bestiary CLI JSON formatter.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "object",
   "properties": {
     "ID": {
@@ -320,7 +320,7 @@
     },
     "IngestMethod": {
       "title": "IngestMethod",
-      "description": "HOW a naming record entered the system — a per-attestation fact, symmetric with AttestationAuthority (a single source such as models.dev is simultaneously the source of self-minted canonical nomina AND of harvested provider-id nomina, so this cannot live on the DataSource dimension). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
+      "description": "HOW a naming record entered the system — a per-attestation fact, symmetric with AttestationAuthority (a single source such as curated is simultaneously the source of curated third-party alias claims AND, via the huggingface seed, of harvested nomina, so this cannot live on the DataSource dimension). Serializes as a lowercase token via encoding.TextMarshaler. Element-enum convention: \"unknown\" sits AT the zero value as the fail-safe. Added in schema 0.6.0.",
       "type": "string",
       "enum": ["unknown", "curated", "harvested", "self-minted"],
       "x-enum-descriptions": {
@@ -332,11 +332,15 @@
     },
     "NomenAttestation": {
       "title": "NomenAttestation",
-      "description": "One independent piece of evidence for a Nomen (the Wikidata per-claim-reference model): each attestation stands on its own, and two sources asserting the same name append two attestations rather than overwriting. A Nomen HAS-MANY attestations (>=1). The two provenance levels SourceURL (WHO asserts) and Source (WHICH ingest we read it from) must never be conflated (the BenchmarkResult discipline). Added in schema 0.6.0.",
+      "description": "One independent piece of evidence for a Nomen (the Wikidata per-claim-reference model): each attestation stands on its own, and two sources asserting the same name append two attestations rather than overwriting. A Nomen HAS-MANY attestations (>=1). The two provenance levels SourceURL (WHO asserts) and Source (WHICH ingest we read it from) must never be conflated (the BenchmarkResult discipline). ArchivedURL is a third, distinct thing: not a provenance level but a durability aid for SourceURL. Added in schema 0.6.0; ArchivedURL added in 0.7.0.",
       "type": "object",
       "properties": {
         "SourceURL": {
           "description": "WHO asserts this naming (the claimant URL); empty for a self-minted attestation.",
+          "type": "string"
+        },
+        "ArchivedURL": {
+          "description": "An archive.org snapshot OF SourceURL (https://web.archive.org/web/<14-digit-timestamp>/<original-url>); a best-effort durability aid for the HARVESTED layer, whose SourceURL is a live page. Empty when no snapshot is recorded, and empty on a curated claim (whose SourceURL already IS the snapshot). Additive: SourceURL stays primary and unchanged. Added in schema 0.7.0.",
           "type": "string"
         },
         "Source": {
@@ -356,7 +360,7 @@
           "type": "string"
         }
       },
-      "required": ["SourceURL", "Source", "Authority", "Method", "IngestedAt"]
+      "required": ["SourceURL", "ArchivedURL", "Source", "Authority", "Method", "IngestedAt"]
     },
     "ModelRef": {
       "title": "ModelRef",
@@ -782,11 +786,21 @@
           "items": { "type": "string" }
         },
         "Metadata": {
-          "description": "Provider-agnostic model facts (description, license, links, benchmark claims) joined to this entity from the models.dev models.json side, or null when none was joined. A pointer field: genuinely optional. Added in schema 0.3.0.",
+          "description": "The PRIMARY provider-agnostic metadata row for this entity (description, license, links, benchmark claims) joined from the models.dev models.json side, or null when none was joined. A DERIVED projection of MetadataAll: the row with the SHORTEST MetadataID, ties broken lexicographic ascending (a lab's canonical id is its shortest one, so the choice is stable under re-ingest and independent of payload size or incoming order). A pointer field: genuinely optional. Added in schema 0.3.0.",
           "oneOf": [
             { "$ref": "#/$defs/EntityMetadata" },
             { "type": "null" }
           ]
+        },
+        "MetadataAll": {
+          "description": "EVERY provider-agnostic metadata row that joined to this entity's identity, sorted ascending by MetadataID; null when none joined. Distinct lab ids routinely decompose to one entity key (a dated alias and its floating alias; a base model and a serving tier that is not a distinct artifact), and each row carries its OWN benchmark claims attributable to its OWN MetadataID. Metadata is the derived primary of this array (the row with the shortest MetadataID). An optional field: a document produced before this array existed carries only Metadata.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/EntityMetadata"
+          }
         },
         "Creator": {
           "description": "The lab / organization that TRAINED this entity's models (the SPDX \"originator\"), DISTINCT from the Providers that host it. A DERIVED join projection of Ref.Family → Creator via the curated creators.json seed (the Sources/Regions projection precedent), not a stored column; one value covers the whole entity (all instances share Family). Empty string (CreatorNone) when the family has no curated mapping. Added in schema 0.6.0; optional for backward compatibility.",

@@ -81,7 +81,11 @@ var templateFuncs = template.FuncMap{
 	// it as a "NN.N GB" figure. It returns "" when ctx is not a positive override or
 	// exceeds the row's baked maximum context (VRAMContextTokens) — the same clamp the
 	// CLI's TYP column applies: no figure is shown above the context the row supports.
-	// This is display-only recompute (the deferred v0.2.9 calculator is out of scope).
+	//
+	// This is display-only recompute in the MODEL-FIRST direction: you already have an
+	// entity and you ask what it costs at a context. The budget-first direction — you
+	// state a budget and ask what fits — is the /calculator page, which reads the same
+	// arithmetic through the root package's FitOver. Neither writes anything baked.
 	"estVRAMGB": func(q bestiary.QuantVRAM, ctx int) string {
 		if ctx <= 0 || q.VRAMContextTokens < ctx {
 			return ""
@@ -100,6 +104,23 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("$%.2f", *p)
 	},
+	// benchScore renders a benchmark claim's SCORE cell: the verbatim upstream value
+	// (ScoreRaw) when the score was non-numeric, otherwise the numeric Score. This
+	// mirrors the CLI's benchScoreCell so the cell is never blank — a string score
+	// ("pass", an em-dash) rides through on ScoreRaw rather than collapsing to a bare 0.
+	"benchScore": func(b bestiary.BenchmarkResult) string {
+		if b.ScoreRaw != "" {
+			return b.ScoreRaw
+		}
+		return fmt.Sprintf("%g", b.Score)
+	},
+	// isPrimaryMetadata reports whether a metadata row is the entity's DERIVED primary
+	// (the row Entity.Metadata points at). The entity view marks the primary in the
+	// per-row attribution rather than hiding the other rows, so a reader can see both
+	// which naming is canonical and that the other rows exist.
+	"isPrimaryMetadata": func(m bestiary.EntityMetadata, primary *bestiary.EntityMetadata) bool {
+		return primary != nil && m.MetadataID == primary.MetadataID
+	},
 	// orDash renders an empty string as an em-dash so a blank cell reads as "unknown"
 	// rather than a rendering gap (the CLI orDash convention).
 	"orDash": func(s string) string {
@@ -108,17 +129,49 @@ var templateFuncs = template.FuncMap{
 		}
 		return s
 	},
+	// plural renders a count with its noun, choosing the singular form at exactly one:
+	// plural 1 "entity" "entities" -> "1 entity". The tree labels every node with a count,
+	// and "1 families" on a single-family creator reads as a rendering bug to anyone who
+	// notices it, which undermines the figures that are correct.
+	"plural": func(n int, one, many string) string {
+		if n == 1 {
+			return fmt.Sprintf("%d %s", n, one)
+		}
+		return fmt.Sprintf("%d %s", n, many)
+	},
 }
 
 // pageFiles maps each page name to the template files that compose it. Parsing per-page
 // (rather than one big set) keeps each page's "content" block unambiguous — the layout is
 // re-parsed into every set, and the last "content" parsed into a set wins, so a set never
-// sees two content blocks. The index page also pulls in results.html, whose
+// sees two content blocks. The entities page also pulls in results.html, whose
 // "entity-results" fragment it renders inline.
+//
+// "tree" (the front page) and "families" both pull in seriestree.html, which defines the
+// ONE "series-subtree" rendering of a hoisted versioned line. Sharing the partial rather
+// than duplicating the markup is what keeps a retired "(base)" node from reappearing on one
+// page and not the other.
+//
+// Every page also pulls in palette.html: the command palette lives in the shared layout, so
+// its "palette-prompt" opening state must be defined in every page's set. The SAME file is
+// parsed into the fragment set, which is what makes the dialog's initial contents and the
+// server's patched contents one rendering rather than two that could drift.
+//
+// There is deliberately no "series" entry: that page was retired, its content absorbed by
+// "families", and /series now 404s.
 var pageFiles = map[string][]string{
-	"index":  {"templates/layout.html", "templates/results.html", "templates/index.html"},
-	"entity": {"templates/layout.html", "templates/entity.html"},
-	"series": {"templates/layout.html", "templates/series.html"},
+	// Every page set carries palette.html: layout.html renders the palette dialog on all
+	// pages and invokes its "palette-prompt" fragment, so a page whose set omitted it would
+	// fail to parse. That includes the calculator, which the palette landed after.
+	"tree":     {"templates/layout.html", "templates/palette.html", "templates/seriestree.html", "templates/tree.html"},
+	"entities": {"templates/layout.html", "templates/palette.html", "templates/results.html", "templates/entities.html"},
+	"entity":   {"templates/layout.html", "templates/palette.html", "templates/entity.html"},
+	"families": {"templates/layout.html", "templates/palette.html", "templates/seriestree.html", "templates/families.html"},
+	// The calculator pulls in calcresults.html, whose "calc-results" fragment it renders
+	// inline on first paint and the SSE seam patches on every budget change -- the
+	// entities/results.html arrangement, and for the same reason: one rendering of the
+	// table means the initial page and every patch cannot disagree.
+	"calculator": {"templates/layout.html", "templates/palette.html", "templates/calcresults.html", "templates/calculator.html"},
 }
 
 // parseTemplates builds one template set per page (see pageFiles).
@@ -134,8 +187,11 @@ func parseTemplates() (map[string]*template.Template, error) {
 	return out, nil
 }
 
-// parseFragments builds the standalone template set used to render SSE fragments (the
-// "entity-results" list PatchElements-ed into #entity-results). It carries no layout.
+// parseFragments builds the standalone template set used to render SSE fragments: the
+// "entity-rows" table PatchElements-ed into #entity-results, the "calc-results" block
+// patched into #calc-results, and the "palette-options" list PatchElements-ed into
+// #palette-results. It carries no layout.
 func parseFragments() (*template.Template, error) {
-	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS, "templates/results.html")
+	return template.New("fragments").Funcs(templateFuncs).ParseFS(templatesFS,
+		"templates/results.html", "templates/calcresults.html", "templates/palette.html")
 }

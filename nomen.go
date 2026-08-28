@@ -256,9 +256,26 @@ func (m *IngestMethod) UnmarshalText(text []byte) error {
 // parse/data/nomen_claims.json is an archive.org snapshot URL captured when the
 // claim was created, never the live claimant page (see nomen_claims.go). The policy
 // binds the CURATED claims layer only.
+//
+// The two URL fields answer different questions and are never interchangeable:
+// SourceURL is the citation of record; ArchivedURL is a best-effort durability aid
+// FOR that citation. The curated layer needs only SourceURL because its SourceURL
+// already IS the snapshot; the harvested layer cites a LIVE observation, so its
+// snapshot — when one exists — rides alongside on ArchivedURL.
 type NomenAttestation struct {
 	// SourceURL is WHO asserts this naming (claim attribution). "" for self-minted.
 	SourceURL string
+	// ArchivedURL is an archive.org snapshot OF SourceURL, in the
+	// IsArchiveSnapshotURL shape. It is a best-effort durability aid for the
+	// HARVESTED layer, whose SourceURL is a LIVE page that can rot: the offline
+	// cmd/bestiary-hf bot asks the Wayback Availability API for the closest
+	// snapshot and records it here. It is ADDITIVE — SourceURL stays primary and
+	// unchanged — and is "" whenever no snapshot is recorded (no lookup was made,
+	// the API reported none, or the lookup failed). An empty value is an honest
+	// "unknown", never an error. A CURATED claim leaves it "": that layer's fence
+	// already requires SourceURL itself to be the snapshot, so it needs no second
+	// field.
+	ArchivedURL string
 	// Source is WHICH ingest we read this naming from (a DataSourceID FK).
 	Source DataSourceID
 	// Authority is whose VOICE the evidence document is (per-attestation).
@@ -312,11 +329,19 @@ type Nomen struct {
 // canonicalAttestation is the single self-minted attestation a canonical nomen
 // carries (§3.2 defaults table): bestiary is the Primary authority for its own
 // canonical scheme, and the key is bestiary-authored, so Method is SelfMinted. The
-// SourceURL is empty (a self-minted key asserts itself); Source is the ingest that
-// attests the entity.
-func canonicalAttestation(src DataSourceID) []NomenAttestation {
+// SourceURL is empty (a self-minted key asserts itself), and the Source is
+// DataSourceBestiary — NOT the upstream ingest the entity came from. A canonical key
+// is rendered by this package's own parse + key pipeline, so no upstream ever
+// asserted it; naming models.dev here would credit an upstream with a claim it never
+// made. The two provenance levels stay distinct: SourceURL is WHO asserts the naming
+// (nobody but bestiary, hence empty), Source is WHICH ingest it was read from (this
+// package itself).
+//
+// It deliberately takes no source parameter: the answer is the same on every mint
+// path, so the FK cannot be got wrong at a call site.
+func canonicalAttestation() []NomenAttestation {
 	return []NomenAttestation{{
-		Source:    src,
+		Source:    DataSourceBestiary,
 		Authority: AuthorityPrimary,
 		Method:    IngestMethodSelfMinted,
 	}}
@@ -352,8 +377,11 @@ func ociAttestation(sourceURL string) []NomenAttestation {
 // ID spelling (Admitted), deduplicated within the entity. It does NOT include alias
 // claims — those are folded in by the callers that have the claim table. The result
 // is deterministically sorted (lessNomen). The entity's own Sources drive the
-// per-nomen Source: a nomen's Source is the ingest that attests the entity
-// (DataSourceModelsDev for every registry entity).
+// per-nomen Source for the HARVESTED schemes only: a provider-ID nomen's Source is
+// the ingest that attests the entity (DataSourceModelsDev for every registry
+// entity). The Canonical nomen is bestiary-authored, so its Source is
+// DataSourceBestiary regardless of where the entity was ingested from — see
+// canonicalAttestation.
 //
 // It reads the curated redundant-modifier suppression seed through the shared
 // mintEntityNominaWith seam so the production path and the fences exercise ONE
@@ -388,7 +416,7 @@ func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
 		Scheme:       NomenSchemeCanonical,
 		Status:       AcceptabilityPreferred,
 		ResolvesTo:   e.Ref,
-		Attestations: canonicalAttestation(src),
+		Attestations: canonicalAttestation(),
 	})
 	if preferred != key {
 		out = append(out, Nomen{
@@ -396,7 +424,7 @@ func mintEntityNominaWith(e Entity, suppression *suppressionTable) []Nomen {
 			Scheme:       NomenSchemeCanonical,
 			Status:       AcceptabilityAdmitted,
 			ResolvesTo:   e.Ref,
-			Attestations: canonicalAttestation(src),
+			Attestations: canonicalAttestation(),
 		})
 	}
 
@@ -474,11 +502,15 @@ func ociSourceURL(name string) string {
 	return "https://ollama.com/library/" + n
 }
 
-// entitySourceForNomen picks the ingest DataSourceID a minted nomen is attributed
+// entitySourceForNomen picks the ingest DataSourceID a HARVESTED nomen is attributed
 // to: the models.dev origin every registry entity attests. It reads the entity's
 // derived Sources projection and prefers DataSourceModelsDev (always present for a
 // registry entity); it falls back to the first source, or DataSourceModelsDev when
 // the entity carries none (a hand-built value).
+//
+// It is deliberately NOT consulted for canonical nomina: a canonical key is authored
+// by bestiary, not read from the entity's ingest, so canonicalAttestation pins
+// DataSourceBestiary and takes no source argument at all.
 func entitySourceForNomen(e Entity) DataSourceID {
 	for _, s := range e.Sources {
 		if s == DataSourceModelsDev {
@@ -637,7 +669,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 			Scheme:       NomenSchemeCanonical,
 			Status:       AcceptabilityPreferred,
 			ResolvesTo:   g.ref,
-			Attestations: canonicalAttestation(DataSourceModelsDev),
+			Attestations: canonicalAttestation(),
 		})
 		if preferred != key {
 			out = append(out, Nomen{
@@ -645,7 +677,7 @@ func MintNominaFromModels(models []ModelInfo) []Nomen {
 				Scheme:       NomenSchemeCanonical,
 				Status:       AcceptabilityAdmitted,
 				ResolvesTo:   g.ref,
-				Attestations: canonicalAttestation(DataSourceModelsDev),
+				Attestations: canonicalAttestation(),
 			})
 		}
 		for _, id := range g.ids {
@@ -707,18 +739,23 @@ func lessNomen(a, b Nomen) bool {
 }
 
 // lessAttestation is the TOTAL strict weak ordering over a Nomen's attestation set:
-// (Source, SourceURL, Authority, Method, IngestedAt) — EVERY field of
+// (Source, SourceURL, ArchivedURL, Authority, Method, IngestedAt) — EVERY field of
 // NomenAttestation. Totality is load-bearing for determinism (INV3): a sort key that
 // omitted IngestedAt (or any field) would leave two attestations equal on the
 // compared fields yet not byte-identical, so they would neither dedup nor order
 // stably — a nondeterministic map-group fallback that breaks N=100. With every field
-// in the key, equal-key ⇒ byte-identical ⇒ deduped.
+// in the key, equal-key ⇒ byte-identical ⇒ deduped. ArchivedURL is in the key for
+// exactly that reason: two attestations alike but for their snapshot are DISTINCT
+// records that must order stably rather than collapse.
 func lessAttestation(a, b NomenAttestation) bool {
 	if a.Source != b.Source {
 		return a.Source < b.Source
 	}
 	if a.SourceURL != b.SourceURL {
 		return a.SourceURL < b.SourceURL
+	}
+	if a.ArchivedURL != b.ArchivedURL {
+		return a.ArchivedURL < b.ArchivedURL
 	}
 	if a.Authority != b.Authority {
 		return a.Authority < b.Authority
@@ -737,7 +774,7 @@ func sortAndDedupAttestations(as []NomenAttestation) []NomenAttestation {
 	out := as[:0]
 	for i, a := range as {
 		if i > 0 && a == as[i-1] {
-			continue // exact duplicate (all five fields equal) — idempotent no-op
+			continue // exact duplicate (all six fields equal) — idempotent no-op
 		}
 		out = append(out, a)
 	}

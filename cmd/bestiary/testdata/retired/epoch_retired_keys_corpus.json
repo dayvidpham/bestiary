@@ -1,0 +1,1242 @@
+{
+  "cases": [
+    {
+      "name": "epoch_retired_agi",
+      "input": "agi",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a DISTINCT-ENTITY under-specified reading, holding at the bare library call, at the Peasant library call and at the shipped `bestiary show` default alike: the retired key's string still names several LIVE and genuinely different entities (agi@01 / agi/mini / agi/pro for `agi`; seven and twenty-five respectively for `ling` and `mimo`), so Resolve returns the typed *bestiary.ErrAmbiguous and the CLI prints its candidate listing. This is the reading `show gpt` and `show claude` have always produced; it must NEVER be `fixed` into a 404, which would 404 the live family itself."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_cogito_v2_1_671b_671b",
+      "input": "cogito/v2.1-671b#671b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "cogito_decomposition_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus cogito_decomposition_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_cogito_1_671b",
+      "input": "cogito@1#671b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "cogito_decomposition_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus cogito_decomposition_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_deepseek_flash_free",
+      "input": "deepseek-flash/free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_devstral_123b",
+      "input": "devstral#123b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gemma_12b",
+      "input": "gemma#12b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gemma_26b_a4b",
+      "input": "gemma#26b-a4b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gemma_4b",
+      "input": "gemma#4b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_glm_free",
+      "input": "glm/free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_glm_free_4_7",
+      "input": "glm/free@4.7",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_glm_free_5",
+      "input": "glm/free@5",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_glm_free_5_2",
+      "input": "glm/free@5.2",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_luna",
+      "input": "gpt-luna",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "an AUTO-DETECT-ONLY reading that NO shipped code path reaches, pinned here so the difference stays visible. Bare bestiary.Resolve (zero ResolveOptions) takes the variant-aware bare-family fallback — the leading token `gpt` is a live Family and the trailing token names a Variant within it — and returns the typed *bestiary.ErrAmbiguous. The CLI never takes that path: `bestiary show` defaults to WithInputFormat(InputFormatPeasant), which parses the WHOLE string as a Family, and that family does not exist after the gpt tier re-key — so the seam a user actually hits is a plain 404, exactly as gpt_tier_rekey_retired_keys_corpus.json already records it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_luna_pro",
+      "input": "gpt-luna/pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_luna_pro_5_6",
+      "input": "gpt-luna/pro@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_luna_5_6",
+      "input": "gpt-luna@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_sol",
+      "input": "gpt-sol",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "an AUTO-DETECT-ONLY reading that NO shipped code path reaches, pinned here so the difference stays visible. Bare bestiary.Resolve (zero ResolveOptions) takes the variant-aware bare-family fallback — the leading token `gpt` is a live Family and the trailing token names a Variant within it — and returns the typed *bestiary.ErrAmbiguous. The CLI never takes that path: `bestiary show` defaults to WithInputFormat(InputFormatPeasant), which parses the WHOLE string as a Family, and that family does not exist after the gpt tier re-key — so the seam a user actually hits is a plain 404, exactly as gpt_tier_rekey_retired_keys_corpus.json already records it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_sol_pro",
+      "input": "gpt-sol/pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_sol_pro_5_6",
+      "input": "gpt-sol/pro@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_sol_5_6",
+      "input": "gpt-sol@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_terra",
+      "input": "gpt-terra",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "an AUTO-DETECT-ONLY reading that NO shipped code path reaches, pinned here so the difference stays visible. Bare bestiary.Resolve (zero ResolveOptions) takes the variant-aware bare-family fallback — the leading token `gpt` is a live Family and the trailing token names a Variant within it — and returns the typed *bestiary.ErrAmbiguous. The CLI never takes that path: `bestiary show` defaults to WithInputFormat(InputFormatPeasant), which parses the WHOLE string as a Family, and that family does not exist after the gpt tier re-key — so the seam a user actually hits is a plain 404, exactly as gpt_tier_rekey_retired_keys_corpus.json already records it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_terra_pro",
+      "input": "gpt-terra/pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_terra_pro_5_6",
+      "input": "gpt-terra/pro@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_terra_5_6",
+      "input": "gpt-terra@5.6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_gpt_pro",
+      "input": "gpt/pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_hy_free_3",
+      "input": "hy/free@3",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_k2",
+      "input": "kimi-k2",
+      "expected": {
+        "library": "resolved",
+        "cli_show": "resolved",
+        "cli_by_entity": "resolved",
+        "covered_by": [
+          "compound_recovery_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a MEASURED DEVIATION, recorded rather than repaired: bestiary.Resolve answers under BOTH the bare library call and the shipped CLI's default Peasant reading, because the retired spelling remains a valid UNDER-SPECIFIED reference matching exactly one live entity. No alias, redirect or successor-listing instrument is involved — the ordinary resolver is doing its ordinary job on a string that still names one model. The exact-key seam (bestiary.EntityByKey) is still a hard 404."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus compound_recovery_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key. DEVIATION: `show --by-entity` ANSWERS for this key. The exact-key seam (bestiary.EntityByKey) is still a hard 404; the CLI seam resolves the input through the model resolver first, and this string is still a valid under-specified reference."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_k2_code",
+      "input": "kimi-k2{code}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_k2_instruct",
+      "input": "kimi-k2{instruct}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "compound_recovery_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus compound_recovery_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_k3",
+      "input": "kimi-k3",
+      "expected": {
+        "library": "resolved",
+        "cli_show": "resolved",
+        "cli_by_entity": "resolved",
+        "covered_by": [
+          "compound_recovery_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a MEASURED DEVIATION, recorded rather than repaired: bestiary.Resolve answers under BOTH the bare library call and the shipped CLI's default Peasant reading, because the retired spelling remains a valid UNDER-SPECIFIED reference matching exactly one live entity. No alias, redirect or successor-listing instrument is involved — the ordinary resolver is doing its ordinary job on a string that still names one model. The exact-key seam (bestiary.EntityByKey) is still a hard 404."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus compound_recovery_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key. DEVIATION: `show --by-entity` ANSWERS for this key. The exact-key seam (bestiary.EntityByKey) is still a hard 404; the CLI seam resolves the input through the model resolver first, and this string is still a valid under-specified reference."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_free",
+      "input": "kimi/free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_kimi_instruct",
+      "input": "kimi{instruct}",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "compound_recovery_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a SINGLE-ENTITY DATE-FRAGMENTATION reading — NOT a surviving bare family, and deliberately not filed with agi/ling/mimo. All nine candidates share one IDENTICAL tuple (family=kimi, variant=k, version=2, modifier=[instruct]) and differ ONLY by `date`; the ambiguity comes from the resolver's grouping key including `date`, the same way it does for any ordinary multi-instance entity whose rows carry divergent dates. The surviving bare family is `kimi`; `kimi{instruct}` is a variant+modifier compound, not a family. Ambiguous at the bare library call, at the Peasant library call and at the shipped `bestiary show` default."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus compound_recovery_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_kling_v2_6",
+      "input": "kling-v2@6",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "collision_split_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus collision_split_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_laguna_s_free_2_1",
+      "input": "laguna-s/free@2.1",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_ling",
+      "input": "ling",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "collision_split_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a DISTINCT-ENTITY under-specified reading, holding at the bare library call, at the Peasant library call and at the shipped `bestiary show` default alike: the retired key's string still names several LIVE and genuinely different entities (agi@01 / agi/mini / agi/pro for `agi`; seven and twenty-five respectively for `ling` and `mimo`), so Resolve returns the typed *bestiary.ErrAmbiguous and the CLI prints its candidate listing. This is the reading `show gpt` and `show claude` have always produced; it must NEVER be `fixed` into a 404, which would 404 the live family itself."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus collision_split_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo",
+      "input": "mimo",
+      "expected": {
+        "library": "ambiguous",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a DISTINCT-ENTITY under-specified reading, holding at the bare library call, at the Peasant library call and at the shipped `bestiary show` default alike: the retired key's string still names several LIVE and genuinely different entities (agi@01 / agi/mini / agi/pro for `agi`; seven and twenty-five respectively for `ling` and `mimo`), so Resolve returns the typed *bestiary.ErrAmbiguous and the CLI prints its candidate listing. This is the reading `show gpt` and `show claude` have always produced; it must NEVER be `fixed` into a 404, which would 404 the live family itself."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_flash",
+      "input": "mimo/flash",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_flash_free",
+      "input": "mimo/flash-free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_omni_free",
+      "input": "mimo/omni-free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_pro",
+      "input": "mimo/pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_pro_free",
+      "input": "mimo/pro-free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5",
+      "input": "mimo/v2.5",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5_free",
+      "input": "mimo/v2.5-free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5_pro",
+      "input": "mimo/v2.5-pro",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5_tts",
+      "input": "mimo/v2.5-tts",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5_tts_voiceclone",
+      "input": "mimo/v2.5-tts-voiceclone",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v2_5_tts_voicedesign",
+      "input": "mimo/v2.5-tts-voicedesign",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v_2_5",
+      "input": "mimo/v@2.5",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v_2_5_pro",
+      "input": "mimo/v@2.5{pro}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v_2_omni",
+      "input": "mimo/v@2{omni}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mimo_v_2_pro",
+      "input": "mimo/v@2{pro}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "mimo_normalization_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus mimo_normalization_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_minimax_m3_free",
+      "input": "minimax-m3/free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_minimax_free",
+      "input": "minimax/free",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_ministral_3b_instruct",
+      "input": "ministral#3b{instruct}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "resolved",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT plus a MEASURED DEVIATION, recorded rather than repaired. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading parses it as a canonical tuple that remains a valid UNDER-SPECIFIED reference to exactly ONE live entity, so `bestiary show` ANSWERS. No alias, redirect or successor-listing instrument is involved; the exact-key seam (bestiary.EntityByKey) is still a hard 404. The per-lever corpus records the same `show: resolved`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_ministral_8b_instruct",
+      "input": "ministral#8b{instruct}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mistral_large_675b_instruct",
+      "input": "mistral/large#675b{instruct}",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "resolved",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT plus a MEASURED DEVIATION, recorded rather than repaired. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading parses it as a canonical tuple that remains a valid UNDER-SPECIFIED reference to exactly ONE live entity, so `bestiary show` ANSWERS. No alias, redirect or successor-listing instrument is involved; the exact-key seam (bestiary.EntityByKey) is still a hard 404. The per-lever corpus records the same `show: resolved`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mistral_mini_3b",
+      "input": "mistral/mini#3b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_mistral_small_24b",
+      "input": "mistral/small#24b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_nemotron_120b",
+      "input": "nemotron#120b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "resolved",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT plus a MEASURED DEVIATION, recorded rather than repaired. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading parses it as a canonical tuple that remains a valid UNDER-SPECIFIED reference to exactly ONE live entity, so `bestiary show` ANSWERS. No alias, redirect or successor-listing instrument is involved; the exact-key seam (bestiary.EntityByKey) is still a hard 404. The per-lever corpus records the same `show: resolved`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_nemotron_30b_a3b",
+      "input": "nemotron#30b-a3b",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "ambiguous",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "gpt_tier_rekey_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "a seam SPLIT running the OPPOSITE way from the gpt-tier keys, and the CLI seam is the user-visible one. Bare bestiary.Resolve auto-detects this spelling as a RAW id — the `#size` / `/variant` punctuation disqualifies the bare-identifier fallback — finds no raw match and returns *bestiary.ErrNotFound. The shipped CLI's default Peasant reading instead parses it as a canonical tuple, matches several live entities, and prints the under-specified candidate listing. The per-lever corpus records the same `show: ambiguous`."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus gpt_tier_rekey_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_nemotron_free_3",
+      "input": "nemotron/free@3",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": [
+          "free_demotion_retired_keys_corpus.json"
+        ]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "covered by the per-lever corpus free_demotion_retired_keys_corpus.json, which pins its CLI seams and its successor set; this row pins the epoch-wide invariant over the same key."
+      }
+    },
+    {
+      "name": "epoch_retired_qwen_coder_3_1m",
+      "input": "qwen/coder@3#1m",
+      "expected": {
+        "library": "not-found",
+        "cli_show": "not-found",
+        "cli_by_entity": "not-found",
+        "covered_by": []
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy, holding at EVERY seam: bestiary.Resolve returns *bestiary.ErrNotFound under the bare library call AND under the shipped CLI's default WithInputFormat(InputFormatPeasant) reading, and `show --by-entity` 404s. The retired spelling names nothing live — no alias, no redirect, no successor listing, and no bare family survives under it."
+      },
+      "mutation": {
+        "description": "NOT covered by any per-lever retired-key corpus — the lever that retired it authored none. This epoch corpus is the only committed record of its retirement, which is why the reconciliation test names it explicitly instead of letting it fall through a gap."
+      }
+    }
+  ]
+}

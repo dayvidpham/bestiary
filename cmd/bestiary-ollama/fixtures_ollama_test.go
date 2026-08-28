@@ -15,6 +15,9 @@ import (
 //go:embed testdata/ollama/normalize_ollama_name_corpus.json
 var ollamaNormalizeNameCorpusJSON []byte
 
+//go:embed testdata/enum/join_arm_string_corpus.json
+var ollamaJoinArmStringCorpusJSON []byte
+
 // loadOllamaCorpus loads a corpus under the exact case-count control (wantN, the
 // pre-migration inline row count) and the non-vacuity guard.
 func loadOllamaCorpus[I any, E any](t *testing.T, data []byte, wantN int) testcase.Corpus[I, E] {

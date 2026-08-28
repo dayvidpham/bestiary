@@ -156,15 +156,26 @@ func TestMidIDEngine_ExtractModifiers_MidIDHarvest(t *testing.T) {
 // token set. These are the invariants that prevent regressions on the rest of the catalog.
 func TestMidIDEngine_Guards(t *testing.T) {
 	t.Run("compound-variant component is not double-harvested", func(t *testing.T) {
-		// mimo-v2-omni-free carries the upstream compound variant "omni-free"; "omni" is
-		// already a component, so the harvest must emit nothing (regression pin: without the
-		// component-guard this flipped Modifier nil→[omni] and broke codegen byte-identity).
-		mods, consumed := extractModifiers("mimo-v2-omni-free", "mimo", "omni-free")
-		if len(mods) != 0 {
-			t.Errorf("mimo-v2-omni-free: mods=%v, want none (omni is a variant component)", mods)
+		// The ID carries the upstream compound variant "omni-free"; "omni" is already a
+		// component, so the phase-B harvest must emit nothing for it (regression pin:
+		// without the component-guard this flipped Modifier nil→[omni] and broke codegen
+		// byte-identity). Only the trailing "free" — a global attribute-class modifier —
+		// is peeled, by phase A.
+		//
+		// RE-SHAPED for the global free demotion. The pin previously used the tail-shaped
+		// spelling "mimo-v2-omni-free", where "omni" sits in the trailing run behind
+		// "free". Once "free" became a peelable modifier token, phase A legitimately
+		// consumes it and then reaches "omni" as the next trailing token — the phase-A
+		// variant-guard compares against the WHOLE variant, not its components, so that
+		// reading is by design and is not what this guard covers. The input is therefore
+		// re-shaped so "omni" sits behind a real boundary token and the phase-B harvest —
+		// the code path variantHasComponent actually guards — is the one under test.
+		mods, consumed := extractModifiers("mimo-omni-2-free", "mimo", "omni-free")
+		if modsContain(mods, "omni") {
+			t.Errorf("mimo-omni-2-free: mods=%v, omni wrongly harvested (it is a variant component)", mods)
 		}
-		if consumed != "" {
-			t.Errorf("mimo-v2-omni-free: consumed=%q, want \"\"", consumed)
+		if consumed != "-free" {
+			t.Errorf("mimo-omni-2-free: consumed=%q, want %q (only the trailing modifier run)", consumed, "-free")
 		}
 	})
 	t.Run("stage/mode token that IS the variant is not harvested", func(t *testing.T) {

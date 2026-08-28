@@ -19,7 +19,7 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 
 // TestNomina_CensusExact pins the EXACT per-scheme census of the minted nomen set
 // over the static registry (the "census literal pinned at bake"). The counts are
-// derived from the committed models_static_gen.go: 957 canonical (one Preferred nomen
+// derived from the committed models_static_gen.go: 939 canonical (one Preferred nomen
 // per distinct entity key), 2834 provider-ID (one Admitted nomen per distinct instance
 // ID spelling, deduped within an entity), 1 alias (the grok-beta seed claim) and 179
 // huggingface (4 curated Hub seeds + 175 distinct-triple repos harvested by the
@@ -82,13 +82,31 @@ func nominaCensus(ns []bestiary.Nomen) map[bestiary.NomenScheme]int {
 // entities fold onto their N.0 siblings, retiring 8 Preferred canonical nomina. provider-ID
 // UNCHANGED at 2791 a THIRD time — the fold merges two entities, moving no instance, so the
 // bare-version ID spellings survive as Admitted provider-ID nomina on the merged entities.
+//
+// canonical went 957 → 940 with the global free demotion: 17 free-tier entity keys retire
+// (0 added), so 17 Preferred canonical nomina go with them. provider-ID UNCHANGED at 2834 a
+// FOURTH time, same reason as every merge before it — the demoted instances re-home onto a
+// surviving sibling and carry their ID spellings across as Admitted provider-ID nomina.
+//
+// canonical went 940 → 939 with the qwen3-coder-next suppress-pin extended to the
+// unprefixed spelling: qwen/coder@3#1m retires (1 key), taking its Preferred canonical
+// nomen with it. provider-ID UNCHANGED at 2834 a FIFTH time, same reason — the InferX
+// instance rejoins qwen/coder@3 and carries its ID spelling across as an Admitted nomen.
+//
+// canonical went 939 → 947 with the ling/inkling/kling collision split: bare `ling` and the
+// phantom `kling-v2@6` retire (−2) while `inkling`, `kling@2.6` and 8 `kling/v*` keys appear
+// (+10), so 8 Preferred canonical nomina are minted net. provider-ID UNCHANGED at 2834 a
+// SIXTH time — and here for a genuinely different reason than the merges above: this is a
+// SPLIT, not a fold, so no instance is created or destroyed; all 15 moved instances carry
+// their existing ID spellings across to the new keys as Admitted provider-ID nomina.
 func TestNomina_CensusExact(t *testing.T) {
 	const (
-		wantCanonical   = 957  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2), one canonical nomen per entity
+		wantCanonical   = 930  // 947 -> 958: 2026-07-23 snapshot refresh (upstream additions); 958 -> 957: v0.2.8 curation slice — command/a{translate} split (+1) minus deepseek@1/@2 dot-lost merges (−2); 957 -> 940: the global free demotion retires 17 entity keys (0 added); 940 -> 939: the qwen3-coder-next suppress-pin extended to the unprefixed spelling retires qwen/coder@3#1m (1 key, 0 added); 939 -> 947: the ling/inkling/kling collision split retires bare `ling` and the phantom `kling-v2@6` (−2) and adds `inkling`, `kling@2.6` and the 8 `kling/v*` video keys (+10). There is exactly one canonical nomen per entity, so the canonical count tracks the entity census exactly; 947 -> 946: the keyspace-wide mimo normalization rewrites all ten mimo keys and merges one of them (mimo/pro) into mimo@2.5{pro}, so exactly one canonical nomen is lost; 946 -> 945: the cogito variant pin merges the phantom cogito@1#671b into the repaired dotted key (spelled cogito@2.1#671b at the tip, after the version-prefix rename, which moves no count), losing exactly one more canonical nomen; 945 -> 942: the gpt tier re-key rewrites all twelve gpt-<tier> keys and empties the three undated gpt-<tier>/pro keys (nine renames, three retirements, no additions), so exactly three canonical nomina are lost; 942 -> 933: the redundant leading-token strip retires fourteen undated keys and mints five dated ones, losing nine canonical nomina. 933 -> 930: the general bare-integer series-compound family recovery retires four compound-family and bare-family keys and adds one, kimi/coder, losing exactly three canonical nomina (-4 +1 = -3). The instance-bearing schemes are again unmoved — a re-keyed instance carries its own id spelling across as an Admitted nomen — and the one harvested HuggingFace repo whose entity moved (mistralai/Mistral-Large-3-675B-Instruct-2512, now mistral/large@3#675b{instruct}) keeps its value while its ResolvesTo is re-pointed, so the huggingface count holds at 179. ONLY the canonical leg moves: the provider-ID, alias and huggingface counts below are re-measured UNCHANGED, because every re-keyed instance carries its own ID spelling across as an Admitted nomen and the three re-keyed HuggingFace repos keep their values while their ResolvesTo is re-pointed
 		wantProviderID  = 2834 // 2791 -> 2834: 2026-07-23 refresh, +43 new upstream instance spellings; UNCHANGED by the v0.2.8 slice — the re-keyed instances keep their provider-ID spellings as Admitted nomina on the merged/split entities (the C4-fold precedent)
 		wantAlias       = 1
+		wantOCI         = 267 // 0 -> 267: the offline Ollama refresh is the first run to capture per-quant OCI manifest digests, which TestMintNomina_OCI anticipated as "future work". The catalog carries 488 digest-bearing quant rows holding 262 DISTINCT digests across 19 entities; nomina are minted per (Value, Scheme, ResolvesTo) triple, and 3 digests are published under more than one catalog ID, so the pair count is 267, not 262. No other scheme moves: the refresh adds no entity, no instance and no ID spelling — canonical/provider-id/alias/huggingface are re-measured UNCHANGED at 930/2834/1/179.
 		wantHuggingFace = 179 // 4 -> 179: v0.2.8 HF-bot slice. The cmd/bestiary-hf live run harvested 179 open-weight Hub repos that JOIN a catalog entity. Of those, 4 are the pre-existing curated Hub claims (nomen_claims.json), aliased to their EXACT curated (Value, huggingface-scheme, ResolvesTo) triples, so each harvested attestation COALESCES onto its curated claim — one nomen carrying TWO attestations (curated + huggingface), adding 0 to the nomen count (validation case 3). The other 175 harvested repos are distinct triples: +175. 4 + 175 = 179.
-		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace
+		wantTotal       = wantCanonical + wantProviderID + wantAlias + wantHuggingFace + wantOCI
 	)
 	// v0.2.8 multi-attestation lift: coalesceNomina groups by the (Value, Scheme,
 	// ResolvesTo) triple. The attestation refactor itself is census-NEUTRAL (one row,
@@ -97,7 +115,9 @@ func TestNomina_CensusExact(t *testing.T) {
 	// fires where a harvested repo shares a curated claim's triple: the 4 curated Hub
 	// claims each coalesce with their aliased harvested twin into ONE nomen carrying TWO
 	// attestations (curated + huggingface), so those 4 add 0 — the count grows only by
-	// the 175 distinct-triple harvested repos. Total 957 + 2834 + 1 + 179 = 3971.
+	// the 175 distinct-triple harvested repos.
+	// The OCI leg joins the census with the Ollama refresh that first captured manifest
+	// digests: 930 + 2834 + 1 + 179 + 267 = 4211.
 	all := bestiary.MintNomina(bestiary.Entities())
 	if len(all) != wantTotal {
 		t.Errorf("MintNomina total = %d, want %d", len(all), wantTotal)
@@ -115,6 +135,11 @@ func TestNomina_CensusExact(t *testing.T) {
 	if c[bestiary.NomenSchemeHuggingFace] != wantHuggingFace {
 		t.Errorf("huggingface nomina = %d, want %d", c[bestiary.NomenSchemeHuggingFace], wantHuggingFace)
 	}
+	if c[bestiary.NomenSchemeOCI] != wantOCI {
+		t.Errorf("oci nomina = %d, want %d;\n"+
+			"  the OCI leg is minted from the per-quant manifest digests the offline Ollama refresh captures,\n"+
+			"  so it moves only when that corpus is refreshed", c[bestiary.NomenSchemeOCI], wantOCI)
+	}
 	// The registry Nomina() convenience must agree with MintNomina(Entities()).
 	if got := len(bestiary.Nomina()); got != wantTotal {
 		t.Errorf("Nomina() total = %d, want %d", got, wantTotal)
@@ -129,9 +154,10 @@ func TestNomina_CensusExact(t *testing.T) {
 	fromModels := nominaCensus(bestiary.MintNominaFromModels(bestiary.StaticModels()))
 	if fromModels[bestiary.NomenSchemeProviderID] != wantProviderID ||
 		fromModels[bestiary.NomenSchemeAlias] != wantAlias ||
-		fromModels[bestiary.NomenSchemeHuggingFace] != wantHuggingFace {
-		t.Errorf("MintNominaFromModels provider-id/alias/huggingface census = %v, want %d/%d/%d",
-			fromModels, wantProviderID, wantAlias, wantHuggingFace)
+		fromModels[bestiary.NomenSchemeHuggingFace] != wantHuggingFace ||
+		fromModels[bestiary.NomenSchemeOCI] != wantOCI {
+		t.Errorf("MintNominaFromModels provider-id/alias/huggingface/oci census = %v, want %d/%d/%d/%d",
+			fromModels, wantProviderID, wantAlias, wantHuggingFace, wantOCI)
 	}
 	if fromModels[bestiary.NomenSchemeCanonical] != wantFromModelsCanonical {
 		t.Errorf("MintNominaFromModels canonical = %d, want %d (the entity census minus the 4 metadata-only standalones)",

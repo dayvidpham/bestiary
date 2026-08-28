@@ -269,10 +269,61 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// now a peeled identity modifier so Command A Translate stops collapsing onto base command/a)
 	// and the deepseek dash-glued dot-lost pins merge phantom deepseek@1 / deepseek@2 onto the
 	// dotted deepseek/v3.1 and deepseek/v3.2-exp entities (−2). Net −1.
-	const wantEntities = 957
+	//
+	// 957 -> 940 with the global free demotion: "free" leaves the entity key entirely, so
+	// 17 free-tier keys retire (a pure MERGE — 0 added, instance total conserved) as their
+	// instances re-home onto the surviving sibling. ling/flash-free@2.6 is carved out by an
+	// exact-ID pin and is NOT among them.
+	//
+	// 940 -> 939 with the qwen3-coder-next suppress-pin extended to the unprefixed spelling:
+	// qwen/coder@3#1m retires (1 key, 0 added, also a pure MERGE) because its '1m' is a
+	// 1M-context tier marker rather than a parameter size; the InferX instance rejoins
+	// qwen/coder@3.
+	//
+	// 939 -> 947 with the ling/inkling/kling collision split. This one is NOT a pure merge:
+	// the upstream catalog stamps raw_family "ling" on all 14 rows of two unrelated product
+	// lines — Thinking Machines' 6 Inkling instances and vercel's 8 klingai video rows — so
+	// both were folded onto inclusionAI's Ling family. Splitting them RETIRES 2 keys and ADDS
+	// 10: bare `ling` empties (its only occupants were the 6 mislabelled Inkling instances,
+	// which leave for the new `inkling` key) and the phantom `kling-v2@6` is re-keyed to
+	// `kling@2.6`, while the 8 klingai rows split off into 8 `kling/v*` keys of their own.
+	// -2 + 10 = +8. inclusionAI's five surviving ling keys are untouched.
+	//
+	// 947 -> 946 with the keyspace-wide mimo normalization. This one is a rename block
+	// with a single merge inside it: the mimo series letter stops keying the entity, so
+	// all ten mimo keys are rewritten and nine of them map one-to-one onto their new
+	// spelling (mimo/v@2.5 -> mimo@2.5, mimo/v2.5-tts -> mimo@2.5{tts}, and so on). The
+	// tenth, mimo/pro, held the single xiaomi/mimo-v2.5-pro-ultraspeed instance: once
+	// "ultraspeed" is curated as an attribute-class tier that instance rejoins
+	// mimo@2.5{pro}, which is the only key count actually lost. -10 + 9 = -1, with all
+	// 93 mimo instances conserved.
+	//
+	// 945 -> 942 with the gpt tier re-key. luna/sol/terra move from being FAMILIES of
+	// their own (gpt-luna, gpt-sol, gpt-terra) to being VARIANTS of family gpt, so all
+	// twelve tier keys are rewritten: gpt-<tier> -> gpt/<tier>, gpt-<tier>@5.6 ->
+	// gpt/<tier>@5.6, gpt-<tier>/pro@5.6 -> gpt/<tier>@5.6{pro}. That is nine renames.
+	// The remaining three, gpt-<tier>/pro, have no successor spelling with an occupant:
+	// their only instances were venice's squashed-version ids (openai-gpt-56-<tier>-pro),
+	// and those are pinned to 5.6 here, so every -pro instance is dated and the undated
+	// {pro} key empties. -12 + 9 = -3, with all 76 tier instances conserved.
+	//
+	// 942 -> 933 with the redundant leading-token strip. Fourteen undated keys retire
+	// because the artifacts on them turn out to be dated: agi, devstral#123b,
+	// gemma#4b, gemma#12b, gemma#26b-a4b, gpt/pro, kimi-k2{code},
+	// ministral#3b{instruct}, ministral#8b{instruct}, mistral/large#675b{instruct},
+	// mistral/mini#3b, mistral/small#24b, nemotron#120b and nemotron#30b-a3b. Five
+	// dated keys are minted for the ones with no existing dated sibling (agi@01,
+	// devstral@2#123b, ministral@3#3b{instruct}, ministral@3#14b{instruct},
+	// nemotron@3#120b); the other nine MERGE onto dated keys that already existed,
+	// which is why the arithmetic is -14 + 5 = -9 rather than a pure rename block.
+	// Two of the fourteen also change family (mistral/mini#3b and mistral/small#24b
+	// become voxtral, the line Mistral actually published them under) and one,
+	// gpt/pro, SPLITS across gpt/pro@5.4 and gpt/pro@5.5.
+	const wantEntities = 930
 	if got := len(bestiary.Entities()); got != wantEntities {
-		t.Errorf("registry census = %d entities, want %d — command/a{translate} split (+1) and "+
-			"the deepseek dot-lost merges (−2) net −1 from the snapshot baseline", got, wantEntities)
+		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
+			"every curated key retirement (see the arithmetic above it); update it in the same "+
+			"commit if the entity count changed intentionally", got, wantEntities)
 	}
 }
 
@@ -293,16 +344,24 @@ func TestEntityMerge_NToN0_MergeOnly(t *testing.T) {
 	// bare+dotted sums measured on the catalog immediately before the fold:
 	//   opus 21+1, sonnet 26+1, flash 28+1, pro 24+2, imagen 1+3, imagen{fast} 1+1,
 	//   ultra 1+1, veo 1+2.
+	// Four sums then moved with the redundant leading-token strip, which recovers a
+	// version for ids that repeated their provider's or their lab's name in front of the
+	// model name, so those instances now reach the BARE key and fold with it:
+	// opus 22 -> 23 (digitalocean anthropic-claude-opus-4), sonnet 27 -> 29 (databricks
+	// databricks-claude-sonnet-4 and digitalocean anthropic-claude-sonnet-4),
+	// flash 28 -> 29 and pro 26 -> 27 (databricks databricks-gemini-3-flash and
+	// databricks-gemini-3-pro). No instance is created: each was previously stranded on
+	// an undated key of the same family.
 	type merge struct {
 		dotted   string
 		wantInst int
 	}
 	merges := map[string]merge{
-		"claude/opus@4":   {"claude/opus@4.0", 22},
-		"claude/sonnet@4": {"claude/sonnet@4.0", 27},
+		"claude/opus@4":   {"claude/opus@4.0", 23},
+		"claude/sonnet@4": {"claude/sonnet@4.0", 29},
 		// 29 -> 28: an upstream rehost row left at the 2026-07-23 refresh.
-		"gemini/flash@3": {"gemini/flash@3.0", 28},
-		"gemini/pro@3":   {"gemini/pro@3.0", 26},
+		"gemini/flash@3": {"gemini/flash@3.0", 29},
+		"gemini/pro@3":   {"gemini/pro@3.0", 27},
 		"imagen@4":       {"imagen@4.0", 4},
 		"imagen@4{fast}": {"imagen@4.0{fast}", 2},
 		"imagen/ultra@4": {"imagen/ultra@4.0", 2},

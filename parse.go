@@ -39,10 +39,29 @@ type familyOverride struct {
 // such that an ID token of the form "<letter><number>" (kimi-k2, minimax-m1,
 // mimo-v2.5) decomposes to variant=<letter> + version=<number>, instead of the
 // whole token becoming the variant. Empty when the family has no letter series.
+//
+// SeriesLetterInKey says whether that series letter also lands in the VARIANT
+// slot — i.e. whether it is part of the entity key. It is a POINTER on purpose:
+// absent means true, so every family curated before this field existed keeps the
+// letter in its key BY CONSTRUCTION and no existing key can move by omission. Set
+// it to false for a family whose letter is a NAMING convention rather than a
+// product line (the ids carry it, the vendor's own naming does not distinguish a
+// separate line by it): the letter and its number are still consumed for VERSION
+// extraction, but the variant slot is left empty so the version carries the whole
+// generation. Dropping the series letter entirely is NOT the same change and is
+// measurably destructive — it breaks version extraction and residue detection.
 type familyInfo struct {
-	Members      []string `json:"members"`
-	BareGenSplit bool     `json:"bare_gen_split"`
-	SeriesLetter string   `json:"series_letter,omitempty"`
+	Members           []string `json:"members"`
+	BareGenSplit      bool     `json:"bare_gen_split"`
+	SeriesLetter      string   `json:"series_letter,omitempty"`
+	SeriesLetterInKey *bool    `json:"series_letter_in_key,omitempty"`
+}
+
+// seriesLetterInKey reports whether this family's series letter belongs in the
+// variant slot. The absent (nil) case is TRUE — the pre-existing behaviour for
+// every family that never declares the field.
+func (i familyInfo) seriesLetterInKey() bool {
+	return i.SeriesLetterInKey == nil || *i.SeriesLetterInKey
 }
 
 // versionPattern holds a named regex pattern for versioned-variant decomposition.
@@ -1468,7 +1487,7 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 		if base, ok := seriesBaseFamily(pd, family); ok {
 			family = base
 		}
-		// tierMod is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
+		// tierMods is ignored here: InferFamilyFromIDWithVariant has no Modifier slot;
 		// the tier→Modifier promotion is applied by ParseFamilyDetailed.
 		if sv, svv, _, ok := splitSeriesVariant(pd, family, string(id)); ok {
 			variant, version = sv, svv
@@ -1483,6 +1502,15 @@ func InferFamilyFromIDWithVariant(id ModelID, p Provider) (Family, string, strin
 func inferFamilyFromIDWithVariantBase(id ModelID, p Provider) (Family, string, string) {
 	if id == "" {
 		return "", "", ""
+	}
+
+	// ── Redundant leading-token strip ────────────────────────────────────
+	// Same rule and same reason as the call in ParseFamilyDetailed: drop a leading
+	// token only when another axis already carries the fact it names. Applied here
+	// too so the empty-raw_family path and the raw-populated path see the SAME id,
+	// which is the symmetry the vendor-strip head below was introduced for.
+	if class, stripped := ClassifyIDPrefix(id, p); class != IDPrefixNone {
+		id = stripped
 	}
 
 	// ── Vendor/namespace strip (shared head) ─────────────────────────────
@@ -1938,8 +1966,8 @@ func idDrivenDecompose(id ModelID, p Provider) (Family, string, string, []string
 	// promotion still applies; with the Modifier LIST it composes atop any capability
 	// modifier (CanonicalizeModifiers dedups against tiers already peeled above).
 	if pd, pdErr := loadParseData(); pdErr == nil {
-		if _, _, tierMod, ok := splitSeriesVariant(pd, family, string(id)); ok && tierMod != "" {
-			modifiers = append(modifiers, tierMod)
+		if _, _, tierMods, ok := splitSeriesVariant(pd, family, string(id)); ok && len(tierMods) > 0 {
+			modifiers = append(modifiers, tierMods...)
 		}
 		// a global modifier left in the variant slot by the empty-family
 		// inference (e.g. "instruct") is moved to the modifier list here, BEFORE the
@@ -2390,6 +2418,22 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 		return ov.family, ov.variant, ov.version, CanonicalizeModifiers(ov.modifiers), nil
 	}
 
+	// Redundant leading-token strip. A model id may repeat, as its first token, a
+	// fact the record already carries on another axis — the serving provider's own
+	// name, or the lab the Creator axis already attributes the family to. Repeating
+	// it costs identity: the version scan then starts one token late and the artifact
+	// keys an undated sibling of the entity it belongs to. ClassifyIDPrefix removes
+	// such a token ONLY when a different carrier holds the same fact, and leaves the
+	// id byte-identical otherwise, so a backend-host label or a product namespace —
+	// the tokens nothing else records — survive. See id_prefix.go for the rules and
+	// the measured cases each one is derived from.
+	//
+	// Placed AFTER the exact-ID override lookup on purpose: curated pins are keyed to
+	// the catalog's own spelling, so they must see the id the catalog published.
+	if class, stripped := ClassifyIDPrefix(id, p); class != IDPrefixNone {
+		id = stripped
+	}
+
 	// (uniform thinking/vision-as-modifier migration): a trailing
 	// {thinking,vision,…} token embedded in the RAW family is ALWAYS a modifier,
 	// never a variant. models.dev encodes the modifier in the family field for some
@@ -2417,6 +2461,42 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// DEFAULT own-family → no-op; a ledger row remaps a mislabel to its canonical family.
 	if pd, pdErr := loadParseData(); pdErr == nil {
 		family = remapFamilyAlias(pd, family)
+	}
+
+	// Raw-populated half of the (d) family-side series normalization. The empty-raw
+	// inference already recovers a COMPOUND series family token ("kimi-k2" -> kimi)
+	// through seriesBaseFamily; the raw-populated path did not, so a provider that
+	// reports the compound AS its family kept it verbatim whenever the version-pattern
+	// table missed it. That table matches only a DOTTED series number ("kimi-k2.7" ->
+	// kimi + "k2.7"), so every BARE-INTEGER series compound ("kimi-k2", "kimi-k3")
+	// fell through to passthrough and stranded its models on a compound-family key of
+	// their own, split off from the short-family siblings that carry the same series.
+	//
+	// The recovery is the SAME closed predicate the empty-raw path uses: it fires only
+	// when the family is exactly "<base>-<letter><number>" and <base> carries that
+	// series letter in families.json. It is therefore general over series families and
+	// over series numbers -- a new series number needs no curated per-spelling row --
+	// and it declines every other family shape rather than guessing.
+	//
+	// A family SELF-MAPPED in family_overrides.json is a CURATED genuine compound (the
+	// compound IS the product name), so it is declined here exactly as the over-capture
+	// reducer declines it. Nothing is reduced on an unrecognised token.
+	//
+	// ONLY the family is reduced here. The (variant, version) split stays the
+	// letter-prefix seam's job further down, run against the model ID -- the family
+	// reduction merely makes the ID visible to it, because that seam returns early
+	// for a family that carries no series_letter and the compound "kimi-k3" carries
+	// none. Seeding (variant, version) from the CONSUMED family token instead was
+	// measured and rejected: a provider that tags a K2.5 model with the coarser raw
+	// family "kimi-k2" (moonshotai/Kimi-K2.5-TEE and 7 siblings) would then be
+	// asserted onto the k@2 key and silently merged with genuine K2 models. An
+	// under-specified model belongs on the honest bare-family line, never on a
+	// confidently WRONG version key -- the same rule that makes the over-capture
+	// reducer decline an unrecognised token rather than treat it as noise.
+	if pd, pdErr := loadParseData(); pdErr == nil {
+		if base, ok := seriesBaseFamily(pd, family); ok && !isCuratedGenuineCompound(pd, family) {
+			family = base
+		}
 	}
 
 	// No failure annotation when the input is empty: delegate to
@@ -2550,12 +2630,12 @@ func ParseFamilyDetailed(raw Family, id ModelID, p Provider) (Family, string, st
 	// no other modifier (thinking/vision from the ID or raw family) is already present;
 	// multi-modifier cases keep the existing modifier and drop the tier (surfaced).
 	if pd, pdErr := loadParseData(); pdErr == nil {
-		if sv, svv, tierMod, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
+		if sv, svv, tierMods, ok := splitSeriesVariant(pd, family, string(cleanedID)); ok {
 			variant, version = sv, svv
-			// the tier COMPOSES into the modifier LIST (CanonicalizeModifiers
+			// the tiers COMPOSE into the modifier LIST (CanonicalizeModifiers
 			// dedups against any already-peeled tier/capability), no longer dropped.
-			if tierMod != "" {
-				modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), tierMod))
+			if len(tierMods) > 0 {
+				modifier = CanonicalizeModifiers(append(append([]string{}, modifier...), tierMods...))
 			}
 		}
 	}
@@ -2982,9 +3062,21 @@ func bedrockProfile(id string) (regionTok, model string, ok bool) {
 	// Strip the Bedrock inference-profile routing suffix, scoped to this branch so
 	// there is zero collateral on non-Bedrock ids: tier tag first (":0"/"@default"),
 	// then the "-v<N>" version token it sat behind.
-	model = reBedrockTierTag.ReplaceAllString(model, "")
-	model = reBedrockVersionTag.ReplaceAllString(model, "")
+	model = stripBedrockRoutingTail(model)
 	return regionTok, model, true
+}
+
+// stripBedrockRoutingTail removes the Bedrock inference-profile routing suffix from
+// a model id: the tier tag first (":0" / "@default"), then the "-v<N>" profile
+// version token it sat behind. It is the shared implementation used by both arms of
+// the Bedrock grammar "[<region>.]<vendor>.<model>[-v<N>:<M>]" — bedrockProfile
+// handles the region-ful arm, and the leading-token classifier the region-less one.
+// Both arms must remove the tail: it is ROUTING metadata, and left in place it
+// swallows the release date behind it, so a dated id reads its date as part of the
+// version.
+func stripBedrockRoutingTail(model string) string {
+	model = reBedrockTierTag.ReplaceAllString(model, "")
+	return reBedrockVersionTag.ReplaceAllString(model, "")
 }
 
 // stripBedrockProfile returns the plain model id for an AWS Bedrock cross-region
@@ -3912,6 +4004,22 @@ func seriesBaseFamily(pd *parseData, family Family) (Family, bool) {
 // family OVER-CAPTURE reduction (Option B)
 // --------------------------------------------------------------------------
 
+// isCuratedGenuineCompound reports whether family is CURATED as a genuine compound:
+// a family_overrides.json row that maps the family to ITSELF. A self-map is the
+// curator's explicit statement that the compound IS the product name (text-embedding,
+// stable-diffusion, nano-banana, model-router, dall-e, …), so no automatic reduction
+// may collapse it. reduceOverCapturedFamily enforces the same rule inline; this
+// predicate exposes it to the other reduction sites so a single curated row DECLINES
+// every automatic path at once, and a new self-map never has to be repeated per site.
+func isCuratedGenuineCompound(pd *parseData, family Family) bool {
+	if pd == nil {
+		return false
+	}
+	key := Family(strings.ToLower(string(family)))
+	ov, ok := pd.overrides[key]
+	return ok && Family(strings.ToLower(string(ov.Family))) == key
+}
+
 // isFamilyResidueToken reports whether tok (a single lowercase token TRAILING the
 // short base of a COMPOUND, over-captured family string) is decomposition RESIDUE —
 // a member / variant / version / param-size / date / context-window / modifier token
@@ -4128,6 +4236,14 @@ type idFamilyOverrideEntry struct {
 //   - nvidia/llama-3.3-nemotron-super-49b-v1.5 (kilo raw="" over-captures family
 //     "llama-3.3-nemotron-super-49b"; openrouter raw="nemotron" gives "nemotron") →
 //     both converge on (nemotron, v1.5, 3.3). nemotron ∈ allFamilies + family_enforce.json.
+//   - nvidia/llama-3_3-nemotron-super-49b-v1_5 is nano-gpt's UNDERSCORE spelling of that
+//     same artifact. Underscores are not a separator the decomposition splits on, so
+//     neither "3_3" nor "v1_5" is reachable as a version token: the row arrived with
+//     raw="nemotron" and an EMPTY variant and version, and keyed the bare nemotron#49b
+//     line — which already holds the genuinely different Super-49B **v1**. Pinned to the
+//     same tuple as the dotted spellings so the v1.5 artifact is served from one key.
+//     Both keys already exist, so this pin moves ONE instance and retires NO key: it is
+//     a re-home, not a split. nemotron#49b survives, holding v1 alone.
 //
 // The two derivative entries below address a different failure: a provider tags a
 // FINETUNE/MERGE with the raw_family of its BASE ("llama"), which folds the
@@ -4147,6 +4263,7 @@ type idFamilyOverrideEntry struct {
 //     the raw="" providers' tuple exactly.
 var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"nvidia/llama-3.3-nemotron-super-49b-v1.5": {family: "nemotron", variant: "v1.5", version: "3.3"},
+	"nvidia/llama-3_3-nemotron-super-49b-v1_5": {family: "nemotron", variant: "v1.5", version: "3.3"},
 	"abacusai/dracarys-72b-instruct":           {family: "dracarys"},
 	"gryphe/mythomax-l2-13b":                   {family: "mythomax"},
 
@@ -4225,6 +4342,34 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// so this row converges on ring@2.6#1t alongside inclusionai/ring-2.6-1t. Sole provider
 	// of this exact id → zero collateral.
 	"ring-2.6-1t-free": {family: "ring", version: "2.6"},
+
+	// ling-2.6-flash-free (opencode) is the one row the global "free" demotion must NOT
+	// sweep up. With "free" registered as a global modifier token, trimOneTrailingModifier
+	// strips it from the RAW family "ling-flash-free" -> "ling-flash" BEFORE the curated
+	// family_overrides lookup runs, so the curated free-row for this id is already dead and
+	// a carve-out there cannot fire. The demotion would then fold this id onto ling/flash@2.6
+	// (4 -> 5 instances), collapsing a distinct served artifact into its sibling. The exact-ID
+	// path is consulted EARLIER — it returns the full tuple before the trailing-modifier trim
+	// runs — so it is the one lever that survives the demotion. Pinned to the tuple the
+	// pipeline derived before the demotion, keeping the ling/flash-free@2.6 key byte-identical
+	// and leaving ling/flash@2.6 unchanged. Sole provider of this exact id -> zero collateral.
+	"ling-2.6-flash-free": {family: "ling", variant: "flash-free", version: "2.6"},
+
+	// kling-v2-6 (qiniu-ai) is the ONE row of the ling/inkling/kling collision that the
+	// family_enforce ledger cannot reach, and it is a DIFFERENT defect from the other 14.
+	// Those 14 carry an upstream raw_family the ID contradicts; this row carries NO upstream
+	// family at all, so the leading-token pipeline owns the whole decomposition and glues the
+	// dash-spelled major onto the family token itself: "kling-v2" + version "6", keying
+	// kling-v2@6. The ledger fires only when the ID-DERIVED family equals one of its members,
+	// and "kling-v2" is not "kling", so it never triggers (the cohere/rerank-v4-pro precedent
+	// above, same shape).
+	//
+	// Pinned to the family AND the version, because both fields are wrong: the id spells
+	// Kling 2.6 with the dot lost to a dash. A dotLostVersionOverrides entry is NOT the lever
+	// here — by construction it corrects Version only, which would leave the corrupted family
+	// standing as kling-v2@2.6. Sole provider of this exact id -> zero collateral; the row
+	// joins the 8 klingai rows under family kling.
+	"kling-v2-6": {family: "kling", version: "2.6"},
 
 	// NOTE (retired override): the bare "k2p7" id (kimi-for-coding) previously needed a
 	// narrow exact-id override to kimi/k@2.7 — its upstream compound raw_family "kimi-k2"
@@ -4368,6 +4513,137 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"deepseek-v3-1":             {family: "deepseek", variant: "v3.1"},
 	"deepseek-ai/deepseek-v3-1": {family: "deepseek", variant: "v3.1"},
 	"deepseek-v3-2-exp":         {family: "deepseek", variant: "v3.2-exp"},
+
+	// Cogito v2.1 671B — the size-doubling decomposition repair. Deep Cogito spells the
+	// release as "cogito-v2.1-671b", so the leading-token pipeline reads the WHOLE
+	// remainder "v2.1-671b" as one variant token and leaves the version empty. The 671b
+	// parameter size is ALSO recovered mechanically into the #size segment, so the
+	// artifact keyed cogito/v2.1-671b#671b — the same 671b stated twice, once as an
+	// identity token and once as the size.
+	//
+	// The `v` is a VERSION PREFIX, not a variant. Upstream spells the release
+	// "cogito-v2.1-671b" / "deepcogito/cogito-v2-1-671b": the letter introduces the
+	// number it is glued to, and there is no sibling line it distinguishes this release
+	// from. So the variant slot is left EMPTY and the dotted point release is the
+	// VERSION "2.1" — the key renders cogito@2.1#671b, and the size is carried exactly
+	// once. This follows the mimo precedent, where the series letter likewise leaves the
+	// key (mimo@2.5{pro}) and survives as a nomen: the v-carrying spellings remain
+	// attested provider-id names, so `bestiary show deepcogito/cogito-v2.1-671b
+	// --format=raw` still finds this entity.
+	//
+	// Family is already "cogito" (FamilyCogito ∈ allFamilies) on every serving row, so
+	// this entry corrects only the variant/version pair. Keyed to the exact (lowercase)
+	// ID; both providers that serve this dotted spelling (kilo raw="", openrouter
+	// raw="cogito") converge on the one tuple because the map is consulted
+	// provider-agnostically.
+	"deepcogito/cogito-v2.1-671b": {family: "cogito", variant: "", version: "2.1"},
+
+	// togetherai serves the SAME Cogito v2.1 671B artifact with the dot lost to a dash
+	// (deepcogito/cogito-v2-1-671b), so the leading-token pipeline read only the trailing
+	// integer as the version and produced (cogito, "", "1") — a phantom "Cogito v1" line
+	// holding one instance while the two dotted rows sit on the repaired key. The repair is
+	// pinned to the SAME (variant, version) pair as its dotted siblings above, because a
+	// row landing on a different pair is a THIRD key rather than a merge. With the
+	// variant slot now empty on both, that pair is ("", "2.1") and all three rows land on
+	// cogito@2.1#671b. Evidence: every spelling renders the same DisplayName ("Cogito
+	// v2.1 671B"), the same 671b size and the same 1.25/1.25 price, and the id's own
+	// "v2-1" spelling names which dot was lost.
+	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "", version: "2.1"},
+
+	// Kling video-model variant shapes — the eight vercel rows. Vercel spells them
+	// klingai/kling-v<version>[-turbo]-<modality>, and the leading-token pipeline read the
+	// WHOLE remainder as one variant token, so the keys rendered kling/v2.5-turbo-i2v,
+	// kling/v3.0-motion-control and so on: a flattened string carrying three different
+	// KINDS of fact in one slot, sitting beside kling@2.6 (the qiniu-ai row), which spells
+	// the same version in the version slot. The two shapes could not both be right.
+	//
+	// Which axis carries which token, and why:
+	//
+	//   - the `v` is a VERSION PREFIX and leaves the key entirely. It introduces the number
+	//     it is glued to and names no sibling line. Same reading as the mimo series letter
+	//     and the cogito release letter above; the v-carrying spelling survives verbatim as
+	//     a provider-id nomen.
+	//   - `2.5` / `2.6` / `3.0` is the VERSION. This is the fact that makes the set
+	//     coherent with kling@2.6, which already keys its version this way.
+	//   - `i2v` / `t2v` / `motion-control` is the MODALITY, and it goes in the VARIANT slot.
+	//     Image-to-video and text-to-video are genuinely different artifacts with different
+	//     inputs, so they are identity, not a serving attribute. The variant slot is where
+	//     this epoch puts a named member of a line (the gpt tiers, the mimo speech members),
+	//     and a modality is exactly that. A typed modality AXIS would be the better home and
+	//     is the deferral this pull-in supersedes for kling only — it is deliberately NOT
+	//     minted here, because one vendor's three tokens are not enough evidence to design a
+	//     keyspace-wide axis, and the variant slot is reversible into one later.
+	//   - `turbo` is an IDENTITY modifier, `{turbo}`. The repo's fast/turbo rule is a global
+	//     identity fail-safe with per-family ATTRIBUTE demotions (claude/glm/kimi/deepseek/
+	//     minimax), each of which was curated against evidence that the token names a speed
+	//     tier of a base the catalog also serves. Kling has no such evidence: there is no
+	//     non-turbo 2.5 row anywhere in the catalog, so demoting it would key these two rows
+	//     onto a kling@2.5 base that nothing attests. The fail-safe holds and turbo stays
+	//     identity-class, which is also the shape the deferral priced.
+	//
+	// The family is already corrected to kling by family_enforce.json (upstream stamps
+	// "family": "ling" on all eight); these entries correct only the variant/version/modifier
+	// triple. Keyed to the exact (lowercase) ID, one row per artifact — an enumeration is
+	// right here because the set IS closed: it is one vendor's eight rows, and a general
+	// modality seam would have to be designed against far more evidence than this.
+	"klingai/kling-v2.5-turbo-i2v":      {family: "kling", variant: "i2v", version: "2.5", modifiers: []string{"turbo"}},
+	"klingai/kling-v2.5-turbo-t2v":      {family: "kling", variant: "t2v", version: "2.5", modifiers: []string{"turbo"}},
+	"klingai/kling-v2.6-i2v":            {family: "kling", variant: "i2v", version: "2.6"},
+	"klingai/kling-v2.6-motion-control": {family: "kling", variant: "motion-control", version: "2.6"},
+	"klingai/kling-v2.6-t2v":            {family: "kling", variant: "t2v", version: "2.6"},
+	"klingai/kling-v3.0-i2v":            {family: "kling", variant: "i2v", version: "3.0"},
+	"klingai/kling-v3.0-motion-control": {family: "kling", variant: "motion-control", version: "3.0"},
+	"klingai/kling-v3.0-t2v":            {family: "kling", variant: "t2v", version: "3.0"},
+
+	// gpt 5.6 tier pins. The curated family_overrides rows map upstream family
+	// gpt-<tier> to (family gpt, variant <tier>), which puts the tier token in the
+	// VARIANT slot and leaves the trailing "-pro" token with nowhere mechanical to go:
+	// "pro" is not in modifiers.json, so extractModifiers can never peel it, and the
+	// six -pro rows would silently CONFLATE into their non-pro sibling entity. Adding
+	// "pro" to modifiers.json globally was measured and rejected — it re-keys ~30
+	// unrelated families and still does not fix these rows, because "pro" is a curated
+	// gpt member and the member guard holds. Exact-ID pins are the honest mechanism
+	// (the cohere/rerank-v4-pro precedent above), and they are bounded by construction.
+	// "pro" is already globally IDENTITY-class in modifier_class.json, so {pro} needs
+	// no new classification — only the peel these pins supply.
+	//
+	// venice spells the same 5.6 release with the dot squashed out of the version
+	// ("openai-gpt-56-<tier>"), which no version scan recovers, so all six venice rows
+	// (three base + three pro) carry the version pin too. This is a CURATED reading of
+	// six ids, not a parser change: openai-gpt-56-luna IS GPT 5.6 Luna, merely spelled
+	// without the dot, and leaving them unpinned would scatter one aggregator's own six
+	// rows across a dated and an undated key.
+	"openai/gpt-5.6-luna-pro":  {family: "gpt", variant: "luna", version: "5.6", modifiers: []string{"pro"}},
+	"openai/gpt-5.6-sol-pro":   {family: "gpt", variant: "sol", version: "5.6", modifiers: []string{"pro"}},
+	"openai/gpt-5.6-terra-pro": {family: "gpt", variant: "terra", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-luna-pro":   {family: "gpt", variant: "luna", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-sol-pro":    {family: "gpt", variant: "sol", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-terra-pro":  {family: "gpt", variant: "terra", version: "5.6", modifiers: []string{"pro"}},
+	"openai-gpt-56-luna":       {family: "gpt", variant: "luna", version: "5.6"},
+	"openai-gpt-56-sol":        {family: "gpt", variant: "sol", version: "5.6"},
+	"openai-gpt-56-terra":      {family: "gpt", variant: "terra", version: "5.6"},
+
+	// The rest of venice's squashed-version gpt line, pinned on exactly the same
+	// curated reading as the six rows above: venice spells every OpenAI version
+	// without its dot, so "openai-gpt-52" is GPT 5.2 and "openai-gpt-55-pro" is GPT
+	// 5.5 Pro. Measured, venice ships fourteen such ids and the six 5.6 tier rows are
+	// only its newest six; leaving the other eight unpinned is what a partial fix
+	// looks like, and it is worse than either extreme — the leading-token classifier
+	// makes the version scan reach the squashed token and read "52" as a version
+	// literal, minting phantom gpt@52 / gpt@54 / gpt@55 / gpt/codex@52 lines beside
+	// the real ones. Pinned here rather than in dotLostVersionOverrides because that
+	// map is consulted AFTER the leading-token strip and would need the stripped
+	// spelling as its key, which is a bare "gpt-52" that no vendor actually publishes;
+	// these keys are the ids venice really serves. Each merges onto the sibling key
+	// its dotted spellings already hold.
+	"openai-gpt-52":       {family: "gpt", version: "5.2"},
+	"openai-gpt-52-codex": {family: "gpt", variant: "codex", version: "5.2"},
+	"openai-gpt-53-codex": {family: "gpt", variant: "codex", version: "5.3"},
+	"openai-gpt-54":       {family: "gpt", version: "5.4"},
+	"openai-gpt-54-mini":  {family: "gpt", variant: "mini", version: "5.4"},
+	"openai-gpt-54-pro":   {family: "gpt", variant: "pro", version: "5.4"},
+	"openai-gpt-55":       {family: "gpt", version: "5.5"},
+	"openai-gpt-55-pro":   {family: "gpt", variant: "pro", version: "5.5"},
 }
 
 // dotLostVersionOverrides is the curated, CLOSED, exact-model-ID map for the "dot-lost"
@@ -4453,22 +4729,61 @@ func isSeriesTierToken(tok string) bool {
 }
 
 // splitSeriesVariant implements the (d) series split. It returns
-// (variant=series-letter, version, tierMod, ok). tierMod is the curated series-tier
-// token promoted to a Modifier when EXACTLY ONE tier trails the
-// series token AND no thinking/vision modifier also trails it; otherwise tierMod is
-// "" (multi-modifier cases keep the series split but leave the tier uncaptured,
-// pending the Modifier-multiplicity ruling). A trailing
-// token that is neither date/context/size, a known modifier, nor a curated tier is
-// an UNKNOWN finetune token → DECLINE (ok=false), leaving current behavior intact.
-func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version, tierMod string, ok bool) {
+// (variant=series-letter, version, tierMods, ok). tierMods holds the curated
+// series-tier tokens promoted to Modifiers. The return is a LIST, not a single
+// token: an id can trail two tiers (mimo-v2.5-tts-voiceclone) and a single-valued
+// return silently drops the second one, which loses the entity distinction the
+// second tier carries. A trailing token that is neither date/context/size, a known
+// modifier, nor a curated tier is an UNKNOWN finetune token → DECLINE (ok=false),
+// leaving current behavior intact.
+//
+// Promotion rules, which differ by whether the series letter is part of the key.
+// The single predicate that selects between them is multiTier == !letterInKey:
+//   - letter-in-key families (the default: kimi, minimax): promote EXACTLY ONE
+//     tier, and only when no thinking/vision modifier also trails it. The
+//     known-modifier arm is tested FIRST for them, so a token in both sets counts
+//     as a modifier and suppresses the promotion. This is byte-for-byte the
+//     pre-existing behaviour and MUST stay that way: widening it silently changed
+//     8 kimi rows (kimi-k2.7-code-highspeed and siblings) in an earlier pass.
+//   - letter-not-in-key families (mimo): promote EVERY trailing tier, whatever
+//     else trails it. Without this the second tier is dropped and the two-tier
+//     ids collapse onto their single-tier sibling's key.
+//
+// The tier test is FAMILY-SCOPED (isSeriesTierTokenFor): the curated global set
+// plus the per-family extension from modifier_class.json. For the multi-tier
+// (letter-not-in-key) families it runs BEFORE the known-modifier test, because
+// tokens like "free"/"turbo" appear in BOTH sets and the known-modifier arm would
+// otherwise consume them and suppress the promotion the family-scoped curation
+// asked for.
+//
+// ARM ORDER, measured not assumed. The order is load-bearing, but NOT for the
+// reason it is tempting to give. idDrivenDecompose independently calls
+// extractModifiers on the same id, and that scan already peels every globally
+// known modifier token, so for MOST ids a dual-membership token is captured
+// either way and the arms could be swapped with no visible effect. The gap is
+// that extractModifiers scans the trailing run and STOPS at the first token that
+// is not a known modifier: a tier-only token (flash, tts, highspeed, …) is such a
+// boundary, so any dual-membership token sitting BEHIND one is unreachable to it
+// and only this switch can capture it. mimo-v2.5-fast-flash is the witness —
+// "fast" is both a curated mimo tier and a global modifier, "flash" blocks
+// extractModifiers, and the id decomposes to [fast flash] with the arms in this
+// order and to [flash] with them swapped, which is a different ENTITY KEY because
+// both tokens are identity-class. That case and its empty-raw twin are pinned in
+// series_tier_modifier_corpus.json and are the regression guard for this order.
+func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, version string, tierMods []string, ok bool) {
 	if pd == nil {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 	info, has := pd.families[Family(strings.ToLower(string(family)))]
 	if !has || info.SeriesLetter == "" {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 	letter := info.SeriesLetter[0]
+	letterInKey := info.seriesLetterInKey()
+	// multiTier selects the promotion policy AND the switch-arm order below. The two
+	// must move together: the arm order decides which bucket a dual-membership token
+	// lands in, and the policy decides whether that bucket promotes.
+	multiTier := !letterInKey
 
 	toks := strings.Split(strings.ToLower(stripVendorNamespace(idStr)), "-")
 
@@ -4489,7 +4804,7 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		}
 	}
 	if si < 0 {
-		return "", "", "", false
+		return "", "", nil, false
 	}
 
 	rest := toks[si+1:]
@@ -4530,27 +4845,56 @@ func splitSeriesVariant(pd *parseData, family Family, idStr string) (variant, ve
 		switch {
 		case tt == "" || isDateShapedToken(tt) || reContextWindow.MatchString(tt) || isParamSizeToken(tt):
 			// not a tier, not a modifier — ignored residual (context/size/date).
+		case multiTier && isSeriesTierTokenFor(family, tt):
+			// Multi-tier families ONLY, and ahead of the known-modifier arm: a token
+			// curated as a tier for THIS family is a tier here even when it is also a
+			// global modifier. Gated so the letter-in-key families keep the ordering
+			// (and therefore the classification) they had before the tier widening.
+			tiers = append(tiers, tt)
 		case isKnownModifierToken(pd, tt):
+			// A capability modifier (thinking/vision/…). It is peeled elsewhere by
+			// extractModifiers, so nothing is captured here; for the single-tier
+			// families it is COUNTED, because one co-occurring capability modifier
+			// suppresses their promotion.
 			knownMods++
-		case isSeriesTierToken(tt):
+		case isSeriesTierTokenFor(family, tt):
+			// Single-tier families reach the family-scoped tier test only after the
+			// known-modifier arm has declined the token.
 			tiers = append(tiers, tt)
 		default:
-			// Unknown finetune/provider token (omni/maas/original/fp4/tts/…): DECLINE
-			// the series split entirely (leave current behavior; surfaced as residual).
-			return "", "", "", false
+			// Unknown finetune/provider token (maas/original/fp4/…): DECLINE the
+			// series split entirely (leave current behavior; surfaced as residual).
+			return "", "", nil, false
 		}
 	}
 
-	// promote a single trailing tier to the Modifier ONLY when there
-	// is exactly one tier and NO co-occurring thinking/vision modifier. Multi-modifier
-	// cases (tier + thinking/vision, or 2+ tiers) keep the series split but leave the
-	// tier uncaptured — the Modifier field is single-valued and the multiplicity rule
-	// is pending a ruling; never picked here unilaterally.
-	if len(tiers) == 1 && knownMods == 0 {
-		tierMod = tiers[0]
+	// Promotion, gated by the same multiTier predicate that ordered the arms above.
+	//
+	// Multi-tier (letter-not-in-key) families promote EVERY trailing tier into the
+	// Modifier LIST: the Modifier field is a list and the multiplicity ruling is
+	// live, so neither a second tier nor a co-occurring capability modifier is a
+	// reason to drop a tier. The two restrictions this lifts each silently
+	// discarded a curated token — the co-occurrence restriction lost the speed tier
+	// on ids that also carry a capability token, and the count restriction lost the
+	// second half of a two-tier speech id. Attribute-class tiers stay out of the
+	// entity key by their class, not by being dropped here.
+	//
+	// Letter-in-key families keep the ORIGINAL restriction: exactly one tier and no
+	// co-occurring capability modifier. Their keyspace was normalized under that
+	// rule and widening it is a silent re-decomposition of ids this lever never
+	// asked to touch.
+	if multiTier {
+		tierMods = append(tierMods, tiers...)
+	} else if len(tiers) == 1 && knownMods == 0 {
+		tierMods = append(tierMods, tiers[0])
 	}
 
-	return string(letter), ver, tierMod, true
+	if !letterInKey {
+		// The letter and its number were consumed for the VERSION above; the variant
+		// slot stays empty so the key renders as <family>@<version>{...}.
+		return "", ver, tierMods, true
+	}
+	return string(letter), ver, tierMods, true
 }
 
 // idDrivenVersion is the consolidated ID-driven version extractor.

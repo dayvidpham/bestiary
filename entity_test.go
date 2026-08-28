@@ -334,7 +334,7 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
 	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 319 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream
+		wantSizedCatalog    = 310 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3. 318 -> 317: the cogito variant pin merges cogito@1#671b into the repaired dotted key (spelled cogito@2.1#671b at the tip, after the key rename that drops the version-prefix 'v' from the variant slot; the rename moves no count) — both are sized catalog entities, so the merge removes one from this count while the artifact keeps its '#671b' segment. 317 -> 310: the redundant leading-token strip re-dates eleven sized keys — gemma#4b, gemma#12b, gemma#26b-a4b, devstral#123b, ministral#3b{instruct}, ministral#8b{instruct}, mistral/large#675b{instruct}, mistral/mini#3b, mistral/small#24b, nemotron#120b, nemotron#30b-a3b — of which only four have no dated sibling to merge into and are re-minted as sized keys (devstral@2#123b, ministral@3#3b{instruct}, ministral@3#14b{instruct}, nemotron@3#120b). Every artifact keeps its size segment; the count falls only because seven of them join an existing sized entity. -11 +4 = -7
 		wantSizedStandalone = 4
 	)
 

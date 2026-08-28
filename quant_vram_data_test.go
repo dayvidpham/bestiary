@@ -50,19 +50,25 @@ func TestBaseRefFor_Absent(t *testing.T) {
 }
 
 // TestQuantVRAMFor_Llama33_70b: present model with arch facts. Verifies exact
-// weights_bytes for each quant row from the seed file, Quant parsed correctly,
+// weights_bytes for each curated quant row, Quant parsed correctly, and
 // Layers/KVHeads/HeadDim populated from the curated arch facts.
 // VRAMBytes/VRAMContextTokens/VRAMEstimatePartial are not checked here — they
 // are computed by the codegen caller (EstimateVRAMBytes), not the loader.
+//
+// The row count and the weights figures are the offline Ollama refresh's, whose
+// quant set is fetch-owned: the corpus now carries every quant the registry
+// publishes for this model, not the three the hand-written seed had. Only the
+// three arch-curated quants are asserted by value — the rest are measured
+// weights with no curation to pin.
 func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 	const id bestiary.ModelID = "llama-3.3-70b-instruct"
 
 	rows := bestiary.QuantVRAMFor(id)
 	if len(rows) == 0 {
-		t.Fatalf("QuantVRAMFor(%q) = nil, want 3 rows", id)
+		t.Fatalf("QuantVRAMFor(%q) = nil, want 12 rows", id)
 	}
-	if len(rows) != 3 {
-		t.Fatalf("QuantVRAMFor(%q): got %d rows, want 3", id, len(rows))
+	if len(rows) != 12 {
+		t.Fatalf("QuantVRAMFor(%q): got %d rows, want 12", id, len(rows))
 	}
 
 	// Build a quick index for order-independent checks.
@@ -76,8 +82,8 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no Q4_K_M row", id)
 	}
-	if q4km.WeightsBytes != 43033509888 {
-		t.Errorf("Q4_K_M WeightsBytes = %d, want 43033509888", q4km.WeightsBytes)
+	if q4km.WeightsBytes != 42520398528 {
+		t.Errorf("Q4_K_M WeightsBytes = %d, want 42520398528", q4km.WeightsBytes)
 	}
 	if q4km.Layers != 80 {
 		t.Errorf("Q4_K_M Layers = %d, want 80", q4km.Layers)
@@ -94,8 +100,8 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no Q8_0 row", id)
 	}
-	if q8.WeightsBytes != 75176521728 {
-		t.Errorf("Q8_0 WeightsBytes = %d, want 75176521728", q8.WeightsBytes)
+	if q8.WeightsBytes != 74975054528 {
+		t.Errorf("Q8_0 WeightsBytes = %d, want 74975054528", q8.WeightsBytes)
 	}
 
 	// F16 row — ~141 GB.
@@ -103,13 +109,16 @@ func TestQuantVRAMFor_Llama33_70b(t *testing.T) {
 	if !ok {
 		t.Fatalf("QuantVRAMFor(%q): no F16 row", id)
 	}
-	if f16.WeightsBytes != 141166166016 {
-		t.Errorf("F16 WeightsBytes = %d, want 141166166016", f16.WeightsBytes)
+	if f16.WeightsBytes != 141117917888 {
+		t.Errorf("F16 WeightsBytes = %d, want 141117917888", f16.WeightsBytes)
 	}
 }
 
-// TestQuantVRAMFor_SmallModel: small 3B-parameter model with two quant rows.
-// Arch facts are absent in the seed — exercises the partial-VRAM code path.
+// TestQuantVRAMFor_SmallModel: small 3B-parameter model whose rows carry NO arch
+// facts — it exercises the partial-VRAM code path. The quant set is fetch-owned
+// and now holds every quant the registry publishes for this model; what this
+// test pins is the absence of arch facts across all of them, and the ParamSize
+// round-trip.
 func TestQuantVRAMFor_SmallModel(t *testing.T) {
 	const id bestiary.ModelID = "llama-3.2-3b-instruct"
 
@@ -117,8 +126,8 @@ func TestQuantVRAMFor_SmallModel(t *testing.T) {
 	if len(rows) == 0 {
 		t.Fatalf("QuantVRAMFor(%q) = nil, want rows", id)
 	}
-	if len(rows) != 2 {
-		t.Fatalf("QuantVRAMFor(%q): got %d rows, want 2", id, len(rows))
+	if len(rows) != 15 {
+		t.Fatalf("QuantVRAMFor(%q): got %d rows, want 15", id, len(rows))
 	}
 
 	for _, r := range rows {

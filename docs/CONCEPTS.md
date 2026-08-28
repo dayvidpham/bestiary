@@ -48,6 +48,40 @@ Versions normalize **dotted-canonical at identity level**: where a family
 attests both `4` and `4.0` for the same tuple, they are one entity keyed
 `@4.0`, and a bare-version expression resolves to it.
 
+### Retired entity keys
+
+A curation repair can change how a model decomposes, which **retires** the old
+entity key: the key no longer names anything. No alias is minted, no redirect
+is added and no successor is listed at the tool — the CHANGELOG migration table
+for the change is the pointer.
+
+What a retired key does depends on the **seam**, and the seams behave
+differently on purpose:
+
+> A retired key is not found at the exact-key seams: `EntityByKey`,
+> `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An
+> old spelling that is still a valid short reference can resolve or show
+> candidates.
+
+- **Exact-key seams** — the library call `bestiary.EntityByKey` and the web
+  route `GET /entity/<key>` — take a canonical key and look it up directly.
+  A retired key is a hard not-found there, without exception.
+- **`bestiary show <ref> --by-entity`** is a third lookup — exact, but not the
+  same one: it matches the input against the store-overlaid entity index by
+  entity key, entity preferred name or concrete model id. It has no
+  short-reference path, so it never returns the under-specified error, and a
+  retired key is not found there unless one of those three spellings still
+  names a live entity.
+- **`bestiary show <ref>`** runs the input through the *model resolver*, and
+  that resolver keeps its short-reference (under-specified) fallback. So a
+  retired spelling that remains a valid short reference to one live entity
+  still resolves, and one that names several live entities still lists them as
+  candidates. Making that fail would break ordinary under-specified lookups
+  whenever they happened to match a retired spelling.
+
+The per-key measured record for a release lives in
+`cmd/bestiary/testdata/retired/epoch_retired_keys_corpus.json`.
+
 ### ProviderInstance
 
 One concrete **offering** of an entity: a `(provider, host, region)` serving
@@ -66,9 +100,69 @@ Three orthogonal instance-level axes:
 | `Host` | which upstream backend a reseller routes to | NanoGPT's `azure-*` IDs → `Host: azure` |
 | `Region` | which geographic/jurisdictional boundary serves the request | Bedrock's `eu.` profiles → `Region: eu` |
 
-None of the three is identity. A **creator** axis (who trained the weights)
-does not yet exist as a typed dimension — it is implicit in the family and the
-lab-scoped metadata ID; making it first-class is tracked upstream (GH#26).
+None of the three is identity.
+
+#### When a leading ID token may be dropped
+
+Vendors habitually spell one of these axes into the ID itself. Whether that
+leading token may be **removed** before the ID is decomposed is decided by one
+rule, not by a per-vendor list (`ClassifyIDPrefix`, `id_prefix.go`): a leading
+token may be dropped **only when a different axis already carries the fact it
+names**, because then the identity tuple loses nothing. Every other token stays,
+because removing it would *delete* information rather than repeat it.
+
+| Leading token names | Carrier that already holds it | Example | Outcome |
+|---|---|---|---|
+| the **serving provider** itself | `Provider` | `databricks-…` served by `databricks` | stripped |
+| the **creating lab**, and the remainder's family declares that same lab | `Creator` | `openai.gpt-…` (family `gpt`, creator `openai`) | stripped |
+| a **Bedrock routing prefix** | `Region` (`DetectRegion`) | `eu.anthropic.claude-…` | stripped |
+| a **backend host**, *and* it is curated | `Host` (`DetectHost`) | NanoGPT's `azure-*` | stripped — by the `Host` path, which records the fact before dropping the token |
+| a **backend host** that nothing curates | *none* | `azure-gpt-4o` reaching the ID-prefix rule | kept |
+| a **product surface** | *none* | GitLab's `duo-chat-…` | kept |
+| the **family** itself | *none* — it *is* identity | `claude-sonnet-4-5` | kept |
+
+The `Region` and `Host` rows are the same rule applied earlier by machinery that
+predates the classifier: `DetectRegion` and `DetectHost` move the fact onto its
+axis and *then* remove the token. `ClassifyIDPrefix` itself knows nothing about
+hosts, so a host label that reaches it — uncurated, or on a provider the host
+table does not cover — is a token no axis holds, and it stays.
+
+Two guards keep the two strip rules honest. The remainder must still name a
+**known family**, so `minimax-m2` on provider `minimax` is left alone (`m2` names
+nothing, and stripping would destroy the identity rather than de-duplicate it).
+And the creator rule checks the **carrier agrees**, not merely that the token is
+a lab name: Bedrock's `zai.glm-…` keeps its token because family `glm`'s curated
+creator is `zhipu`, and a lab token the Creator axis spells differently is not a
+carrier.
+
+That last distinction is where the rule comes from. A blanket provider-name strip once
+erased NanoGPT's `azure-` label, and the fact it named — which upstream backend
+served the request — existed nowhere else, so it was simply lost. The lesson is
+not "except azure": it is that constancy across a provider's catalog is **not**
+evidence of redundancy. Measured, 28 providers prefix every one of their IDs with
+a single token, and for most of them (`claude-`, `grok-`, `glm-`, `kimi-`) that
+token is the family. Ask what the token *names*, and which axis already holds it.
+
+### Creator
+
+A fourth axis, **entity-level** rather than instance-level: who *trained* the
+weights, as opposed to who makes them available. `Family.Creator()` maps a
+family to its lab (`llama` → `meta`), and `Creator.Providers()` lists the
+hosting surfaces that lab operates or brands for its OWN models.
+
+`Creator` layers ABOVE `Family.CanonicalProvider()` rather than replacing it.
+When one expression matches models from several providers, resolution ranks a
+creator-operated surface first, the family's canonical provider next, and a
+rehost last — so `llama-3.3-70b-instruct` reports Meta's `llama` surface rather
+than the alphabetically-first rehost. A family with no creator, no curated
+distribution row, or no creator-hosted candidate resolves exactly as it did
+before the axis existed.
+
+`Creator.Providers()` returns **curation order** — the lab's primacy order as
+`parse/data/creator_providers.json` lists it. It is deterministic (the same
+committed file yields the same slice every time) but deliberately NOT
+alphabetical: the slice index IS the tie-break that decides which of a lab's
+several surfaces wins.
 
 ### Series and Release
 
@@ -78,6 +172,35 @@ them: `Series{Family, Generation}` is the versioned line (`llama-4`,
 `maverick`). Version sits above variant, per the ratified mental model
 "the llama-4 series → scout/maverick releases". Because the relations are
 computed, the hierarchy can be reshaped without re-keying anything.
+
+### Entity metadata · lab-reported claims
+
+**Provider-agnostic facts about the model itself** — description, license,
+typed links, benchmark scores — as opposed to `ProviderInstance`, which
+records how one provider *serves* it. Metadata is keyed by the lab-scoped
+`MetadataID` (`zhipuai/glm-4.6`), a stable identifier immune to entity
+re-keying.
+
+A benchmark score in this layer is a **lab-reported claim**, not an
+independent measurement: it is what a lab published in its own blog post or
+model card. Two provenance levels are therefore kept distinct and must not be
+conflated — `SourceURL` records *who asserted the claim* (the claimant), while
+the `Source` (`DataSourceID`) records *which ingest we read it from*. For the
+same reason a claim's parts (criterion, harness, metric and value,
+attribution) are separate fields and never concatenated: a claim is only
+interpretable alongside the conditions it was produced under.
+
+One entity can be named by **several** lab identifiers — a dated alias and its
+floating alias (`anthropic/claude-opus-4-5` and `anthropic/claude-opus-4-5-20251101`),
+or a serving tier that is not a distinct artifact (`openai/gpt-5.5-instant`).
+All such rows attach to the one entity (`Entity.MetadataAll`, sorted by
+`MetadataID`), and each row keeps **its own** claims. Claims from different
+identifiers are never fused into a single table: that would present an
+assessment record no lab actually published. `Entity.Metadata` is a derived
+convenience pointer at the **primary** row — the shortest `MetadataID`, ties
+lexicographic ascending, since a lab's canonical identifier is its shortest
+one. The primary is a *naming* choice, deliberately independent of how much
+payload a row carries, so it stays stable across re-ingest.
 
 ## The naming layer
 
@@ -115,6 +238,16 @@ Two provenance levels never share a field: `SourceURL` is *who says so* (the
 claimant — xAI's docs, a HuggingFace repo page), `Source` is *where we read
 it* (the ingest). Curated claims cite archive.org snapshots so the evidence
 cannot rot.
+
+A harvested naming cannot do that: it cites a **live observation** the bot
+made, and a live page is exactly what rots. So the snapshot rides *beside* the
+citation instead of replacing it — `ArchivedURL` records an archive.org
+snapshot **of** `SourceURL`, looked up best-effort when the naming is
+harvested. It is a third thing, not a third provenance level: `SourceURL` and
+`Source` say who claimed and where we read it, while `ArchivedURL` only makes
+the first of those two checkable later. It is empty whenever no snapshot was
+recorded — an honest "none", never an error — and always empty on a curated
+claim, whose `SourceURL` already *is* the snapshot.
 
 The load-bearing consequence: **repairs to identity never erase the record**.
 When two entities merge, or a spelling is re-keyed, the old spellings survive
@@ -239,6 +372,19 @@ Belief`, `I6 Belief Value`, `I7 Belief Adoption`; Wikidata `Help:Ranking`
 claims and references" subsection of `Wikidata/Data model update` on
 Meta-Wiki (the reference-independence quote) — both current as of this
 writing.
+
+### Measured vs. derived figures
+
+The same "whose voice, and how did it get here" question applies to quantitative
+facts, not just to namings. A weights figure is either **measured** — the ingested
+artifact size a registry published — or **derived**: computed by bestiary from an
+attested parameter count and a quantization's bits-per-weight, for an entity no
+registry has measured. `WeightsBasis` (`fit.go`) types the distinction so it cannot
+be lost in transit, and every surface that shows a derived figure says so: the web
+UI's `/calculator` badges such a row `derived · weights-only`, naming both that the
+weights are an estimate and that its KV-cache term is absent. A derived figure is a
+**lower bound**, the same posture as a `PARTIAL` VRAM row — an entity whose parameter
+shape publishes no attested total gets no derived row at all rather than a guess.
 
 ## External identifiers
 

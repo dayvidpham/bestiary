@@ -1,5 +1,5 @@
 {
-  "_comment": "BCNF data-source provenance dimension + append-only ingest log. 'sources' is the data-source dimension keyed by id (uri is a 2nd candidate key, unique). 'ingested' is the append-only ingest log: a source MAY carry multiple rows (its history), keyed by the composite (source_id, ingested_at); source_id is a FK to sources. It carries NO uri \u2014 the uri is reached by joining to sources via source_id (BCNF: the transitive uri->id dependency is normalized out). The CURRENT ingest for a source is the row with the maximum ingested_at (DatasetIngestedFor); the whole ordered history is DatasetIngestHistoryFor. An exact-duplicate (source_id, ingested_at) is REJECTED at load. ingested_at is a COMMITTED SNAPSHOT timestamp, NEVER computed at load or codegen time \u2014 pinning it here is what keeps generated output byte-deterministic. The registry attestation rule (registry.go aggregate): every static row attests models.dev (empty Source means the models.dev origin is implicit); an enriched row whose Source names a further source (e.g. ollama) DUAL-attests both models.dev AND that source.",
+  "_comment": "BCNF data-source provenance dimension + append-only ingest log. 'sources' is the data-source dimension keyed by id (uri is a 2nd candidate key, unique). 'ingested' is the append-only ingest log: a source MAY carry multiple rows (its history), keyed by the composite (source_id, ingested_at); source_id is a FK to sources. It carries NO uri — the uri is reached by joining to sources via source_id (BCNF: the transitive uri-\u003eid dependency is normalized out). The CURRENT ingest for a source is the row with the maximum ingested_at (DatasetIngestedFor); the whole ordered history is DatasetIngestHistoryFor. An exact-duplicate (source_id, ingested_at) is REJECTED at load. ingested_at is a COMMITTED SNAPSHOT timestamp, NEVER computed at load or codegen time — pinning it here is what keeps generated output byte-deterministic. The registry attestation rule (registry.go aggregate): every static row attests models.dev (empty Source means the models.dev origin is implicit); an enriched row whose Source names a further source (e.g. ollama) DUAL-attests both models.dev AND that source.",
   "schema_version": 3,
   "sources": [
     {
@@ -21,6 +21,11 @@
       "id": "huggingface",
       "uri": "https://huggingface.co/api/models",
       "canonical_name": "HuggingFace Hub"
+    },
+    {
+      "id": "bestiary",
+      "uri": "https://github.com/dayvidpham/bestiary",
+      "canonical_name": "bestiary (self-minted)"
     }
   ],
   "ingested": [
@@ -31,7 +36,7 @@
     },
     {
       "source_id": "ollama",
-      "ingested_at": "2026-06-09T00:00:00Z",
+      "ingested_at": "2026-08-25T22:54:05Z",
       "parser_schema": 3
     },
     {
@@ -52,6 +57,11 @@
     {
       "source_id": "huggingface",
       "ingested_at": "2026-07-23T00:00:00Z",
+      "parser_schema": 3
+    },
+    {
+      "source_id": "bestiary",
+      "ingested_at": "2026-08-25T00:00:00Z",
       "parser_schema": 3
     }
   ]

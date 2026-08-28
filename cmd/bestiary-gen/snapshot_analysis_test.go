@@ -381,13 +381,16 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// it was the only remaining UNKNOWN-tier token still causing a series divergence
 	// after the initial tier wiring (mimo-v2-omni → (mimo,'v','2',mod=omni)): 155 → 154
 	// (CatC 108 → 107).
-	// RESIDUAL (honest, surfaced — NOT masked): the only SERIES (kimi/minimax/mimo)
-	// IDs still divergent are the MULTI-MODIFIER cases — a tier AND thinking/vision (or
-	// 2+ tiers) in the single-valued Modifier field: kimi-k2-thinking-turbo (×2 paths).
-	// The user ruled Option 1 (Modifier → LIST, lossless), but that is a PUBLIC SCHEMA
-	// change deferred to the later Modifier-LIST slice (grep "multi-modifier"
-	// / "Modifier-LIST"). For now these keep the series split + the capability modifier
-	// (thinking) and DROP the tier.
+	// The multi-modifier residual named here is CLOSED. The Modifier field is a list
+	// and the multiplicity ruling is live, so the two restrictions that used to drop a
+	// tier — "exactly one tier" and "no co-occurring capability modifier" — are both
+	// gone: every trailing curated tier is promoted. kimi-k2-thinking-turbo keeps both
+	// tokens, and 8 kimi records recover the highspeed tier that the code modifier had
+	// been suppressing. That recovery is keyspace-NEUTRAL (highspeed is attribute-class,
+	// so it renders in "[...]" and never enters the key) and changed no divergence count.
+	// The mimo series letter also left the variant slot in the same change (its family
+	// record declares series_letter_in_key false), so the mimo ids listed above now
+	// converge on (family, "", version, tiers) rather than (family, letter, version).
 	// (The other ~150 residual divergences are NON-series family/version mislabels —
 	// deepseek-v3.x, magnum, morph, mistral-7b-v0.x, the CatD ledger, qwen3-vl/param —
 	// out of this version-path scope.)
@@ -513,8 +516,22 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// empty-raw and raw="nemotron" providers converge on (nemotron,v1.5,3.3)). Cross-provider
 	// divergence is now ZERO (no residual). The override is enforce-blessed (family-only
 	// correction, no field dropped → cat-(c)=0).
+	//
+	// CORPUS REFRESH: the committed snapshot was reground on the vendored codegen
+	// catalog (jq .providers parse/data/modelsdev/catalog.json), taking the corpus from
+	// 4,979 to 5,765 records and the multi-provider id count to 908. Divergence rose
+	// 0 → 4 — all four are REAL upstream disagreements the stale fixture predated, not
+	// pipeline regressions (the path-unification diff over the re-captured baseline reads
+	// changed=0, so no record's decomposition moved). Enumerated with per-row
+	// justifications in crossProviderJustifiedResidual (main_test.go); the categories are
+	// B=2 (text-embedding-3-small and -large: sap-ai-core publishes no raw family so the
+	// id yields "text-embedding-3", while openai/azure publish "text-embedding" — the two
+	// spellings share a base once the trailing generation digit is stripped),
+	// C=1 (poolside/laguna-s-2.1: the lab says "laguna", its resellers say "laguna-s",
+	// a hyphen-prefix pair) and D=1 (sakana/fugu-ultra: vercel says "aura" where pioneer
+	// and openrouter say "fugu" — the genuine mislabel).
 	const (
-		divergenceExact = 0
+		divergenceExact = 4
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 0
@@ -561,12 +578,15 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// modifier-taxonomy + member-guard). CatD 3→1 (qwen3-next ×2 converged via the
 	// next→qwen member add; residual D = nemotron only). CatA/CatB unchanged at 0.
 	// CatD 1→0 — the nemotron embedded-family residual folded via idFamilyOverrides.
-	// ALL cross-provider categories are now ZERO (total divergence = 0).
+	// ALL cross-provider categories were ZERO on the 4,979-record stale fixture.
+	// The corpus refresh (5,765 records) surfaced 4 real upstream divergences: CatB 0→2,
+	// CatC 0→1, CatD 0→1. CatA stays 0. See the divergenceExact note above and the
+	// per-row justifications in crossProviderJustifiedResidual (main_test.go).
 	const (
 		catAExact = 0 // vendor-prefix/case (case-fold resolved all)
-		catBExact = 0 // bare-gen-split
-		catCExact = 0 // member-variant/version — all converged
-		catDExact = 0 // genuine family mislabel — nemotron folded; ZERO
+		catBExact = 2 // bare-gen-split — text-embedding vs text-embedding-3 (×2 ids)
+		catCExact = 1 // member-variant/version — laguna vs laguna-s hyphen-prefix pair
+		catDExact = 1 // genuine family mislabel — vercel's aura vs fugu on sakana/fugu-ultra
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

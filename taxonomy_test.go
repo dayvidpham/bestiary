@@ -99,11 +99,48 @@ func equalStrings(a, b []string) bool {
 // minimax/m@25, qwen@35 lines) into their dotted siblings, retiring 8 versioned lines;
 // 1t routing empties the ling@1t/ring@1t VERSIONS (1t is now a size), so ling and ring
 // become bare lines — ring already had a bare presence, ling adds one, net +1 bare.
+// 417 → 415 with the global free demotion (−2 bare / versioned UNCHANGED): of the 17
+// retired free-tier keys, 15 shared a family with a surviving sibling, so their lines
+// stayed populated. Two families existed ONLY through their free key — deepseek-flash
+// (deepseek-flash/free) and minimax-m3 (minimax-m3/free) — and their bare lines empty out
+// with them. Every versioned line touched (glm@4.7 / @5 / @5.2, hy@3, laguna-s@2.1,
+// nemotron@3) keeps other entities, so no versioned line retires.
+// 415 → 417 with the ling/inkling/kling collision split (+2 bare / versioned UNCHANGED):
+// two new bare lines appear — `inkling` (Thinking Machines' 6 instances, no identity
+// version) and `kling` (the 8 klingai video keys, which at that point carried their whole
+// shape string in the VARIANT slot and so had no version) — while `ling` keeps its bare
+// line through the surviving ling#1t. The versioned side nets to zero: the phantom
+// kling-v2@6 line retires and the kling@2.6 line replaces it one-for-one.
+// 417 -> 416 with the keyspace-wide mimo normalization (-1 bare / versioned UNCHANGED):
+// the release name is the variant, and mimo's variant is now empty on every key, so the
+// six bare mimo keys that each carried their own name (mimo, mimo/flash, mimo/pro and the
+// three v2.5-tts* speech keys) all move onto a versioned line — their version came out of
+// the variant slot the letter had been sharing. The bare `mimo` line therefore empties.
+// The two versioned mimo lines (gen 2 and gen 2.5) both already existed and simply absorb
+// the arrivals, so no versioned line is added or retired.
+// 416 -> 415 with the cogito variant pin that follows the decomposition (-1 versioned /
+// bare UNCHANGED): the dash-glued togetherai spelling was the sole occupant of a phantom
+// cogito gen-1 line, and merging it onto the repaired gen-2.1 key empties that line. The
+// gen-2.1 line the decomposition minted keeps both of its dotted rows plus this arrival.
+//
+// 416 -> 416 with the cogito decomposition repair (+1 versioned / -1 bare): the fused
+// variant "v2.1-671b" carried no version, so the artifact sat on a BARE cogito line that
+// it was the sole occupant of; un-fusing it into variant "v" + version "2.1" moves it to
+// a cogito gen-2.1 line that did not exist before. One bare line empties, one versioned
+// line appears, and the total is unchanged.
+//
+// 409 -> 410 with the kling variant-shape normalization (+2 versioned / -1 bare): the
+// eight klingai video keys stop carrying their version inside a flattened variant string
+// and key it in the version slot, so they leave the bare `kling` line for generation
+// lines. Two of those generations are new (kling gen-2.5 and gen-3.0); gen-2.6 already
+// existed, minted by the qiniu-ai kling@2.6 row. The bare `kling` line held nothing but
+// these eight keys, so it empties. -1 +2 = +1.
+
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 417 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none)
-		wantVersionLines  = 209 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice)
-		wantBareLines     = 208 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice)
+		wantSeries        = 410 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines); 416 -> 415: the cogito variant pin retires the phantom cogito gen-1 line by merging its sole occupant onto the repaired gen-2.1 line; 415 -> 410: the gpt tier re-key retires six lines and adds one — the three bare gpt-luna/gpt-sol/gpt-terra lines and the three versioned gpt-<tier>@5.6 lines all disappear as the tiers become variants of gpt, the tiers' undated keys join the EXISTING bare gpt line (adding no line), and the dated keys mint the one new gpt gen-5.6 line. -6 +1 = -5; 410 -> 411: the redundant leading-token strip retires NO line and adds exactly one, the agi gen-01 line, because every other key it re-dates lands on a generation line that already existed; 411 -> 409: the general bare-integer series-compound family recovery retires the two compound-family bare lines kimi-k2 and kimi-k3 outright (their occupants merge onto the kimi line, which already existed) and adds none — kimi/coder is a new RELEASE on the existing bare kimi line, not a new line. -2 +0 = -2; 409 -> 410: the kling variant-shape normalization empties the bare kling line and mints the kling gen-2.5 and gen-3.0 lines (gen-2.6 already existed). -1 +2 = +1
+		wantVersionLines  = 210 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line; 210 -> 209 as the cogito variant pin then empties the phantom cogito gen-1 line by merging it onto that new line; 209 -> 207 as the gpt tier re-key retires the three gpt-<tier>@5.6 lines and mints the single gpt gen-5.6 line: -3 +1 = -2; 207 -> 208 as the leading-token strip mints the agi gen-01 line; UNMOVED by the series-compound recovery, which touches only bare lines — re-measured at 208; 208 -> 210 as the kling variant-shape normalization moves the eight video keys off the bare kling line onto generation lines, two of which (kling gen-2.5 and gen-3.0) are new while gen-2.6 already existed)
+		wantBareLines     = 200 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line; UNCHANGED by the cogito variant pin, which moves only versioned lines. 206 -> 203 as the gpt tier re-key retires the three bare gpt-luna/gpt-sol/gpt-terra lines; their undated successors are variants of gpt and join the bare gpt line, which already existed, so nothing is added. UNCHANGED by the leading-token strip: the bare agi line keeps agi/mini and agi/pro after agi itself becomes agi@01, and no other bare line empties. 203 -> 201 as the series-compound recovery empties the two compound-family bare lines kimi-k2 and kimi-k3; the bare kimi line survives (it keeps its own occupants and gains kimi/coder), so nothing is added. 201 -> 200 as the kling variant-shape normalization empties the bare kling line: it held nothing but the eight video keys, and every one of them now carries a version. 210 + 200 = 410.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -149,8 +186,25 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // 670 → 659 with the dot-lost version repair + 1t param-size routing: the dot-lost merges
 // retire the releases carried by the folded dotless/dash lines, and the 1t re-keys move
 // ling/ring onto releases that already existed; net −11.
+// 669 → 652 with the global free demotion: each of the 17 retired keys carried a
+// free-tier release name of its own on its line (free, flash-free, omni-free, pro-free,
+// v2.5, v2.5-free, v2.5-pro), none of which any surviving entity shares, so the release
+// count falls by exactly the 17 retired keys.
+// 652 → 661 with the ling/inkling/kling collision split (+9): the 8 klingai keys each carry
+// a distinct shape token in the variant slot (v2.5-turbo-i2v … v3.0-t2v), so each is its own
+// named release on the new bare kling line (+8); `inkling` and `kling@2.6` open a bare
+// release on each of their new lines (+2); the phantom kling-v2@6 line takes its sole bare
+// release with it (−1); and retiring bare `ling` costs NOTHING, because ling#1t already
+// shares that line's un-named release. 8 + 2 − 1 = +9.
+// 661 -> 655 with the keyspace-wide mimo normalization (-6): a release is named by the
+// VARIANT, and after the normalization no mimo key has one. Before, mimo carried EIGHT
+// releases — six on the bare line (the un-named bare `mimo`, plus flash, pro, v2.5-tts,
+// v2.5-tts-voiceclone, v2.5-tts-voicedesign) and one named "v" on each of the two
+// versioned lines. After, it carries TWO: one un-named release on gen 2 and one on gen
+// 2.5. The six speech/tier distinctions are not lost; they moved out of the release name
+// and into the identity-modifier segment of the key. 8 - 2 = -6.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 669 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name)
+	const wantReleases = 645 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5; 655 -> 654: the cogito variant pin retires the phantom cogito gen-1 line, whose sole un-named release goes with it (the decomposition commit before it moves no release count — it replaces one bare-line release with one gen-2.1 release); 654 -> 648: the gpt tier re-key retires the twelve tier releases (each tier line carried an un-named release and a `pro` release on both its bare and its 5.6 generation) and adds six — the bare gpt line gains the named releases luna/sol/terra, and the new gpt gen-5.6 line carries the same three (the {pro} modifier is not a release name, so gpt/<tier>@5.6 and gpt/<tier>@5.6{pro} share one release). -12 +6 = -6; 648 -> 646: the leading-token strip retires three un-named/named releases whose sole occupants moved to a dated line (bare agi, gpt's bare `pro` release and mistral's bare `mini` release) and adds one, the un-named release of the new agi gen-01 line. -3 +1 = -2; 646 -> 645: the series-compound recovery retires the sole un-named release of each of the two compound-family lines (kimi-k2 and kimi-k3 — the {instruct} modifier is not a release name, so kimi-k2 and kimi-k2{instruct} share one) and adds one, the named release `coder` on the bare kimi line. -2 +1 = -1
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {

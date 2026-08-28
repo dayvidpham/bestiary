@@ -1,0 +1,81 @@
+{
+  "cases": [
+    {
+      "name": "retired_compound_family_kimi_k2",
+      "input": "kimi-k2",
+      "expected": {
+        "by_entity": "resolved",
+        "show": "resolved",
+        "retired_instances": [
+          "umans-ai|umans-coder",
+          "umans-ai|umans-kimi-k2.7",
+          "umans-ai-coding-plan|umans-coder",
+          "umans-ai-coding-plan|umans-kimi-k2.7"
+        ],
+        "successors": ["kimi/coder", "kimi/k@2.7"]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a retired entity key is a hard 404 on the EXACT-key seam (bestiary.EntityByKey) — no alias, no redirect, no successor listing — and the CHANGELOG old->new table is the only pointer a user gets. This key is a MEASURED DEVIATION on the two CLI seams and is recorded rather than repaired: \"kimi-k2\" is the upstream raw_family spelling, and after the recovery it remains a valid UNDER-SPECIFIED reference that the ordinary resolver matches to exactly one live entity (kimi/k@2, four instances), so both `show` and `show --by-entity` answer it. No alias or redirect instrument is involved; making it 404 would mean breaking an under-specified ref because it happens to match a retired spelling."
+      },
+      "mutation": {
+        "description": "the compound-family key SPLITS: the two umans-coder rows name no series token in their id, so they land on the new kimi/coder key, while the two umans-kimi-k2.7 rows carry a dotted 2.7 and land on the pre-existing kimi/k@2.7. Do not record this as a single-successor fold."
+      }
+    },
+    {
+      "name": "retired_compound_family_kimi_k2_instruct",
+      "input": "kimi-k2{instruct}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "not-found",
+        "retired_instances": ["alibaba-cn|moonshot-kimi-k2-instruct"],
+        "successors": ["kimi/k@2{instruct}"]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: uniform hard 404 on both seams. The bare-family exception does not apply — \"kimi-k2\" is not a family that survives, it is the upstream raw_family with the series token fused into it, and it names nothing live once the identity modifier is spelled with it."
+      },
+      "mutation": {
+        "description": "a pure MERGE: the single alibaba-cn row joins the pre-existing kimi/k@2{instruct} key, carrying its instruct modifier across byte-identical."
+      }
+    },
+    {
+      "name": "retired_compound_family_kimi_k3",
+      "input": "kimi-k3",
+      "expected": {
+        "by_entity": "resolved",
+        "show": "resolved",
+        "retired_instances": ["kimi-for-coding|k3"],
+        "successors": ["kimi/k@3"]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy: a hard 404 on the EXACT-key seam. Recorded MEASURED DEVIATION on the two CLI seams, for the same reason as kimi-k2: \"kimi-k3\" is the upstream raw_family spelling and remains a valid under-specified reference matching exactly one live entity (kimi/k@3, seven instances). The resolver is doing its ordinary job; no alias, redirect or successor-listing instrument exists."
+      },
+      "mutation": {
+        "description": "the target of this lever: kimi-for-coding's bare id \"k3\" leaves its one-instance compound-family line and joins kimi/k@3 alongside moonshotai's own Kimi K3 rows — with no exact-id entry authored for \"k3\"."
+      }
+    },
+    {
+      "name": "retired_date_fragmented_kimi_instruct",
+      "input": "kimi{instruct}",
+      "expected": {
+        "by_entity": "not-found",
+        "show": "ambiguous",
+        "retired_instances": ["nano-gpt|baseten/Kimi-K2-Instruct-FP4"],
+        "successors": ["kimi/k@2{instruct}"]
+      },
+      "classification": "must-fail",
+      "provenance": {
+        "source": "requirement",
+        "ref": "the epoch-wide retired-key policy with a SINGLE-ENTITY DATE-FRAGMENTATION exception — NOT a bare-family one. The exact-key seam is a hard 404, but the looser `show` seam returns the under-specified error over 9 candidates that share ONE identical tuple (family=kimi, variant=k, version=2, modifier=[instruct]) and differ ONLY by `date`: the resolver's grouping key includes `date`, so one entity's differently-dated instances form separate candidate groups, exactly as they do for any ordinary multi-instance entity. The surviving bare family here is `kimi`; \"kimi{instruct}\" is a variant+modifier compound and never named a family. Turning this into a 404 would break ordinary under-specified lookups, so it is NOT repaired."
+      },
+      "mutation": {
+        "description": "this key's sole occupant sat on the BARE kimi line with no version at all because its raw family was the compound kimi-k2; with the family recovered the seam reads K2 out of the id and it re-homes onto kimi/k@2{instruct}, emptying the coarse key."
+      }
+    }
+  ]
+}

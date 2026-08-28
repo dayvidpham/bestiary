@@ -994,7 +994,7 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				Ref:     bestiary.EntityRef{Family: "llama", Version: "3.3", ParamSize: "70b", Modifier: []string{"instruct"}},
 				Sources: []bestiary.DataSourceID{bestiary.DataSourceModelsDev, bestiary.DataSourceOllama},
 			},
-			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata", "Creator"},
+			expectProps: []string{"Ref", "Instances", "Lineage", "Providers", "Hosts", "Regions", "Nomina", "PriceInputRange", "PriceOutputRange", "ContextRange", "MaxOutputRange", "Capabilities", "Sources", "Metadata", "MetadataAll", "Creator"},
 			expectTypes: map[string]string{
 				"Ref":              "$ref",
 				"Instances":        "array|null",
@@ -1008,6 +1008,13 @@ func TestSchemaDefs_V024_DeepConformance(t *testing.T) {
 				"MaxOutputRange":   "array",
 				"Capabilities":     "$ref",
 				"Sources":          "array|null",
+				// MetadataAll is the COMPLETE multi-row metadata record (array of
+				// EntityMetadata, sorted ascending by MetadataID); Metadata is its
+				// derived primary. It is a plain array|null struct field, so unlike
+				// Metadata it is NOT allowlisted from the type cross-check.
+				// This case asserts it is present in the plain-Entity marshal
+				// and carries the array|null type node.
+				"MetadataAll": "array|null",
 				// Creator is a DERIVED join projection surfaced as a plain struct
 				// field ($ref #/$defs/Creator; a hand-constructed Entity carries the
 				// CreatorNone zero value). Added in schema 0.6.0.
@@ -1408,5 +1415,112 @@ func TestJSONOutput_NegativeConformance(t *testing.T) {
 				"  how to fix: ModelInfo.Date must be typed as string in Go so " +
 				"JSON decode rejects non-string values",
 		)
+	}
+}
+
+// TestSchemaDefs_NomenAttestation_KeySetEquality is the BOTH-DIRECTION key-set fence
+// between the Go NomenAttestation struct and its bestiary.schema.json $def. Before
+// this case the type had ZERO schema coverage, so neither direction could fail:
+//
+//   - Go → schema: a field added to the struct and forgotten in the schema slips
+//     through, because the $def sets no "additionalProperties": false, so the extra
+//     serialized key validates against the schema anyway.
+//   - schema → Go: a property left in the $def after the struct field is removed or
+//     renamed slips through, because nothing asserts the schema is inhabited.
+//
+// Both directions are therefore asserted as SET EQUALITY over
+// (exported struct field names) vs ($def properties), read off the marshalled JSON
+// of a fully-populated value so the check exercises the real serialization (the
+// property names ARE the Go field names: NomenAttestation carries no json tags).
+// The required[] list is asserted to be that same set: every field always
+// serializes, so all six are required.
+//
+// Mutation proof (either side, expect a FAIL): delete "ArchivedURL" from the $def's
+// properties in bestiary.schema.json, or delete the ArchivedURL field from
+// NomenAttestation in nomen.go.
+func TestSchemaDefs_NomenAttestation_KeySetEquality(t *testing.T) {
+	schemaBytes, err := os.ReadFile("bestiary.schema.json")
+	if err != nil {
+		t.Fatalf("could not read bestiary.schema.json: %v", err)
+	}
+	var schemaDefs struct {
+		Defs map[string]struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+			Required   []string                   `json:"required"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(schemaBytes, &schemaDefs); err != nil {
+		t.Fatalf("could not unmarshal $defs from bestiary.schema.json: %v", err)
+	}
+	def, ok := schemaDefs.Defs["NomenAttestation"]
+	if !ok || len(def.Properties) == 0 {
+		t.Fatalf("bestiary.schema.json $defs.NomenAttestation missing or has no properties")
+	}
+
+	// A fully-populated value: every field non-zero, so a field that failed to
+	// serialize (a stray omitempty, an unexported field) is visible as a missing key.
+	at := bestiary.NomenAttestation{
+		SourceURL:   "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+		ArchivedURL: "https://web.archive.org/web/20260101000000/https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+		Source:      bestiary.DataSourceHuggingFace,
+		Authority:   bestiary.AuthorityPrimary,
+		Method:      bestiary.IngestMethodHarvested,
+		IngestedAt:  "2026-08-25T00:00:00Z",
+	}
+	raw, err := json.Marshal(at)
+	if err != nil {
+		t.Fatalf("json.Marshal(NomenAttestation) failed: %v", err)
+	}
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("could not unmarshal NomenAttestation JSON: %v", err)
+	}
+
+	// Direction 1: every serialized key is a declared $def property.
+	for key := range out {
+		if _, ok := def.Properties[key]; !ok {
+			t.Errorf("NomenAttestation serializes key %q that bestiary.schema.json $defs.NomenAttestation does not declare;\n"+
+				"  why: the $def sets no \"additionalProperties\": false, so an undeclared key validates silently\n"+
+				"  how to fix: add a %q property to $defs.NomenAttestation (and to its required[] list)", key, key)
+		}
+	}
+	// Direction 2: every declared $def property is actually serialized.
+	for prop := range def.Properties {
+		if _, ok := out[prop]; !ok {
+			t.Errorf("bestiary.schema.json $defs.NomenAttestation declares property %q that NomenAttestation does not serialize;\n"+
+				"  how to fix: add an exported %q field to bestiary.NomenAttestation, or drop the property from the $def",
+				prop, prop)
+		}
+	}
+	if len(out) != len(def.Properties) {
+		t.Errorf("NomenAttestation key-set size = %d, $def property-set size = %d; the two must be EQUAL",
+			len(out), len(def.Properties))
+	}
+
+	// required[] is that same set: a NomenAttestation always serializes every field
+	// (no json tags at all, so no omitempty is even expressible).
+	req := map[string]bool{}
+	for _, r := range def.Required {
+		req[r] = true
+	}
+	for prop := range def.Properties {
+		if !req[prop] {
+			t.Errorf("$defs.NomenAttestation property %q is not in required[]; every field always serializes, so all %d are required",
+				prop, len(def.Properties))
+		}
+	}
+	for _, r := range def.Required {
+		if _, ok := def.Properties[r]; !ok {
+			t.Errorf("$defs.NomenAttestation required[] names %q, which is not a declared property", r)
+		}
+	}
+
+	// The crux of this slice: ArchivedURL is present on BOTH sides, and it carries
+	// the archive-snapshot shape the shared validator accepts.
+	if _, ok := def.Properties["ArchivedURL"]; !ok {
+		t.Error("$defs.NomenAttestation is missing the \"ArchivedURL\" property (added in schema 0.7.0)")
+	}
+	if got, ok := out["ArchivedURL"].(string); !ok || !bestiary.IsArchiveSnapshotURL(got) {
+		t.Errorf("NomenAttestation.ArchivedURL serialized as %v, want the archive-snapshot-shaped string", out["ArchivedURL"])
 	}
 }

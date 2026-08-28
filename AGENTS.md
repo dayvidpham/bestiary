@@ -163,17 +163,24 @@ handoff `bestiary-84su7` (the full ratified surface + implementation notes) and 
 - **The Ollama ingest is an offline, polite-bot tool** (`cmd/bestiary-ollama`). The hard
   models.dev↔Ollama ID-join lives in this network-gated binary, never in `go test`. It is
   **alias-first**: a curated `ollama_aliases.json` entry overrides the mechanical decomposition
-  (curated > mechanical, matching the `parse/` override precedent); otherwise it strips the
-  quant tag and decomposes the remainder through the production parse pipeline into an
-  `EntityRef` key, matched against `StaticModels()` (retrying with an `instruct` modifier for
-  bare size-only tags). Community finetunes are **kept, never dropped**: Ollama exposes no
-  base-model marker, so lineage is **inferred** (decomposition + curated tables) — base-known
-  finetunes carry a `base_ref` (→ a `DerivationFinetune` lineage edge), base-unknown ones become
-  standalone entities and are appended to a sorted `ollama_unlinked.json` for visibility. On
-  refresh, **field ownership** is explicit: fetch-owned fields (`weights_bytes`, the quant set,
+  (curated > mechanical, matching the `parse/` override precedent); otherwise it strips the quant
+  tag and decomposes the remainder through the production parse pipeline into an `EntityRef` key,
+  matched against `StaticModels()` (retrying with an `instruct` modifier for bare size-only
+  tags). Two DISTINCT Ollama identities can resolve to ONE catalog `model_id` (a bare size tag
+  and its explicit `-instruct` tag name the same model), so entries are **coalesced** by
+  `model_id` and the **stronger join arm wins** any field they disagree on — the typed `joinArm`
+  precedence is `alias` > `mechanical` > `instruct-fallback` > `community`, and its order IS the
+  enum's order. Community finetunes are **kept, never dropped**: Ollama exposes no base-model
+  marker, so lineage is **inferred** (decomposition + curated tables) — base-known finetunes
+  carry a `base_ref` (→ a `DerivationFinetune` lineage edge), base-unknown ones become standalone
+  entities and are appended to a sorted `ollama_unlinked.json` for visibility. On refresh,
+  **field ownership** is explicit: fetch-owned fields (`weights_bytes`, the quant set,
   `param_size`) are overwritten while curation-owned fields (architecture facts,
-  `context_window`, `base_ref`, `_comment`s) are preserved. The bot uses a descriptive
-  User-Agent and waits **≥1 second** between requests (a hard project constraint).
+  `context_window`, `base_ref`, `_comment`s) are preserved. Quant names are **normalized to the
+  `Quantization` enum's canonical token at the ingest boundary** (Ollama's raw `fp16` becomes
+  `f16`), so the curated quant tables are keyed by one spelling only; a token the enum cannot
+  name is dropped with an actionable message rather than written through. The bot uses a
+  descriptive User-Agent and waits **≥1 second** between requests (a hard project constraint).
 
 - **Two version axes, both bump for v0.2.4.** `BestiarySchemaVersion` (the public JSON output
   contract in `bestiary.schema.json`) goes `0.1.0` → `0.2.0` — additive only; all new props
@@ -384,11 +391,18 @@ the release branch, as part of the release PR:
    distinct numbers and neither is derivable from the other:
    `**Schema:** \`A.B.C\` → \`X.Y.Z\` (additive). SQLite store schema \`N\` → \`M\`.`
    must agree with `BestiarySchemaVersion` in `version.go` and `currentSchemaVersion` in `store.go`.
-3. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
+3. **Bump `ReleaseVersion` in `version.go`** to the release being cut, without the
+   leading `v` (tag `v0.2.10` → `"0.2.10"`), and update its pin in
+   `TestReleaseVersion_Exact`. This is the constant the offline ingest bots embed in
+   their outbound `User-Agent`; left unbumped, the bots misreport the build to the
+   registry operators whose logs carry it (the Ollama bot advertised `0.2.4` for three
+   releases). It is a THIRD version axis — neither `BestiarySchemaVersion` nor the
+   store schema number.
+4. **Update the link-ref block at the bottom of the file** — this is the step that gets forgotten,
    because nothing renders differently when it is wrong:
    - repoint `[Unreleased]` to `compare/vX.Y.Z...HEAD`
    - add `[X.Y.Z]: https://github.com/dayvidpham/bestiary/compare/v<previous>...vX.Y.Z`
-4. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
+5. **Verify parity before opening the PR.** Every stanza needs a ref, every version ref needs a
    stanza, and each ref's left-hand side must be the next-older tag:
    ```
    grep -o '^## \[[^]]*\]' CHANGELOG.md | sed 's/^## //' | while read -r s; do
@@ -413,7 +427,7 @@ further versions shipped. Both were repaired retroactively, after the tags were 
 | `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
 | `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
-| `version.go` | Manual | Update on public type changes or upstream schema updates |
+| `version.go` | Manual | Update on public type changes or upstream schema updates; `ReleaseVersion` bumps on the release branch — see "Releases" |
 | `CHANGELOG.md` | Manual | Entries written as slices land; stanza cut + link refs updated on the release branch — see "Releases" |
 | `AGENTS.md` (`CLAUDE.md` is a symlink to it) | Manual | One file, two names. Editing `AGENTS.md` updates both |
 | All other `.go` files | Developer | Normal development workflow |

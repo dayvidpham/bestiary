@@ -14,6 +14,1304 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.2.10] — 2026-08-28
+
+**Schema:** `0.6.0` → `0.7.0` (additive). SQLite store schema `8` → `9`.
+
+### Changed
+
+- **Two dead curation rows are swept.** Both were reachable only through data this
+  release itself removed, and both are deleted with a measured proof of deadness: a full
+  `go generate ./...` with and without each row is **byte-identical in every generated
+  file** — no key moves, no instance moves, no report row changes.
+
+  - `parse/data/creators.json`: the `{"family": "kimi-k2", "creator": "moonshotai"}` row.
+    The `kimi-k2` family was retired by the general series-compound recovery, so the row
+    named a family that no longer exists. Moonshot keeps its attribution through the
+    surviving `kimi` row, and `Creators()` is unmoved at **43**.
+  - `parse/data/family_overrides.json`: the `mimo-v2.5` row. It is subsumed by
+    `splitSeriesVariant`, which re-decomposes a letter-prefix series directly off the model
+    ID: `ParseFamilyDetailed(raw=mimo, id=mimo-v2.5)` already yields
+    `(mimo, "", "2.5", "")` without it, which is what the canonical seam and therefore every
+    entity key uses. The row only affected the raw-only `ParseFamily` primitive, whose
+    whole-token output (`v2.5`) is documented as SUPERSEDED downstream
+    (`parse/data/version_patterns.json`). Its case leaves
+    `testdata/parse/family_overrides_corpus.json` with it, since that corpus enumerates the
+    override rows. The sibling `mimo-v2.5-pro` row is **not** dead and stays.
+
+- **Kling's eight video keys state their version in the version slot.** The klingai rows
+  are spelled `klingai/kling-v<version>[-turbo]-<modality>` upstream, and the leading-token
+  decomposition read the whole remainder as ONE variant token, so the keys rendered
+  `kling/v2.5-turbo-i2v`, `kling/v3.0-motion-control` and so on — a flattened string
+  carrying three different KINDS of fact in one slot, sitting directly beside `kling@2.6`,
+  which spells the same kind of version in the version slot. Both shapes could not be
+  right. This was deferred when the collision split landed; it is pulled in here.
+
+  **Which axis carries which token, and why.**
+
+  | token | axis | reason |
+  |---|---|---|
+  | `v` | none — it leaves the key | A version PREFIX: it introduces the number it is glued to and names no sibling line. Same reading this release gives the mimo series letter and the cogito release letter. The v-carrying spelling survives verbatim as a provider-id nomen. |
+  | `2.5` / `2.6` / `3.0` | **version** | This is what makes the set coherent with `kling@2.6`, which already keys its version this way. |
+  | `i2v` / `t2v` / `motion-control` | **variant** (identity) | Image-to-video and text-to-video are genuinely different artifacts taking different inputs, not a serving tier. The variant slot is where this release puts a named member of a line (the gpt tiers, the mimo speech members), and a modality is exactly that. |
+  | `turbo` | **identity modifier** `{turbo}` | The repo's fast/turbo rule is a global identity fail-safe with per-family ATTRIBUTE demotions, each curated against evidence that the token names a speed tier of a base the catalog also serves. Kling has no such evidence — there is **no** non-turbo 2.5 row anywhere in the catalog — so demoting would key these two rows onto a `kling@2.5` base nothing attests. |
+
+  **A typed modality axis is still the better long-term home, and is deliberately NOT minted
+  here.** One vendor's three tokens are not enough evidence to design a keyspace-wide axis,
+  and the variant slot is reversible into one later. What is fixed now is the incoherence
+  between `kling@2.6` and `kling/v2.6-i2v`.
+
+  **Measured key diff** (unit: entity keys; axis: the constant set in
+  `entities_constants_gen.go`; configuration: this lever alone, on the release tip). Eight
+  renames, nothing else moves — **census 930 → 930**:
+
+  | old spelling | new spelling |
+  |---|---|
+  | `kling/v2.5-turbo-i2v` | `kling/i2v@2.5{turbo}` |
+  | `kling/v2.5-turbo-t2v` | `kling/t2v@2.5{turbo}` |
+  | `kling/v2.6-i2v` | `kling/i2v@2.6` |
+  | `kling/v2.6-motion-control` | `kling/motion-control@2.6` |
+  | `kling/v2.6-t2v` | `kling/t2v@2.6` |
+  | `kling/v3.0-i2v` | `kling/i2v@3.0` |
+  | `kling/v3.0-motion-control` | `kling/motion-control@3.0` |
+  | `kling/v3.0-t2v` | `kling/t2v@3.0` |
+
+  **This table is not a migration table, and no key is retired by it.** Every one of the
+  eight old spellings was minted *inside this same unreleased release* by the collision
+  split and **never shipped**: measured against the release baseline, none of them appears
+  on either side of the cumulative key diff, which stays at **62 retired / 35 added**. There
+  is nothing for a released consumer to migrate from; the table is here so a reader of the
+  collision-split entry below is not left with the old spellings.
+
+  Series lines 409 → 410 (versioned 208 → 210, bare 201 → 200): the eight keys leave the
+  bare `kling` line — which held nothing else, so it empties — for generation lines, two of
+  which (`kling` gen-2.5 and gen-3.0) are new while gen-2.6 already existed. Releases,
+  instance totals and every nomen count are unmoved. The path-unification gate reports
+  **`(c)=0`** and needs **no new justified-exception row**, exactly as the deferral priced it.
+
+- **The entity view lists the lab's own providers first.** `bestiary show <ref>
+  --by-entity` rendered `Providers (N):` as one flat, effectively alphabetical run, so
+  the organisation that TRAINED the model sat wherever its name happened to fall —
+  Zhipu's own `zhipuai` was 41st of 42 on `glm@5`, one line below a `Creator: zhipu`
+  field. The line now reads in three groups: the creator's own hosted surfaces in the
+  curated order (which encodes primacy — `zhipuai` ahead of the international `zai`
+  brand), then the family's `CanonicalProvider` when it is not already among them, then
+  every remaining provider alphabetically. A ` | ` separates the preferred group from
+  the rest, so the boundary is visible without knowing the creator table by heart; the
+  bar is omitted when either side is empty.
+
+  The **`Instances` table follows the same order**. That is the half with teeth: the
+  table truncates at 20 rows, so on a heavily-rehosted entity the lab's own offering
+  could be cut from the view entirely while twenty rehosts were shown.
+
+  Presentation only. No key moves, no entity or instance is added or dropped, the
+  printed provider count is unchanged (the list is a permutation), and `--output json`
+  is untouched — it still carries the registry's own `Providers` and `Instances` order.
+
+- **The GPT 5.6 tiers are variants of `gpt`, not families of their own.** Luna, Sol and
+  Terra are tiers of one release, exactly as Claude's Haiku, Opus and Sonnet are, and the
+  curated `parse/data/family_overrides.json` table already holds that precedent. Three
+  rows map upstream family `gpt-<tier>` onto `(family gpt, variant <tier>)` and cover all
+  **76** catalog rows carrying such a family — a different population from the **75** ids
+  matching the `gpt-*{luna,sol,terra}` id pattern, and neither is a typo for the other.
+  The keys now read `gpt/luna@5.6`, `gpt/luna@5.6{pro}` and the same for `sol` and `terra`.
+  - The `parse/data/modelsdev_aliases.json` rows are retargeted in the same change.
+    Omitting that step was measured to synthesize three phantom zero-instance standalone
+    entities.
+  - Six exact-ID pins carry the `-pro` rows. With the tier in the variant slot, `pro` has
+    nowhere mechanical to go — it is not in `modifiers.json`, so nothing can peel it — and
+    the six `-pro` rows were measured to CONFLATE into their non-pro siblings, a silent
+    data conflation. Teaching `pro` globally was priced and rejected: it re-keys ~30
+    unrelated families **and still does not fix these rows**, because `pro` is a curated
+    `gpt` member and the member guard holds.
+
+- **Venice's dot-less version spelling is read as the version it means, for all fourteen
+  of its GPT ids.** Venice publishes `openai-gpt-56-luna` and `openai-gpt-55-pro` — GPT
+  5.6 Luna and GPT 5.5 Pro with the dot squashed out. This is a **curated reading of
+  fourteen specific ids, not a parser change**, and it is deliberately all-or-nothing:
+  a partial pin would scatter one aggregator's own rows across dated and undated keys.
+
+  **What this means for you as a reader.** Venice's rows now sit **under the dated keys**
+  — `gpt/luna@5.6`, `gpt/luna@5.6{pro}` and so on — where before they would have attached
+  to the undated `gpt/<tier>` and `gpt/<tier>{pro}` and been invisible to anyone filtering
+  on the dated key. The consequence of pinning is that the undated `{pro}` key per tier
+  now has **no occupant at all** and is retired: every `-pro` instance is dated. The bare
+  `gpt/<tier>` keys DO survive, holding one row each — gitlab's, for the reason in the
+  next entry.
+
+- **A model id no longer loses its version to a leading token that repeats what another
+  axis already records.** An id whose first token is the serving provider's own slug
+  (`databricks-gpt-5-6-luna`) or the lab that trained the model
+  (`openai-gpt-5.6-luna`, `openai.gpt-5.6-luna`) pushed the version scan one token late,
+  so the artifact keyed an **undated sibling** of the entity it belongs to. Measured, 165
+  records were affected and 120 changed their decomposition.
+
+  The rule is a classification, not a prefix list (`ClassifyIDPrefix`, `id_prefix.go`): a
+  leading token may be dropped **only when a DIFFERENT carrier already holds the fact it
+  names**, and the strip is additionally refused unless the remainder still names a known
+  family. Two carriers license it — the `Provider` field, and the `Creator` axis when the
+  remainder's family declares that exact lab — and everything else is left byte-identical.
+
+  **What is deliberately NOT stripped, and why the distinction is the whole point:**
+  - A **backend-host label**. nano-gpt's `azure-gpt-4o` is served by nano-gpt, not Azure,
+    so `azure` is the only place that routing fact appears. A blanket provider-name strip
+    deleted exactly this label once; here it simply fails both carrier tests.
+  - A **product-surface namespace**. gitlab prefixes all 22 of its ids with `duo-chat-`,
+    which is neither its provider slug nor a lab, and no axis records which of a
+    provider's surfaces served a model. Stripping it would delete a fact rather than
+    repeat one — so gitlab's three tier rows stay on the undated `gpt/<tier>` keys, and
+    that is the measured cost of the rule being honest rather than tidy.
+  - A **family token that happens to be constant across a provider's catalog**. Measured,
+    28 providers prefix every one of their ids with a single token, and for most of them
+    (`claude-`, `grok-`, `glm-`, `kimi-`, `mimo-`, `solar-`) that token IS the family.
+    Constancy is not a carrier test.
+  - A **lab token the Creator axis spells differently**. Bedrock's `zai.glm-…` and
+    `moonshot.kimi-…` are declined, because the curated creators are `zhipu` and
+    `moonshotai`; the carrier does not hold the value the id spells.
+
+  Two smaller consequences are worth naming. The Bedrock grammar
+  `[<region>.]<vendor>.<model>[-v<N>:<M>]` now has BOTH arms normalized: the routing tail
+  goes with a dotted strip, because leaving it swallows the release date behind it. And
+  two Bedrock rows whose dotted lab segment was being read as the FAMILY — Mistral's
+  Voxtral Mini and Small, keyed as `mistral/mini` and `mistral/small` — land on `voxtral`,
+  the line Mistral actually published them under.
+
+- **A compound series family is recovered generally, not one spelling at a time.** A
+  provider that reports a COMPOUND series family as its raw family (`kimi-k2`, `kimi-k3`)
+  kept that compound verbatim whenever the version-pattern table missed it. That table
+  matches only a DOTTED series number (`kimi-k2.7` → `kimi` + `k2.7`), so every
+  BARE-INTEGER series compound fell through to passthrough and stranded its models on a
+  compound-family key of their own, split off from the short-family siblings carrying the
+  same series. `kimi-for-coding`'s bare id `k3` — tagged with raw family `kimi-k3`, with
+  the series token living ONLY in the family field — was invisible to the `kimi` series
+  entirely, sitting alone on a `kimi-k3` key.
+
+  The empty-raw inference already recovered this shape; the raw-populated path did not.
+  Wiring the SAME closed predicate into the raw-populated path is a general reduction over
+  series families and series numbers: it accepts a family only when it is exactly
+  `<base>-<letter><number>` and `<base>` carries that series letter, so a future series
+  number recovers automatically and **no exact-id entry is added for `k3`**. A family
+  self-mapped in `family_overrides.json` is a curated genuine compound and is declined,
+  as are a wrong series letter, a series letter with no number, and any compound carrying
+  an extra unrecognised token.
+
+  ONLY the family is reduced. The `(variant, version)` split stays the letter-prefix
+  seam's job, run against the model ID. Seeding it from the consumed family token instead
+  was measured and rejected: a provider that tags a K2.5 model with the coarser raw family
+  `kimi-k2` (`moonshotai/Kimi-K2.5-TEE` and siblings) would then be asserted onto the
+  `kimi/k@2` key and silently merged with genuine K2 models. An under-specified model
+  belongs on the honest bare-family line, never on a confidently wrong version key — so
+  those rows stay exactly where they were, and that is pinned as a negative control.
+
+- **Two defects in the offline Ollama bot, both invisible until it was run against the
+  real registry.** (1) `model_id` is the corpus's join key — codegen matches rows onto the
+  catalog by exact model id — but two distinct Ollama identities routinely resolve to one
+  catalog id (the bare size tag `llama3.1:405b` and the explicit `llama3.1:405b-instruct`
+  are the same model), and the bot emitted an entry per identity: a real refresh wrote the
+  same `model_id` **two and three times**, each with a different subset of the quants, and
+  codegen would have kept whichever it read last. Identities are now coalesced by output
+  model id — the strongest join arm owns the entry and any quant they disagree on, while
+  every other identity still contributes the quants it alone measured, so coalescing never
+  costs a measurement. (2) The bot wrote the RAW Ollama quant token, and Ollama spells
+  16-bit float `fp16` — a spelling the `Quantization` enum deliberately rejects, leaving
+  normalisation to the ingest layer. That produced a corpus the loader refuses outright,
+  and it orphaned curation: a curated `f16` row's architecture facts vanished when the
+  refresh reported the same quant as `fp16`. Rows now carry the canonical enum name, so
+  the refreshed row IS the curated row; a token with no canonical name is dropped with an
+  actionable message rather than written.
+
+- **The offline Ollama refresh bot now names the version that actually made the request.**
+  Its `User-Agent` was a hand-spelled literal and sat at `bestiary-ollama/0.2.4` for three
+  releases, misreporting the build to the registry operators whose logs carry it. The
+  version segment is now DERIVED from a new `bestiary.ReleaseVersion` constant — a THIRD
+  version axis, distinct from both `BestiarySchemaVersion` (the public JSON output
+  contract) and the SQLite store schema number — so it reads `bestiary-ollama/0.2.10`
+  and cannot drift again. `AGENTS.md`'s release procedure gains the bump step, and a pin
+  test fails until the bump happens.
+
+  The bot's outbound guarantees are now asserted at the tool's OWN seam, not only inside
+  the shared polite-bot package: one constructor (`newPoliteClient`) builds the client
+  `run()` uses, and the offline tests drive that same constructor with an injected
+  transport and a fake clock to pin the current-version `User-Agent`, the ≥1 s gap between
+  consecutive requests (first request: no sleep; second: ≥1 s), and that every outbound
+  path funnels through the injected transport — a client whose transport refuses to dial
+  produces an error rather than a silent socket. `go test ./cmd/bestiary-ollama` was
+  additionally run inside a disabled network namespace (`unshare -rn`) and is green:
+  zero network requests.
+
+- **The measured-weights corpus is refreshed from the live Ollama registry, and the
+  calculator's measured coverage grows from 2 entities to 19.** One network-gated run of
+  the offline bot over its seven-model allowlist takes `parse/data/quant_vram.json` from
+  **4 hand-written entries to 47** (43 new, none removed).
+
+  **What you gain as a reader.** Measured over the shipped catalog with
+  `FitOver(Entities(), FitFilter{})` — UNIT: entities; AXIS: the `FitResult`
+  denominators; CONFIGURATION: this tree's own regenerated bake:
+
+  | denominator | before | after |
+  |---|---|---|
+  | `EntitiesConsidered` | 930 | 930 |
+  | `EntitiesMeasured` | 2 | **19** |
+  | `EntitiesDerived` | 297 | 281 |
+  | `EntitiesExcluded` | 11 | 11 |
+
+  Seventeen entities become measured. **Sixteen were previously DERIVED** — they had an
+  estimate inferred from an attested parameter count, and now carry real per-quant
+  footprints instead: `gemma@2#2b`, `gemma@2#27b`, `llama@3.1#8b`, `llama@3.1#8b{instruct}`,
+  `llama@3.1#70b`, `llama@3.1#70b{instruct}`, `llama@3.1#405b{instruct}`,
+  `llama@3.2#1b{instruct}`, `llama@3.2#3b`, `mistral#7b`, `mistral#7b{instruct}`,
+  `mistral@0.3#7b{instruct}`, `qwen@2.5#7b{instruct}`, `qwen@2.5#14b{instruct}`,
+  `qwen@2.5#32b{instruct}`, `qwen@2.5#72b{instruct}`. **One is newly covered outright**:
+  the bare `mistral` key had no attested total, so before this refresh the calculator
+  could say nothing about it at all. **No new architecture facts**: `layers`/`kv_heads`/
+  `head_dim` are curation-owned and the registry's config blob does not publish them, so
+  the newly measured rows are weights-only (`VRAMEstimatePartial: true`) until a curator
+  supplies them.
+
+  **The entity keyspace does not move: 930 keys before, 930 after — zero renames, zero
+  fissions, zero retirements, and no `param_size` introduced.** The refresh writes
+  `Source` and `QuantVRAM` onto 63 catalog rows and touches no other generated field.
+
+  **Every curation-owned field is byte-identical afterwards**, verified by diffing the
+  four pre-existing entries field by field: per-entry `_comment`, `context_window`,
+  `base_ref`, and the per-quant `layers`/`kv_heads`/`head_dim` on all three arch-curated
+  quants of the 70B anchor. The fetch-owned fields move as designed — the quant set
+  widens to what the registry publishes (the 70B model goes from 3 curated quants to 12),
+  and the weights update to the current manifests, which corrects the seed's 70B `q4_k_m`
+  estimate from 43,033,509,888 down to the measured 42,520,398,528 bytes.
+
+  **One text field DID change, and it is the file's own header, not curation.** The
+  top-level `_comment` of `parse/data/quant_vram.json` — distinct from the per-entry
+  `_comment`s above, which are byte-identical — is the tool's own constant and is
+  rewritten unconditionally on every run. It goes from the old `KEYING CONTRACT`
+  paragraph to a `FIELD OWNERSHIP` paragraph naming which fields the bot owns
+  (`weights_bytes`, digest, quant set, `param_size`, `source`) and which curation owns
+  and the bot preserves. This is a documentation rewrite of the file header only; no
+  entry data moves with it.
+
+  **`ollama_unlinked.json` did not exist before this run; it now lists 26 entries** — the
+  base-unknown community models the bot keeps rather than drops (`gemma2`, `phi3.5` and
+  `qwen2.5` tags with no joinable models.dev row, plus the `:latest` and version-only
+  Mistral tags). They ship as standalone entries, so nothing measured is discarded.
+
+  **The OCI naming scheme now carries data.** The refresh is the first run to capture the
+  per-quant OCI manifest digest, so the shipped registry mints **267 OCI nomina** where it
+  minted 0 — 262 distinct digests across 19 entities, counted as 267 (digest, entity)
+  pairs because three digests are published under more than one catalog ID. The total
+  nomen census moves 3,944 → 4,211; the canonical (930), provider-id (2,834), alias (1)
+  and huggingface (179) legs are re-measured **unchanged**, since the refresh adds no
+  entity, no instance and no ID spelling.
+
+  One tag was skipped: `llama3.1:70b-instruct-q3_K_S` answered HTTP 503. The bot reports
+  and continues rather than abandoning a whole refresh for one tag.
+
+### Removed
+
+- **Four more entity keys are retired by the series-compound recovery**, and one is
+  added (`kimi/coder`, for the two `umans-coder` rows whose id names no series token at
+  all, so the letter-prefix seam correctly declines and the residual token becomes the
+  variant). No alias is minted, no redirect is added and no successor is listed at the
+  tool: this table is the migration record, and the only pointer a user gets.
+
+  | retired key (series-compound recovery) | instances re-home to |
+  |---|---|
+  | `kimi-k2` | `kimi/coder`, `kimi/k@2.7` |
+  | `kimi-k2{instruct}` | `kimi/k@2{instruct}` |
+  | `kimi-k3` | `kimi/k@3` |
+  | `kimi{instruct}` | `kimi/k@2{instruct}` |
+
+  `kimi-k2` SPLITS — it is not a fold onto one successor — because two of its four rows
+  name no series token and two carry a dotted `2.7`. Every row is re-derived from the
+  instances the retired key actually held, checked against the live registry on each run,
+  and cross-checked against this table in BOTH directions
+  (`cmd/bestiary/testdata/retired/compound_recovery_retired_keys_corpus.json`).
+
+  Two of these four are a MEASURED DEVIATION from the epoch's uniform-404 reading, and
+  they are recorded rather than repaired. `kimi-k2` and `kimi-k3` are the upstream
+  raw_family spellings, and both are still LIVE concrete model ids, so both CLI seams still
+  answer them: `bestiary show` finds the model directly, and `bestiary show --by-entity`
+  finds it through its concrete-model-id arm and renders the owning entity (`kimi/k@2`,
+  `kimi/k@3`). The hard 404 that admits no exception is at the EXACT-key seam
+  (`bestiary.EntityByKey`), and it holds for all four — and for all 62 keys this release
+  retires. Making either CLI seam fail would mean breaking a live lookup because the
+  spelling happens to match a retired key — an under-specified reference at `bestiary show`,
+  an exact concrete-model-id hit at `show --by-entity`.
+
+- **The retired-key rule, stated per seam.** This is the release's single normative
+  statement of what a retired key does, and it governs every per-key stanza below. An
+  earlier draft of some stanzas below described `bestiary show --by-entity` as "the
+  exact-key seam" and read the hard 404 as covering it; that wording conflated two
+  different exact lookups, and because it never shipped it is rewritten in place rather
+  than appended to — in the CHANGELOG and in every retired-key test docblock. The rule:
+
+  > A retired key is not found at the exact-key seams: `EntityByKey`,
+  > `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An old
+  > spelling that is still a valid short reference can resolve or show candidates.
+
+  So the invariant that admits no exception is the pair of EXACT-key seams — the library
+  call `bestiary.EntityByKey` and the web route `GET /entity/<key>` — and it holds for
+  all **62** keys this release retires. Neither CLI seam is one of those two, and the two
+  do not behave alike. `bestiary show --by-entity` is an exact match over the
+  store-overlaid entity index, accepting the entity key, the entity preferred name or a
+  concrete model id; it has NO short-reference path, so it never returns the
+  under-specified error. `bestiary show` runs the input through the model resolver, which
+  keeps its short-reference (under-specified) fallback, so a retired spelling that is
+  still a valid short reference answers there or lists candidates. Measured at the
+  shipped `bestiary show` seam, the 62 split **45 not-found / 12 under-specified /
+  5 resolved**; `show --by-entity` differs from `show` for a further four keys. The
+  per-key record is `cmd/bestiary/testdata/retired/epoch_retired_keys_corpus.json`,
+  probed by `TestEpochRetiredKeys_MeasuredPolicySplit`. No alias is minted, no redirect
+  is added and no successor is listed at the tool: the migration tables below are the
+  only pointer a user gets.
+
+- **Twenty-six entity keys are retired by the two changes above.** Twelve come from the
+  tier re-key and fourteen from the leading-token strip. No alias is minted, no redirect
+  is added and no successor is listed at the tool: this table is the migration record, and
+  the only pointer a user gets.
+
+  | retired key (tier re-key + prefix strip) | instances re-home to |
+  |---|---|
+  | `agi` | `agi@01` |
+  | `devstral#123b` | `devstral@2#123b` |
+  | `gemma#12b` | `gemma@3#12b` |
+  | `gemma#26b-a4b` | `gemma@4#26b-a4b` |
+  | `gemma#4b` | `gemma@3#4b` |
+  | `gpt-luna` | `gpt/luna`, `gpt/luna@5.6` |
+  | `gpt-luna/pro` | `gpt/luna@5.6{pro}` |
+  | `gpt-luna/pro@5.6` | `gpt/luna@5.6{pro}` |
+  | `gpt-luna@5.6` | `gpt/luna@5.6` |
+  | `gpt-sol` | `gpt/sol`, `gpt/sol@5.6` |
+  | `gpt-sol/pro` | `gpt/sol@5.6{pro}` |
+  | `gpt-sol/pro@5.6` | `gpt/sol@5.6{pro}` |
+  | `gpt-sol@5.6` | `gpt/sol@5.6` |
+  | `gpt-terra` | `gpt/terra`, `gpt/terra@5.6` |
+  | `gpt-terra/pro` | `gpt/terra@5.6{pro}` |
+  | `gpt-terra/pro@5.6` | `gpt/terra@5.6{pro}` |
+  | `gpt-terra@5.6` | `gpt/terra@5.6` |
+  | `gpt/pro` | `gpt/pro@5.2`, `gpt/pro@5.4`, `gpt/pro@5.5` |
+  | `kimi-k2{code}` | `kimi/k@2.7{code}` |
+  | `ministral#3b{instruct}` | `ministral@3#3b{instruct}` |
+  | `ministral#8b{instruct}` | `ministral@3#8b{instruct}` |
+  | `mistral/large#675b{instruct}` | `mistral/large@3#675b{instruct}` |
+  | `mistral/mini#3b` | `voxtral/mini#3b` |
+  | `mistral/small#24b` | `voxtral/small#24b` |
+  | `nemotron#120b` | `nemotron@3#120b` |
+  | `nemotron#30b-a3b` | `nemotron@2#30b-a3b` |
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/gpt_tier_rekey_retired_keys_corpus.json`), so the three
+  copies of the record cannot drift apart. Two rows are why the record cannot be written
+  from assumption: `gpt-luna` (and its `sol`/`terra` twins) SPLITS, because gitlab's row is
+  deliberately not stripped, and `gpt/pro` splits three ways because its rows are dated by
+  two different mechanisms.
+
+  **Three keys deviate from the epoch-wide `show`-seam expectation, and the deviation is
+  recorded rather than repaired.** `ministral#3b{instruct}`, `mistral/large#675b{instruct}`
+  and `nemotron#120b` still RESOLVE at plain `bestiary show`, because each remains a valid
+  **under-specified reference** to exactly one live entity: the successor carries a version
+  the retired key did not, so a ref omitting the version still names one model. Nothing was
+  added to let a retired key resolve: the exact-key seams (`bestiary.EntityByKey` and
+  `GET /entity/<key>`) are a hard 404 for all **26**, and making these fail would mean
+  breaking ordinary under-specified lookups whenever they happen to match a retired
+  spelling. `show --by-entity` is a different lookup again — an exact match over the
+  store-overlaid entity index (entity key, entity preferred name or concrete model id),
+  with no short-reference path — and it reports not-found for all 26. Nine further keys
+  report the under-specified error because their FAMILY survives them, exactly as `show gpt`
+  and `show claude` always have; the remaining fourteen are 404 on both seams.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **26** `Entity__` declarations and gains **14**,
+  counted from the file:
+
+  removed — `Entity__Agi`, `Entity__Devstral__Size_123b`, `Entity__Gemma__Size_12b`,
+  `Entity__Gemma__Size_26b_a4b`, `Entity__Gemma__Size_4b`, `Entity__Gpt__Pro`,
+  `Entity__Gpt_luna`, `Entity__Gpt_luna__Pro`, `Entity__Gpt_luna__Pro__Version_5_6`,
+  `Entity__Gpt_luna__Version_5_6`, `Entity__Gpt_sol`, `Entity__Gpt_sol__Pro`,
+  `Entity__Gpt_sol__Pro__Version_5_6`, `Entity__Gpt_sol__Version_5_6`,
+  `Entity__Gpt_terra`, `Entity__Gpt_terra__Pro`, `Entity__Gpt_terra__Pro__Version_5_6`,
+  `Entity__Gpt_terra__Version_5_6`, `Entity__Kimi_k2__Code`,
+  `Entity__Ministral__Size_3b__Instruct`, `Entity__Ministral__Size_8b__Instruct`,
+  `Entity__Mistral__Large__Size_675b__Instruct`, `Entity__Mistral__Mini__Size_3b`,
+  `Entity__Mistral__Small__Size_24b`, `Entity__Nemotron__Size_120b`,
+  `Entity__Nemotron__Size_30b_a3b`;
+
+  added — `Entity__Agi__Version_01`, `Entity__Devstral__Version_2__Size_123b`,
+  `Entity__Gpt__Luna`, `Entity__Gpt__Luna__Version_5_6`,
+  `Entity__Gpt__Luna__Version_5_6__Pro`, `Entity__Gpt__Sol`,
+  `Entity__Gpt__Sol__Version_5_6`, `Entity__Gpt__Sol__Version_5_6__Pro`,
+  `Entity__Gpt__Terra`, `Entity__Gpt__Terra__Version_5_6`,
+  `Entity__Gpt__Terra__Version_5_6__Pro`,
+  `Entity__Ministral__Version_3__Size_14b__Instruct`,
+  `Entity__Ministral__Version_3__Size_3b__Instruct`,
+  `Entity__Nemotron__Version_3__Size_120b`.
+
+  The name shape also flips for the tier keys, `__Pro__Version_5_6` becoming
+  `__Version_5_6__Pro`, because `pro` moves from a path segment to an identity modifier.
+
+  Census effect, measured over this slice's own two runs: the tier re-key alone takes
+  entities **945 → 942** (12 out, 9 in), series lines 415 → 410, versioned lines 209 → 207,
+  bare lines 206 → 203, releases 654 → 648, canonical nomina 945 → 942 (total 3,959 →
+  3,956). The leading-token strip then takes entities **942 → 933** (14 out, 5 in), series
+  lines 410 → 411 (the one new `agi` gen-01 line; bare lines unchanged), releases 648 →
+  646, canonical nomina 942 → 933 (total 3,956 → 3,947), sized catalog entities 317 → 310.
+  Provider-id (**2,834**), alias (**1**) and HuggingFace (**179**) nomina are re-measured
+  UNCHANGED across both: a re-keyed instance carries its own id spelling across as an
+  Admitted nomen, and the one harvested Hub repo whose entity moved keeps its value while
+  its `ResolvesTo` is re-pointed.
+
+### Added
+
+- **A budget-first VRAM fit calculator at `/calculator`, with a typed weights basis.**
+  The detail page answers "I have this model, what does it cost?"; the calculator
+  reverses the direction and answers "I have this much VRAM, what runs?". State a budget
+  and an adjustable headroom, and the page lists only rows whose weights clear
+  `budget − headroom`, largest first, each with the greatest context it can afford and
+  **which limit produced that figure** — the budget or the model's own window. The
+  arithmetic lives in the root package (`fit.go`: `FitOver`/`Fit`, `FitBudget`,
+  `FitFilter`, `FitRow`, `FitResult`, `DerivedWeightsBytes`), so it is unit-testable
+  without an HTTP server and reusable by the CLI later; `cmd/bestiary-web` only renders
+  it. `FitOver` is pure over the entities it is given.
+  - **Headroom is presentation-layer view state, and its preset is deliberately
+    non-zero.** The shipped formula carries no runtime-overhead term
+    (`VRAMFormulaVersion` stays **2**), which is correct for a stored datum but means a
+    fit verdict computed from it alone over-promises. The slack is a control the reader
+    owns and can see, never a constant smuggled back into the data: nothing on this path
+    writes to `QuantVRAM`, `WeightsBytes` or `VRAMBytes`, and no context setting changes
+    any displayed VRAM figure.
+  - **Two non-fits are named rather than rounded off.** A row whose KV-cache term is not
+    computable reads **unknown** — never an unbounded context, because an absent
+    architecture fact is not an infinite budget — and a row whose computable KV budget is
+    spent reads **no context budget remaining**. A positive minimum-context filter
+    excludes both, since neither can promise the reader a token.
+  - **`WeightsBasis` types where a weights figure came from**, with `BasisMeasured` at
+    enum zero so any value that never saw the type reads as the ingested file size it is.
+    A **derived** row — an entity with an attested `TotalParams`, at least one instance,
+    and no ingested quant row anywhere — estimates weights as parameter count ×
+    bits-per-weight and is badged `derived · weights-only`, naming **both**
+    qualifications: the figure is an estimate, and its KV term is missing. No unmeasured
+    entity in the catalog publishes layers / KV heads / head dim, so every derived figure
+    is a lower bound and the page says so.
+  - **The exclusions are structural, not a runtime policy.** An entity whose parameter
+    shape returns the `ParamShapeNull` sentinel — the `NxM` tokens, whose product
+    `parse.go` deliberately refuses to compute, and the `Nb-Ke` tokens, which publish only
+    an active count — produces **no** derived row and is counted excluded. Deriving from
+    `ActiveParams` instead would understate residency by up to 26.7× and would render
+    Llama 4 Scout and Maverick identically. The six quantization members whose
+    `BitsPerWeight()` is 0 (`none`, `awq`, `gptq`, `int8`, `int4`, `other`) produce **no**
+    row rather than a zero-byte one, which would read as fitting any budget. An entity no
+    provider serves gets no row at all.
+  - **The coverage statement is computed, never written.** The sentence heading the
+    table interpolates `FitResult.EntitiesConsidered` / `EntitiesMeasured` /
+    `EntitiesDerived` / `EntitiesExcluded` at request time; the tests assert the
+    **identity** between the rendered numbers and those fields, and recompute each field
+    from its own predicate over the same entity slice. No count is a literal anywhere on
+    the page or in its tests. The render cap is stated in words whenever it bites, so a
+    truncated table never reads as everything that fits.
+  - Patches arrive over `GET /sse/calculator` into `#calc-results` through the vendored
+    Datastar client; the entity browser's `#entity-results` seam is untouched.
+
+- **Creator-first resolution, layered above `CanonicalProvider` rather than replacing
+  it.** A new curated `Creator → [Provider]` distribution relation
+  (`parse/data/creator_providers.json`, 24 rows / 52 pairs) records the hosting
+  surfaces each lab operates for its OWN models, and `Creator.Providers()` exposes them
+  in **curation order** — the lab's primacy order, which is load-bearing: Zhipu leads
+  with its own `zhipuai` API ahead of the international `zai` brand. All five
+  provider-preference sites (`resolve.go` ×4, `format.go` ×1) now consult one shared
+  authority that ranks a creator surface above the canonical provider above a rehost.
+  `Family.CanonicalProvider` is unchanged and still consulted in full; it is the layer
+  beneath, and a family with no creator, no curated distribution row, or no
+  creator-hosted candidate resolves exactly as before. **77 distinct exact model IDs
+  change their rendered provider**, every one of them from a rehost or router to the
+  lab's own surface — `llama-3.3-70b-instruct` reports `llama` instead of `azure`,
+  `glm-4.6` reports `zhipuai` instead of `302ai`, and the `claude-*` line reports
+  `google-vertex-anthropic` instead of the generic `google-vertex`. Multi-lab hubs
+  (`modelscope`, `huggingface`) are deliberately NOT distribution surfaces: they host
+  many labs on the same footing, so listing one would rank a hub above a genuine rehost
+  while saying nothing about first-party hosting.
+- **The ambiguity listing names both axes separately.** `FormatAmbiguous` renders a
+  `Creator:` section (rows marked `+`) before the existing `Canonical:` section (rows
+  marked `*`), each suppressed independently when empty, with each row assigned to at
+  most one section so a provider that satisfies both — Anthropic creates AND hosts
+  Claude — is listed once. This closes the v0.2.8 Impl-UAT finding that the user-facing
+  message conflated "there is one canonical creator (Meta)" with "there is no canonical
+  provider". `Also rehosted by:` now excludes BOTH axes, so a lab's own surface is no
+  longer listed as a rehost of the lab's own weights.
+- **Lab-prefix derivation for the creator dimension.** Every models.dev metadata id is
+  lab-scoped, so `DeriveCreatorLabDisagreements` projects that assertion onto the family
+  the JOIN'S OWN decomposition maps the row to (a curated `modelsdev_aliases.json` entry
+  is the sole identity; otherwise `stripMetadataLab` + `ParseFamilyDetailed`). The
+  catalog carries **24 distinct lab prefixes** across 263 metadata rows — 20 of the 24
+  are also Provider tokens, 4 are not — reaching **40 families**, 38 by exactly one lab.
+  The derivation is **report-only, never self-applying**: a new committed emission
+  `parse/data/creators_lab_disagreements.json` lists every family whose evidence
+  conflicts, classified `multi-org` / `spelling-variant` / `divergent` / `withheld`.
+  It currently carries **4 rows**, and auto-applying any of the 3 mechanical ones would
+  have recorded a WRONG creator: `llama` and `mistral` are claimed by both their own lab
+  and NVIDIA's re-publications, and `glm`'s lab spells itself `zhipuai` against the
+  curated `zhipu`. The fourth, `ling`, is **withheld** through a new `withheld` array in
+  `creators.json` — its only lab-scoped row reaches it through an alias retargeting
+  `thinkingmachines/inkling`, so seeding it would attribute InclusionAI's line to the
+  wrong lab; the withholding carries its reason and is re-reported on every regen so it
+  cannot decay into an unexplained gap.
+- **Curated `Creator → [Provider]` coverage report.** A second committed emission
+  `parse/data/creator_providers_unserved.json` lists every curated pair whose provider
+  serves no instance of any of that creator's families, so aspirational or stale
+  curation is visible rather than silent. It is **empty** at this commit — the healthy
+  steady state. Both new emissions follow the INV3 contract (explicit `sort.Slice`, no
+  wall clock, empty list rather than null) and are now covered by the codegen
+  reproducibility harness: `runFixtureCodegen` was widened to a `codegenArtifacts`
+  struct so `TestCodegen_Reproducible_ByteIdentical` (N=100) compares them alongside the
+  three generated `.go` sources. Neither `.go`-only codegen guard could reach a JSON
+  report before, so an emission built from a map range was previously unguarded.
+- **A ⌘K command palette on every page — an ARIA combobox in a native `<dialog>`, with
+  zero new dependencies.** `⌘K` / `Ctrl-K` (and a chrome button, replacing the disabled
+  placeholder search box) opens a modal palette; type-ahead patches `#palette-results`
+  through a new `GET /sse/palette`, `↑`/`↓` move `aria-activedescendant` while DOM focus
+  stays in the input, and `Enter` navigates to `/entity/<key>`. The scope is entity
+  **search and navigate ONLY**: there are deliberately no page-navigation or view-action
+  rows, so `Enter` means the same thing whatever is highlighted. Nothing was added to
+  `go.mod` and the vendored `assets/datastar.js` is untouched — the global hotkey is the
+  client's own `data-on-keydown__window` binding, the modal scrim / focus trap /
+  Esc-to-dismiss are the platform's `<dialog>`, and the option rows are server-rendered
+  through the SAME SSE fragment seam the entity browser already used (`ReadSignals` →
+  `NewSSE` → `PatchElements`), differing only in target element. Matching is ranked —
+  canonical-key prefix, then key substring, then an attribution (family/creator) match —
+  capped at 10 options, and the cap is **stated in the popup** (`showing 10 of N`) rather
+  than silently swallowing matches. An empty query offers nothing at all, so a reader who
+  has typed nothing cannot press `Enter` onto a row they never chose. `templates/palette.html`
+  is parsed into BOTH the page sets and the SSE fragment set, so the dialog's opening state
+  and the server's patched state are one rendering rather than two that could drift.
+
+### Changed
+
+- **The v0.2.4 weights invariant is amended in the open, not quietly widened.** Three
+  shipped doc comments said, in effect, that a weights figure is never derived from
+  bits-per-weight: `QuantVRAM.WeightsBytes` (`entity.go`), the weights-term paragraph in
+  `vram.go`, and `Quantization.BitsPerWeight` (`quantization.go`). Each is rescoped in
+  the same commit as the enum that makes a derived figure possible: the invariant governs
+  what is **stored**, and the separately-typed display-time projection that now exists is
+  never written back. `VRAMFormulaVersion` stays **2**.
+
+- **The curated `Family → Creator` seed grows from 18 rows to 75, and `Creators()` from
+  9 to 41.** Rows are grouped by provenance in the data file: the 18 original
+  UAT-confirmed rows, 27 rows applied from the lab derivation, and 30 hand-curated rows
+  for families the metadata join never reaches (a family with catalog entities but no
+  `models.json` row has no lab prefix to derive from). Curated rows WIN over lab-derived
+  values. The 41 tokens are `9 seed + 14 lab-derived + 18 curated-unreached`, where the
+  14 is `24 lab prefixes − 8 already-seeded labs − 1 spelling variant (zhipuai) − 1
+  withheld (thinkingmachines)`. This collapses the front-page creator grouping from
+  **251 top-level groups to 226** (unit: distinct non-empty `Creator` values plus
+  families that remain unattributed, over the 254 distinct families of the 957-entity
+  catalog). The long tail is deliberately left unattributed rather than guessed at: 152
+  of the 254 families carry exactly one entity and many of those tokens are decomposition
+  artifacts (`free`, `cheap`, `coder`).
+- Adding a NEW creator token is documented on `Creators()` as costing **five** authoring
+  parts that must move together — the `creators.json` row, the `Creator` constant, the
+  `knownCreators` entry, the `Creators()` length pin, and the `creatorExpr` case in
+  `cmd/bestiary-gen` (omit the last and codegen silently bakes the untyped fallback
+  `Creator("token")` instead of the constant). Two new consistency guards enforce both
+  directions: every creator in `creators.json` satisfies `Creator.IsKnown()`, and every
+  well-known `Creator` is referenced by at least one row, so the set cannot accumulate
+  dead tokens.
+- Six creator rows map families no catalog entity currently carries (`claude-haiku`,
+  `claude-opus`, `claude-sonnet`, `command-a`, `command-r`, `o`). Their disposition is
+  **RETAIN**, on the rationale `family.go` already gives for keeping `FamilyO` in
+  `CanonicalProvider`: each is still a real `raw_family` value the upstream catalog
+  emits, so a residual row resolves to its lab rather than falling through. A test pins
+  both halves — that the rows still resolve, and that they are still at zero entities —
+  so "dead" stays measured rather than assumed.
+- `curatedBaseFamilies` gains `c4ai`, `ornith`, `qwq` and the lowercase `hy`. All four
+  carry real catalog entities but are absent from the generated family set, and the
+  creator table's FK gate requires `Family.IsKnown`. `hy` is registered as a literal
+  because the generated set already binds the identifier `FamilyHy` to a DIFFERENT
+  Family VALUE — the upstream mixed-case `"Hy"` — while every entity the decomposition
+  produces carries lowercase `"hy"`; family comparison is byte-exact, so the two are
+  distinct families and reconciling them is a family-set repair, not a creator one.
+- Reground the `cmd/bestiary-gen` decomposition test corpus on the vendored codegen
+  catalog (`parse/data/modelsdev/catalog.json`), replacing a fixture that had fallen
+  786 records behind it: 4,979 → 5,765 records over 170 providers. The frozen
+  decomposition baseline was re-captured in the same commit, so the path-unification
+  diff reads `records=5765 changed=0` — no entity key moves and no census pin changes.
+  The refresh surfaced four **real** cross-provider divergences the stale fixture had
+  hidden (`text-embedding-3-small`, `text-embedding-3-large`, `poolside/laguna-s-2.1`,
+  `sakana/fugu-ultra`); they are carried as enumerated, individually justified residuals
+  rather than curated away.
+- **Plan amendment — `Creator.Providers()` is deterministic, not alphabetical.** The
+  implementation plan specified the accessor return a "sorted, deterministic" slice;
+  it returns **curation order** instead, and that is a deliberate amendment rather
+  than an oversight. Determinism is satisfied by the committed
+  `parse/data/creator_providers.json` (same file → same slice on every call and every
+  build); alphabetising it would not be a cleanup but a behaviour change, because
+  creator-first selection uses the slice INDEX as its primacy tie-break, so a sort
+  would silently change which of a lab's surfaces a model resolves to. Emissions a
+  reader would expect sorted keep their own explicit sorts:
+  `parse/data/creator_providers_unserved.json` sorts on `(creator, provider)` and
+  `parse/data/creators_lab_disagreements.json` sorts on `family`.
+
+### Fixed
+
+- **NVIDIA's Nemotron Super 49B v1.5 is served from one key, and the bare 49B key stops
+  holding two different models.** nano-gpt spells that artifact with underscores
+  (`nvidia/Llama-3_3-Nemotron-Super-49B-v1_5`) where every other provider uses dots.
+  Underscores are not a separator the decomposition splits on, so neither `3_3` nor `v1_5`
+  was reachable as a token: the row arrived with an empty variant and version and keyed the
+  bare `nemotron#49b` line — which already held the genuinely different Super-49B **v1**.
+  An exact-id pin puts it on the `(nemotron, v1.5, 3.3)` tuple its dotted siblings already
+  converge on.
+
+  **This moves one instance and retires no entity key, so it carries no migration table and
+  falls outside the retired-key policy entirely.** Both keys already existed at the baseline
+  and both survive; measured, the entity key set is byte-identical before and after
+  (`entities_constants_gen.go` does not change), and the whole effect is an instance diff:
+  `nemotron#49b` goes 2 → 1 instance (keeping the v1 row alone) and
+  `nemotron/v1.5@3.3#49b` goes 2 → 3. It is **not** a split — `nemotron#49b` stays live —
+  and nothing is orphaned: the instance total across the pair is conserved at 4. A committed
+  test pins the exact instance membership of BOTH keys, because asserting only the arrival
+  would leave a retirement of the bare key indistinguishable from a re-home
+  (`cmd/bestiary/testdata/rehome/nemotron_rehome_corpus.json`). Census unchanged: entities
+  945, series 415, releases 654, canonical nomina 945.
+
+- `synthesizeStandaloneEntity` never projected `Entity.Creator`, so a metadata-only
+  standalone reported an empty creator even when its family was mapped. The invariant
+  "`Entity.Creator == Ref.Family.Creator()` for every entity" held only by accident —
+  no synthesized family had a curated creator until the `ornith` rows gained one.
+- **Self-referential `bestiary` data source.** `DataSourceBestiary` (`"bestiary"`) joins the
+  BCNF data-source dimension as a fifth curated row
+  (`parse/data/datasources.json`, uri `https://github.com/dayvidpham/bestiary`). It is the
+  honest `Source` for anything bestiary **authors** rather than reads from an upstream, and it
+  is deliberately distinct from `curated` — `curated` is the ingest a *third-party* claim was
+  transcribed from, `bestiary` is a claim with no third party at all. `sources --export`
+  carries the new row and round-trips it, so the export stays promotable straight back into the
+  curated seed.
+
+### Changed
+
+- **Self-minted canonical nomina are attributed to `bestiary`, not `models.dev`.** Both shared
+  mint joints — `MintNomina` (from entities) and `MintNominaFromModels` (the sync path), which
+  previously hard-coded `DataSourceModelsDev` at their canonical call sites — now emit
+  `Source = bestiary` on every canonical attestation. A canonical key is rendered by bestiary's
+  own parse + key pipeline, so naming an upstream credited it with a claim it never made.
+  `canonicalAttestation` takes no source argument any more, which makes the FK
+  impossible to get wrong at a call site. `Authority` (`primary`) and `Method` (`self-minted`)
+  are **unchanged**, and no nomen **count** changes (957 canonical / 2834 provider-id / 1 alias
+  / 179 huggingface, unchanged; the from-models joint stays at canonical − 4).
+- `sync` now registers the `bestiary` dimension row alongside `models.dev`, `curated` and
+  `huggingface` before persisting nomina, since `nomen_attestations.source_id` is a real
+  foreign key.
+
+### Notes
+
+- **A SQLite cache written by a pre-v0.2.10 build keeps its old `models.dev` FK** on
+  canonical-nomen attestations until it is re-synced. This is deliberate, not merely tolerated:
+  the FK records *which ingest we read a naming from*, and for a cached row that ingest genuinely
+  was the pre-v0.2.10 pipeline — rewriting it would back-date a claim the old build never made,
+  which is exactly the provenance dishonesty this row exists to fix. Run `bestiary sync` to
+  re-mint the attestations; the value corrects itself.
+- **`NomenAttestation.ArchivedURL` — an archive.org snapshot for harvested namings.**
+  A curated naming claim already had to cite a snapshot, because a lab's model card is
+  edited and deleted without notice. A *harvested* naming could not: it cites the LIVE
+  page the bot observed, which is precisely the thing that rots. The snapshot now rides
+  **beside** that citation instead of replacing it — `SourceURL` stays primary and
+  unchanged, and `ArchivedURL` carries the archive.org capture of it. Empty means "no
+  snapshot recorded", an honest unknown rather than an error, and it is always empty on a
+  curated claim (whose `SourceURL` already *is* the snapshot). The curated archive-only
+  fence is untouched — not relaxed, moved or duplicated.
+  - `cmd/bestiary-hf` looks the snapshot up from the Internet Archive **Availability
+    API** (read-only; never Save Page Now) through the **same** `politebot.Client` as the
+    Hub crawl, so the ≥1 s cadence is enforced across both hosts by one seam and no new
+    backoff is added — the existing `Retry-After` handling is inherited as-is. Every
+    not-a-snapshot outcome is a **miss, never an error**: the documented
+    `{"archived_snapshots":{}}` shape, any final non-2xx (a post-retry 429 included), an
+    unparseable answer, or a URL that fails the shared archive-snapshot shape check. A
+    miss also never **erases** a snapshot an earlier run recorded — the archive does not
+    un-capture a page, so a throttled refresh must not destroy durable evidence.
+  - The seed's `archived_url` field is optional and omitted when absent, so a repo the
+    archive has never captured leaves the committed file byte-identical.
+  - `IsArchiveSnapshotURL` is exported as the ONE shared shape check, so the curated
+    fence, the suppression fence and the harvested layer cannot drift apart on what an
+    archive URL looks like.
+
+**Schema:** `0.6.0` → `0.7.0` (additive). SQLite store schema `8` → `9`.
+
+- `bestiary.schema.json`: `ArchivedURL` joins `$defs.NomenAttestation` `properties` **and**
+  `required` (all six — a `NomenAttestation` carries no json tags, so every field always
+  serializes). `BestiarySchemaVersion` is `0.7.0`, the single bump of this epoch.
+- SQLite store `8` → `9`: `nomen_attestations` gains `archived_url TEXT NOT NULL DEFAULT ''`
+  via a presence-guarded `ALTER TABLE ADD COLUMN` self-heal read from `pragma_table_info`.
+  The migration is purely additive — no table is dropped, recreated or reordered — so every
+  pre-existing row survives byte-identical with an empty `ArchivedURL`, and re-running it is
+  a no-op.
+
+| store schema | table | change |
+|---|---|---|
+| `8` → `9` | `nomen_attestations` | `+ archived_url TEXT NOT NULL DEFAULT ''` (appended; presence-guarded self-heal) |
+### Fixed
+
+- **Canonical segment binding no longer mis-reads a version token as a variant.** A
+  canonical ref is bound to `(family, variant, version)` by slot position, and a provider
+  prefix was consumed by shifting the segment slice left — but the residue was then re-read
+  positionally with no memory of which slot the un-stripped form implied. A trailing
+  version token therefore landed in the *variant* slot and could never match a
+  variant-empty entity, so `ling/2.6` and `ant/ling/2.6` were both `model not found`, and a
+  variant-empty ref could not be addressed with a provider prefix at all. The repair adds
+  three rules — a two-segment provider strip guarded on the candidate's own `Provider`
+  field, a variant-empty version rebind written as an if/else (never an abort, which would
+  drop thousands of resolvable refs such as `302ai/claude/haiku@4.5`), and a
+  date-to-version rebind gated on a provider segment having actually been stripped.
+  `ling/2.6` and `ant/ling/2.6` now resolve uniquely to `ling@2.6#1t`; `openai/gpt@5.1`
+  returns a scoped `ErrAmbiguous` over exactly its two openai-served candidates, and
+  `gpt/5.1` / `openai/gpt/5.1` over their groups.
+
+  Every new rule lives in a **second pass that runs only when the first pass matched
+  nothing anywhere in the registry**, so "nothing matched" is a property of the match
+  *set*, never of one model: a ref that already resolved is untouched by construction. A
+  further **base-first preference** keeps a rebound version segment on the variant-empty
+  artifact whenever one exists, and only lets it reach variant-carrying siblings when the
+  catalog holds no variant-empty artifact at that version.
+
+  The `providerStripped` gate on the date-to-version rebind is load-bearing and was found
+  by measurement, not by reasoning: without it, **486 of 957 entity keys** silently lose
+  their `bestiary show` aggregate entity view, because `show` reaches that view only when
+  model resolution *misses* — a resolver-only sweep stays green while the CLI regresses.
+  Guards now run at **both seams**: an invariant sweep over every entity key at the
+  resolver, and a full-census sweep at the `show` seam.
+
+### Added
+
+- `testdata/resolve/segment_binding_corpus.json`, driven at the peasant seam
+  (`Resolve(ref, WithInputFormat(InputFormatPeasant))` — what `bestiary show` passes, and
+  where the must-not-widen refs are actually reachable). Each row pins its **candidate
+  set** rather than its outcome class: the entity keys the candidates span, plus the
+  provider-level ref set wherever a widening would be invisible at the identity level. It
+  carries the repaired refs, the six known falsifiers, the pinned entity-view guards, and
+  one held-open composition-witness slot.
+- **`Entity.MetadataAll` — every metadata row an entity is named by.** Distinct
+  models.dev identifiers routinely decompose to one entity key (a dated alias and its
+  floating alias; a serving tier that is not a distinct artifact), and `Entity.Metadata`
+  was a single pointer, so the join kept only the row it visited last. Measured over the
+  baked corpus at this change's baseline (unit: metadata rows / benchmark claims / links;
+  axis: the whole registry; configuration: the committed
+  `parse/data/modelsdev/catalog.json` snapshot, offline, no store overlay): **39 of 263
+  rows were unreachable, taking 103 benchmark claims and 15 links with them** — 224
+  distinct entities carried metadata. All 263 rows (508 claims, 105 links) are now
+  reachable. The witness is `gpt@5.5`, named by both `openai/gpt-5.5` and
+  `openai/gpt-5.5-instant`: the **31 claims** reported under `openai/gpt-5.5` previously
+  rendered nowhere, because the instant row won the single pointer.
+  `MetadataAll` is sorted ascending by `MetadataID`; `Entity.Metadata` becomes a derived
+  projection of it — the shortest `MetadataID`, ties lexicographic ascending. That is a
+  naming rule, not a payload rule: a lab's canonical identifier is its shortest one, so
+  the primary is stable across re-ingest and independent of how many claims a row carries
+  or the order rows arrive in.
+- **Per-identifier claim attribution** in `show --by-entity` and on the web entity page:
+  every joined row is listed (the primary marked) and each benchmark table is headed by
+  the `MetadataID` the claims were reported under. Claims from different identifiers are
+  never merged into one table — a score is a **lab-reported claim** attributable to the
+  identifier the lab published it under, and fusing two rows would present an assessment
+  record no lab actually published. `docs/CONCEPTS.md` gains this framing.
+
+### Changed
+
+- `JoinEntityMetadata` is now **idempotent** as well as pure: `MetadataAll` is
+  cleared-then-accumulated per entity touched in the call, so re-joining an
+  already-joined set replaces the record instead of doubling it, while an entity no row
+  lands on keeps the record it arrived with. Entity clones copy `MetadataAll`
+  **element-wise**, so a returned row's benchmark table never aliases registry-owned
+  storage. Two metadata rows sharing one absent-family key now accumulate onto a single
+  synthesized standalone rather than producing a duplicate entity.
+- The sync overlay's baked base layer is rebuilt from every metadata row rather than one
+  row per entity. `MergeEntityMetadata` unions the base against synced rows per
+  `MetadataID`, so a row missing from the base could not survive as a baked-only row
+  after a sync. The `entities` table's `BENCHMARKS` column likewise sums claims across
+  every joined row.
+- **Schema:** `bestiary.schema.json` `$defs.Entity` gains `MetadataAll` (an array of
+  `EntityMetadata`, additive and **not** required). No SQLite store migration: the
+  `entity_metadata` table is already keyed by the stable `metadata_id`, one row per lab
+  identifier, so the multi-row record is a join-layer property the existing schema
+  already carries — proven by a full-corpus store round-trip test.
+
+### Added
+
+- **`CreatorGroups()` / `SeriesGroups()` — a browsable Creator > Family > Series > entities
+  projection.** A read-only view over relations that already exist (the curated
+  `Family`→`Creator` seed and the computed Series/Release taxonomy); like the taxonomy it is
+  computed on read and can never rename an entity. It exists because `SeriesAll()` alone is
+  flat — several hundred lines with no organizing level above them — so the projection puts
+  the two questions a reader actually arrives with, "whose models?" then "which line?", above
+  the generation-level detail. The creator set is derived from the curated seed, so growing
+  `creators.json` grows the tree with no code change.
+- **The base hoist: no `(base)` node anywhere.** A series' un-named release is not a member
+  of the line alongside the named ones — it *is* the line, un-named. Rendering it as a
+  sibling node called `(base)` invented a level that does not exist and buried the entities
+  of a line with no named releases one click deeper than the entities of a line that has
+  them. Those entities are now hoisted onto the series itself (`SeriesGroup.Hoisted`), and
+  only genuinely named releases remain as releases. `SeriesGroup.Shape()` reports which of
+  `base-only` / `mixed` / `named-only` a line is, so a renderer can lay out the two levels
+  correctly (a mixed line shows its hoisted entities above, and visually distinct from, its
+  release disclosures). The hoist is a re-parenting, never a filter: a test asserts the
+  projection is an exact partition of `Entities()`, so an implementation that dropped the
+  un-named entities instead of lifting them fails loudly rather than rendering a plausible
+  but smaller tree.
+- Entities re-homed by the curated strays table (`series.json`) are shown under the line
+  they were re-homed onto, which is the point of the table — so a stray can appear under a
+  creator its own family token does not name. A test pins that this divergence is confined
+  to strays and can never become a silent misattribution of a normal entity.
+
+### Changed
+
+- **Web: the front page is now a Creator > Family > Series > entities tree (`GET /`).** A
+  reader arriving with no query in mind was previously handed a nine-hundred-row table; they
+  now get a hierarchy to walk, starting from the lab that trained the weights. Attributed
+  creators arrive expanded; families with no curated creator collect in a single collapsed
+  group at the bottom. The tree renders whatever creators the curated seed carries, so it
+  grows with `creators.json` and hard-codes no lab.
+- **Web: the dense entity browser moved from `/` to `GET /entities`, unchanged.** Same seven
+  signals, same `#entity-results` SSE patch target, same facets — only its address changed,
+  and it is one click from the tree.
+- **Web: `GET /families` absorbs the series/release explorer**, emitting the SAME per-series
+  anchors, so every detail-page series link still resolves.
+- **Web: no `(base)` node on any page.** Both hierarchy pages render one shared partial over
+  the new hoisted projection, so the un-named release's entities attach directly to their
+  line. On a line that has both, the hoisted entities render above the release disclosures
+  with a legend and a rule marking them as a different level of the hierarchy — adjacency on
+  screen must not be read as sameness of level. Tests assert the identity on the RENDERED
+  document as well as on the projection: a template can drop a branch it never ranges over,
+  entirely downstream of a correct projection.
+- Four cross-page links were retargeted accordingly: the browser's "browse by series" and
+  the entity detail page's "‹ catalog", "series" and series-section anchor links.
+
+### Removed
+
+- **`GET /series` is retired and now returns a hard 404** — the route, its handler and its
+  template are deleted, not repointed. It is deliberately not a 301: an alias keeps a dead
+  name alive in links, bookmarks and search results indefinitely, which is what retiring the
+  name was meant to stop. No content was lost — `/families` absorbed it and emits the same
+  anchors.
+
+- **Web: a readability type scale governs every text size.** The `bestiary-web` stylesheet
+  gained a six-step, rem-based type scale (`--fs-xs` … `--fs-xl`) and every `font-size` in
+  the layout now resolves through it — there is no literal font-size value left in the
+  stylesheet, and a test guard keeps it that way. Because the steps are rem-based, a reader
+  who raises their browser's base font size now scales the whole page with it; the previous
+  px literals ignored that preference outright. Each former size moves up exactly one step
+  (12→13, 13→14, 14→15, 15→16 px at the browser default), so the dense entity grid keeps its
+  density while the smallest text on the page stops being 12px. Headings, which previously
+  carried no explicit size at all, are on the scale too. The steps are named `--fs-*` rather
+  than `--text-*` because `--text` and `--text-muted` are already colour tokens. No selector
+  was renamed.
+
+- **Entity key retired: `qwen/coder@3#1m`.** The unprefixed spelling `qwen3-coder-next-fp8-1m` (provider InferX)
+  escaped the 1M-context suppress-pin that already covered the `qwen/`-prefixed spelling, so its `1m` context marker
+  was keying off a phantom `#1m` size entity holding a `TotalParams` of 1,000,000. Both spellings are now pinned;
+  the instance rejoins `qwen/coder@3`. Measured at this commit (unit: entity keys; axis: the full constant set in
+  `entities_constants_gen.go`; configuration: this pin alone, applied on top of the free-demotion baseline in the
+  section below): 940 → 939, one key retired, none renamed, none added. Retired-key policy: hard 404 on
+  `bestiary show` and `GET /entity/`, no alias.
+
+  | old key | new home | removed constants |
+  |---|---|---|
+  | `qwen/coder@3#1m` | instance rejoins `qwen/coder@3` | `Entity__Qwen__Coder__Version_3__Size_1m` (1 declaration) |
+
+- **Three entity keys were one: the `ling` / `inkling` / `kling` collision is split — 939 → 947 keys,
+  2 retired and 10 added.** The vendored models.dev catalog stamps `"family": "ling"` on **all 14**
+  rows of two product lines that have nothing to do with inclusionAI's Ling: Thinking Machines'
+  6 Inkling instances and vercel's 8 `klingai/kling-v*` video models. Bare `ling` was therefore not an
+  inclusionAI entity at all — it held those 14 mislabelled rows and none of inclusionAI's own. Two
+  curated `family_enforce.json` ledger rows (`inkling`, `kling`) now let the ID-driven decomposition
+  win over the upstream label, splitting all 14 with **no exact-ID pins**, and the
+  `parse/data/modelsdev_aliases.json` row for `thinkingmachines/inkling` is retargeted from `ling` to
+  `inkling` so its metadata follows the entity.
+
+  **The root cause is upstream's label, not our parser.** The earlier reading — "vercel drops the
+  leading `k`" — is **false**: vercel spells its rows `klingai/kling-v2.5-turbo-i2v`, leading `k`
+  intact, and every other provider's id is equally correct. Our decomposition was right all along and
+  was simply being overruled by a wrong `raw_family`. That is why the fix is a ledger entry rather
+  than 14 pins.
+
+  A fifteenth row needed a different lever. qiniu-ai's `kling-v2-6` carries **no** upstream family, so
+  the key was entirely our own: the leading-token pipeline glued the dash-spelled major onto the family
+  token and read the orphan as the whole version, producing `kling-v2@6` — a phantom family at a version
+  the vendor never published. An exact-ID `idFamilyOverrides` row corrects family *and* version together
+  to `kling@2.6`. A `dotLostVersionOverrides` entry would **not** have worked: by construction it
+  corrects `Version` only, leaving `kling-v2@2.6` with the corrupted family standing.
+
+  **inclusionAI's ling keyspace is untouched.** `ling#1t`, `ling@2.6#1t`, `ling/flash@2.0`,
+  `ling/flash@2.6` and `ling/flash-free@2.6` are byte-identical before and after, each holding exactly
+  the instances it held before (2, 4, 2, 4 and 1), asserted by value in a committed test. The `ling`
+  **family** survives with those five children; only the bare `ling` **key** retires.
+
+  The 8 klingai shape tokens are **normalized** — this was deferred when the split landed and has since
+  been pulled in; see the dedicated entry at the top of this release for the axis-by-axis reasoning and
+  the measured diff. The successor column below therefore names the normalized keys.
+
+  **Migration table (old → new).** Each row is DERIVED, not assumed: every retired key's pre-split
+  instances are pinned in a companion corpus, the successor set is re-derived from them against the
+  live registry on every test run, and this table is compared against that derivation.
+
+  | retired collision key | instances re-home to |
+  |---|---|
+  | `kling-v2@6` | `kling@2.6` |
+  | `ling` | `inkling`, `kling/i2v@2.5{turbo}`, `kling/t2v@2.5{turbo}`, `kling/i2v@2.6`, `kling/motion-control@2.6`, `kling/t2v@2.6`, `kling/i2v@3.0`, `kling/motion-control@3.0`, `kling/t2v@3.0` |
+
+  **`ling` is this epoch's widest split — nine successors, and it does NOT fold onto its family line.**
+  Looking for your model under bare `ling` will not find it: six of its rows are Inkling and eight are
+  Kling video models, and the surviving `ling` children are unrelated inclusionAI weights.
+
+  **Retired-key behaviour, measured — the two keys differ, and that is correct.** `kling-v2@6` is a
+  uniform hard 404: `ErrNotFound` on both `bestiary show kling-v2@6` and
+  `bestiary show kling-v2@6 --by-entity`. Bare `ling` returns `ErrNotFound` on the
+  `--by-entity` seam but **`ErrAmbiguous`** on the looser `show` seam — not because it
+  split, but because its **family outlives the key** and the bare family token still has
+  five live children, exactly as `show gpt`, `show claude` and `show mimo` behave. The
+  asymmetry is in the seams, not in the key: `--by-entity` is an exact match over the
+  store-overlaid entity index (entity key, entity preferred name or concrete model id)
+  with no short-reference path, so it cannot come back ambiguous, while plain `show` runs
+  the input through the model resolver, which keeps that fallback. The exact-key seams are
+  `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is pinned as measured and
+  must not be "corrected" into a 404. No alias is minted and no successor is listed by the
+  tool on either seam; this table is the pointer.
+
+  **Compile break for library consumers — 2 `Entity__` constants removed, 10 added**, counted from
+  `entities_constants_gen.go`. Removed: `Entity__Ling`, `Entity__Kling_v2__Version_6`. Added:
+  `Entity__Inkling`, `Entity__Kling__I2v__Version_2_5__Turbo`, `Entity__Kling__T2v__Version_2_5__Turbo`, `Entity__Kling__I2v__Version_2_6`, `Entity__Kling__Motion_control__Version_2_6`, `Entity__Kling__T2v__Version_2_6`, `Entity__Kling__I2v__Version_3_0`, `Entity__Kling__Motion_control__Version_3_0`, `Entity__Kling__T2v__Version_3_0`, `Entity__Kling__Version_2_6` (the eight video constants are named for the keys they carry at the RELEASE tip, after the variant-shape normalization below; the pre-normalization spellings never shipped). The generated file holds
+  939 → 947 constant declarations over 939 → 947 distinct key values — a bijection, one declaration
+  per key, so the constant break and the key diff are the same either way.
+
+  **Creator attribution follows the split.** The `ling` withhold — deferred precisely because a curated
+  alias pointed Inkling at the wrong family — is discharged and the withhold list is now empty. The lab
+  derivation reaches `inkling` unambiguously, so `thinkingmachines` is applied; `ling` is left with no
+  lab-scoped metadata row at all, so `inclusionai` is authored by hand. The well-known `Creator` set
+  moves **41 → 43** and the codegen lab-disagreement report **4 → 3 rows**. `kling` is deliberately left
+  unattributed: naming its lab is a separate curation decision.
+
+  Downstream census, all re-measured from this regeneration: canonical nomina 939 → 947 (provider-ID
+  2834, alias 1 and huggingface 179 all unchanged, so the nomen total moves 3953 → 3961 — no instance is
+  created or destroyed, all 15 that move carry their id spellings across as Admitted nomina); series
+  lines 415 → 417 (bare 206 → 208 for the new `inkling` and `kling` lines; versioned unchanged at 209,
+  since `kling@2.6` replaces the `kling-v2@6` line one-for-one); releases 652 → 661 (+8 named kling
+  shapes, +2 bare on the new lines, −1 for the retired `kling-v2@6` line; retiring bare `ling` costs
+  nothing, because `ling#1t` already shares that line's un-named release).
+
+  The codegen-emitted `parse/data/modelsdev_unlinked.json` join-disagreement report gains a
+  **`count == 0` guard**, which it never had. It is added here because this is the first curation slice
+  that can break it: measured, leaving the `thinkingmachines/inkling` alias pointed at `ling` while the
+  entity moves to `inkling` drives the report 0 → 1 and silently orphans that row's description,
+  license and benchmarks.
+
+### Changed
+
+- **The `free` tier leaves entity identity: 957 → 940 entity keys, 17 retired and 0 added.**
+  A `-free` suffix names a pricing/serving tier a provider offers for an existing model, not
+  a different weights artifact, so it now classifies as an ATTRIBUTE modifier and renders in
+  the `[…]` segment instead of the key. Three curated sites carry the change —
+  `parse/data/modifier_class.json` gains `global.free = "attribute"` (it was absent, so the
+  unknown→IDENTITY fail-safe had been promoting it), `parse/data/modifiers.json` gains `free`
+  so the tail scan peels it, and `parse/data/families.json` drops the `free` member from
+  `glm`, `kimi`, `minimax` and `nemotron` so the per-family member-guard stops re-promoting
+  the already-resolved variant. `qwen` keeps its `free` member and is unaffected. No instance
+  is lost: the instance total is conserved and every retired key's rows re-home onto a
+  surviving sibling. `claude/haiku`, `claude/sonnet` and `north/mini` gain and lose no key —
+  their instances merely re-home, because `-free` had been blocking version extraction.
+
+  **`ling/flash-free@2.6` is deliberately exempt and SURVIVES**, with `ling/flash@2.6`
+  unchanged at 4 instances. It is preserved by a new exact-ID row in `parse.go`'s
+  `idFamilyOverrides` (`ling-2.6-flash-free`), which is the only seam that can reach it: once
+  `free` is a peelable modifier the trailing-modifier trim rewrites the raw family
+  `ling-flash-free` → `ling-flash` *before* the `family_overrides.json` lookup runs, so a
+  curated override row there is already dead. It is the one `*free*`-bearing key besides the
+  standalone `free` and `cobuddy:free` entities to survive.
+
+  **Migration table (old → new).** Each retired key is a hard 404 on both lookup seams —
+  `bestiary show <old>` and `bestiary show <old> --by-entity` both return `ErrNotFound`, for
+  17 of 17, verified and pinned as a committed test. No alias is minted, no redirect is
+  added, and no successor is listed by the tool; this table is the pointer. Each row is
+  DERIVED, not assumed: every retired key's pre-demotion instances are pinned in the
+  companion corpus, the successor set is re-derived from them against the live registry on
+  every test run, and this table is compared against that derivation — so a row cannot
+  quietly name a key its rows never landed on.
+
+  | retired key | instances re-home to |
+  |---|---|
+  | `deepseek-flash/free` | `deepseek/flash` |
+  | `glm/free` | `glm` |
+  | `glm/free@4.7` | `glm@4.7` |
+  | `glm/free@5` | `glm@5` |
+  | `glm/free@5.2` | `glm@5.2` |
+  | `hy/free@3` | `hy@3` |
+  | `kimi/free` | `kimi/k@2.5`, `kimi/k@2.7{code}`, `kimi/k@3` |
+  | `laguna-s/free@2.1` | `laguna-s@2.1` |
+  | `mimo/flash-free` | `mimo@2{flash}` |
+  | `mimo/omni-free` | `mimo@2{omni}` |
+  | `mimo/pro-free` | `mimo@2{pro}` |
+  | `mimo/v2.5` | `mimo@2.5` |
+  | `mimo/v2.5-free` | `mimo@2.5` |
+  | `mimo/v2.5-pro` | `mimo@2.5{pro}` |
+  | `minimax/free` | `minimax/m@2.1`, `minimax/m@2.5`, `minimax/m@2.7` |
+  | `minimax-m3/free` | `minimax/m@3` |
+  | `nemotron/free@3` | `nemotron@3` |
+
+  Two of these were the *only* key their family had, so the `deepseek-flash` and
+  `minimax-m3` families disappear entirely — which is what they always were, phantom
+  families minted by a fused pricing suffix. The five `mimo/*` and `minimax-m3` rows re-home
+  to a *re-keyed* target rather than a plain parent: peeling `free` exposes a version that
+  the fused suffix had been hiding, so `variant="v2.5-free", version=""` resolves as
+  `variant="", version="2.5"`. Those six `mimo/*` targets are stated at their FINAL spelling:
+  the keyspace-wide mimo normalization below landed in the same release and re-keyed every
+  mimo entity, and a migration table may only point at a key that is live when the release
+  ships.
+
+  **Two rows SPLIT rather than fold.** `kimi/free` and `minimax/free` were each a single
+  key holding rows from three *different* model versions, because a fused `-free` suffix had
+  been blocking version extraction on all of them: `kimi/free` held `kimi-k2.5-free`,
+  `moonshotai/kimi-k2.7-code-free` and `moonshotai/kimi-k3-free`, and `minimax/free` held
+  `coding-minimax-m2.7-free`, `minimax-m2.1-free` and `minimax-m2.5-free`. Peeling `free`
+  separates them, so each key has three successors and **neither folds onto its bare family
+  line** — bare `kimi` and bare `minimax` are live tokens with unrelated children, and
+  looking there will not find these models.
+
+  **Compile break for library consumers — 17 `Entity__` constants removed, 0 added**, counted
+  from `entities_constants_gen.go`: `Entity__Deepseek_flash__Free`, `Entity__Glm__Free`,
+  `Entity__Glm__Free__Version_4_7`, `Entity__Glm__Free__Version_5`,
+  `Entity__Glm__Free__Version_5_2`, `Entity__Hy__Free__Version_3`, `Entity__Kimi__Free`,
+  `Entity__Laguna_s__Free__Version_2_1`, `Entity__Mimo__Flash_free`,
+  `Entity__Mimo__Omni_free`, `Entity__Mimo__Pro_free`, `Entity__Mimo__V2_5`,
+  `Entity__Mimo__V2_5_free`, `Entity__Mimo__V2_5_pro`, `Entity__Minimax__Free`,
+  `Entity__Minimax_m3__Free`, `Entity__Nemotron__Free__Version_3`. The generated file holds
+  957 → 940 constant declarations over 957 → 940 distinct key values — a bijection, one
+  declaration per key, so the constant break and the key diff are the same 17 either way.
+
+  Downstream census, all re-measured from this regeneration: canonical nomina 957 → 940
+  (provider-ID 2834, alias 1 and huggingface 179 all unchanged, so the nomen total moves
+  3971 → 3954); series lines 417 → 415, entirely from the two vanished families (versioned
+  lines stay at 209, bare lines 208 → 206); releases 669 → 652, one per retired key, each
+  having been the sole occupant of its release name.
+
+- **The modifier-class inventory guard derives its token set from the curated file.**
+  `TestVC6_InventoryTokensPinned` previously restated the inventory as a hand-maintained
+  token list with a `total != 21` assert, and had silently gone stale by four — the curated
+  file held 25 global tokens while the test pinned 21, gated by nothing. It now reads
+  `parse/data/modifier_class.json` and checks set equality in both directions, so adding,
+  removing or reclassifying a global token needs no edit there and the guard cannot drift. A
+  small explicitly-scoped floor of load-bearing tokens stays in code so that silently
+  deleting a curated row is still caught.
+
+### Changed
+
+- **The mimo keyspace is normalized to `mimo@<version>{modifiers}` — the series letter
+  leaves the entity key, and the ten mimo keys become nine.** `mimo/v2.5-pro`,
+  `mimo/v@2.5{pro}` and `mimo/pro` were three spellings of one model, Xiaomi's MiMo 2.5
+  Pro, and they now all render **`mimo@2.5{pro}`**. No `mimo/v*` key survives anywhere.
+
+  The lever is not "delete the series letter" — that was measured and it destroys the
+  keyspace, because the letter is load-bearing for version extraction and residue
+  detection (dropping it reaches `mimo@2.5` zero times and mints `mimo@5`, `mimo/pro@5`
+  and worse). Instead a family record can now declare **`series_letter_in_key: false`**
+  (`parse/data/families.json`): the letter is still consumed to extract the version, but
+  it no longer occupies the variant slot. The field is a pointer, so absent means true and
+  every other letter-series family — `kimi` (`k`), `minimax` (`m`) — is unchanged by
+  construction.
+
+  Two supporting changes were each measured to be **required**, not cosmetic:
+  - `parse/data/modifier_class.json` gains a **`series_tiers`** block: a per-family
+    extension of the curated series-tier token set, giving mimo `flash`, `tts`,
+    `voiceclone`, `voicedesign`, `free` and `ultraspeed`. The scoping is the point — an
+    earlier attempt added these to the *global* set, which is shared with kimi and
+    minimax, and the blast radius was six times the intended one. None of them may go in
+    `modifiers.json` either: `tts` is already a family key, so a global promotion would
+    collide with it.
+  - the trailing-tier promotion now returns a **list**, and for a family whose series
+    letter is NOT in the key the two restrictions that used to discard tiers are gone.
+    Previously a tier was promoted only when there was exactly one of them and no
+    capability modifier alongside it, so `mimo-v2.5-tts-voiceclone` lost its second tier
+    and `xiaomi/mimo-v2-flash-thinking` lost `flash` outright. The widening is **scoped to
+    mimo**, exactly like the token set above: `kimi` and `minimax` keep the letter in
+    their keys and keep the original one-tier, no-co-occurring-modifier rule, so no kimi
+    or minimax record changes its decomposition. The same predicate also orders the
+    classification, because a token that is both a curated tier and a global modifier is
+    bucketed differently depending on which test runs first.
+
+  The seven mimo rows in `parse/data/family_overrides.json` are **retained and rewritten
+  to an empty variant** rather than deleted — deleting them was measured to mint four
+  malformed keys (`mimo-flash/free`, `mimo-omni-free{omni}`, `mimo-pro/free`,
+  `mimo-v2/pro`). The three `parse/data/huggingface_nomina.json` mimo rows are re-keyed;
+  the now-redundant `xiaomi/mimo-v2.5-pro-ultraspeed` row is dropped from
+  `parse/data/modelsdev_aliases.json`, since `ultraspeed` no longer declines.
+
+  **The "V" survives where it belongs — in the name.** It leaves the key, not the model's
+  identity: `bestiary show mimo-v2.5-pro` still resolves, and `XiaomiMiMo/MiMo-V2.5-Pro`
+  is still a nomen of `mimo@2.5{pro}` on both the huggingface and provider-id legs. That
+  needed no mechanism, because nomina are minted from the provider ids and the ids spell
+  the V. Measured over the mimo family, **only the canonical leg moved**: canonical
+  10 → 9, provider-id 40 → 40, huggingface 3 → 3, alias 0 → 0. No `NomenSchemeAlias` claim
+  and no `nomen_claims.json` row was authored.
+
+  **Surviving keyspace (9 keys, 93 instances — the instance total is conserved exactly):**
+  `mimo@2.5`, `mimo@2.5{pro}`, `mimo@2.5{tts}`, `mimo@2.5{tts,voiceclone}`,
+  `mimo@2.5{tts,voicedesign}`, `mimo@2{flash}`, `mimo@2{omni}`, `mimo@2{pro}`,
+  `mimo@2{tts}`.
+
+- **The merged `mimo@2.5{pro}` keeps BOTH of its models.dev rows.** Two metadata rows
+  decompose to that one key — the canonical `xiaomi/mimo-v2.5-pro` and the
+  `xiaomi/mimo-v2.5-pro-ultraspeed` speed tier the merge folds in — and the multi-metadata
+  slot carries both, with the canonical row as the derived primary. Its description, its
+  link and its three benchmark claims (SWE-Bench Verified 78.9, SWE-Bench Pro 57.2, GPQA
+  Diamond 86.6) survive the merge intact, asserted by value in a committed test.
+
+### Removed
+
+- **Ten mimo entity keys are retired by the normalization above, and each is a hard 404.**
+  Nine are pure renames and one (`mimo/pro`) is a genuine merge. No alias is minted, no
+  redirect is added and no successor is listed at the tool: this table is the migration
+  record, and the pointer a user gets.
+
+  | retired mimo key | instances re-home to |
+  |---|---|
+  | `mimo` | `mimo@2{tts}` |
+  | `mimo/flash` | `mimo@2{flash}` |
+  | `mimo/pro` | `mimo@2.5{pro}` |
+  | `mimo/v2.5-tts` | `mimo@2.5{tts}` |
+  | `mimo/v2.5-tts-voiceclone` | `mimo@2.5{tts,voiceclone}` |
+  | `mimo/v2.5-tts-voicedesign` | `mimo@2.5{tts,voicedesign}` |
+  | `mimo/v@2.5` | `mimo@2.5` |
+  | `mimo/v@2.5{pro}` | `mimo@2.5{pro}` |
+  | `mimo/v@2{omni}` | `mimo@2{omni}` |
+  | `mimo/v@2{pro}` | `mimo@2{pro}` |
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/mimo_normalization_retired_keys_corpus.json`), so the
+  three copies of the record cannot drift apart.
+
+  **Bare `mimo` is the one row whose two seams differ, and that is correct.**
+  `bestiary show mimo --by-entity` returns not-found like every other retired key, but
+  plain `bestiary show mimo` still reports the lookup as under-specified — not because the
+  key split, but because the FAMILY survives the retirement of its bare key and still has
+  nine live children, exactly as `show gpt` and `show claude` behave. It must not be
+  "fixed" into a 404.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **10** `Entity__` declarations and gains **9**, counted
+  from the file:
+
+  removed — `Entity__Mimo`, `Entity__Mimo__Flash`, `Entity__Mimo__Pro`,
+  `Entity__Mimo__V2_5_tts`, `Entity__Mimo__V2_5_tts_voiceclone`,
+  `Entity__Mimo__V2_5_tts_voicedesign`, `Entity__Mimo__V__Version_2_5`,
+  `Entity__Mimo__V__Version_2_5__Pro`, `Entity__Mimo__V__Version_2__Omni`,
+  `Entity__Mimo__V__Version_2__Pro`;
+
+  added — `Entity__Mimo__Version_2_5`, `Entity__Mimo__Version_2_5__Pro`,
+  `Entity__Mimo__Version_2_5__Tts`, `Entity__Mimo__Version_2_5__Tts__Voiceclone`,
+  `Entity__Mimo__Version_2_5__Tts__Voicedesign`, `Entity__Mimo__Version_2__Flash`,
+  `Entity__Mimo__Version_2__Omni`, `Entity__Mimo__Version_2__Pro`,
+  `Entity__Mimo__Version_2__Tts`.
+
+  Census effect of this lever alone, measured on its own run: entities 947 → 946, series
+  lines 417 → 416 (bare 208 → 207, versioned unchanged), releases 661 → 655, canonical
+  nomina 947 → 946 (total 3,961 → 3,960).
+
+- **Two cogito entity keys are retired, and each is a hard 404.** Deep Cogito publishes one
+  artifact — Cogito v2.1 671B — and the catalog was carrying it under two keys, neither of
+  them right. The dotted spelling `deepcogito/cogito-v2.1-671b` decomposed with the whole id
+  remainder `v2.1-671b` in the variant slot and an empty version, so the 671b parameter size
+  was stated **twice**: once as an identity token inside the variant and once again as the
+  mechanically recovered `#size` segment. The dash-glued togetherai spelling
+  `deepcogito/cogito-v2-1-671b` lost its dot, so only the orphaned trailing integer was read
+  as the version, minting a phantom "Cogito v1" line for a release that does not exist.
+
+  Both are repaired to the same shape — an EMPTY variant and the dotted point release as the
+  version — so all three serving instances (kilo, openrouter, togetherai) now key
+  `cogito@2.1#671b`, the only live cogito key. **The `v` is a version PREFIX, not a variant:**
+  it introduces the number it is glued to and names no sibling line this release is
+  distinguished from, which is the reading the mimo normalization already applies to its
+  series letter. The v-carrying spellings survive as provider-id nomina
+  (`deepcogito/cogito-v2.1-671b`, `deepcogito/cogito-v2-1-671b`), so
+  `bestiary show deepcogito/cogito-v2.1-671b --format=raw` still finds the entity. It lands in **two** steps, in that order: the
+  decomposition first, then the merge. Merging into the malformed key first would have moved
+  the togetherai instance onto a key that then had to be renamed underneath it.
+
+  No alias is minted, no redirect is added and no successor is listed at the tool: this table
+  is the migration record, and the pointer a user gets.
+
+  | retired cogito key | instances re-home to |
+  |---|---|
+  | `cogito/v2.1-671b#671b` | `cogito@2.1#671b` |
+  | `cogito@1#671b` | `cogito@2.1#671b` |
+
+  **Correction, recorded rather than silently rewritten.** An earlier draft of this stanza
+  read the glued `v` as the VARIANT and published `cogito/v@2.1#671b` as the successor. That
+  spelling **never shipped** — it existed only in-tree between two commits of this same
+  unreleased stanza — and it contradicted the mimo ruling this release already applied. The
+  successor column above is the corrected one; there is nothing for a released consumer to
+  migrate from, because no release ever carried `cogito/v@2.1#671b`. The release's cumulative
+  retired set is therefore **unchanged at 62** and its added set unchanged at 35: measured
+  against the release baseline, `cogito/v@2.1#671b` is absent from BOTH sides of the diff.
+
+  Every row is re-derived from the instances the retired key actually held, checked against
+  the live registry on each run, and cross-checked against this table
+  (`cmd/bestiary/testdata/retired/cogito_decomposition_retired_keys_corpus.json`), so the
+  three copies of the record cannot drift apart.
+
+  **Both keys 404 on both seams**, measured: `bestiary show <key> --by-entity` and plain
+  `bestiary show <key>` each return not-found for `cogito/v2.1-671b#671b` and for
+  `cogito@1#671b`. Neither is a bare family token, so neither reaches the under-specified
+  branch that bare `mimo` and bare `ling` reach.
+
+  **Library consumers get a compile break, which is louder than a 404.**
+  `entities_constants_gen.go` loses **2** `Entity__` declarations and gains **1**, counted
+  from the file:
+
+  removed — `Entity__Cogito__V2_1_671b__Size_671b`, `Entity__Cogito__Version_1__Size_671b`;
+
+  added — `Entity__Cogito__Version_2_1__Size_671b`.
+
+  Census effect, measured per commit on its own run (unit: entity keys; axis: the constant
+  set in `entities_constants_gen.go`; configuration: each lever alone, chained on the
+  in-tree baseline). The decomposition is a pure **rename**: entities 946 → 946, series lines
+  416 → 416 (versioned 209 → 210, bare 207 → 206 — the artifact leaves the bare cogito line
+  it was the sole occupant of and mints a cogito gen-2.1 line), releases unchanged at 655,
+  canonical nomina unchanged at 946. The variant pin is a genuine **merge**: entities
+  946 → 945, series lines 416 → 415 (versioned 210 → 209 as the phantom gen-1 line empties,
+  bare unchanged at 206), releases 655 → 654, canonical nomina 946 → 945 (total 3,960 →
+  3,959), sized catalog entities 318 → 317. Across both, the provider-ID nomen count is
+  unchanged at 2,834 — every re-keyed instance carries its own id spelling across as an
+  admitted nomen.
+
+
+### Changed
+
+- **The MiniMax `turbo` demotion is re-verified against the lab's own sources, and its
+  evidence grade is upgraded.** `turbo` is IDENTITY by global default and is demoted to an
+  ATTRIBUTE for only a few curated families. For MiniMax that demotion had rested on
+  inference alone — it was recorded as the lower-confidence row, the first one to revisit —
+  and it rides on **exactly one** catalog instance, nanogpt's `minimax/minimax-m2.7-turbo`.
+  It was re-checked on **2026-08-25** against
+  [the MiniMax M2.7 weights repo](https://huggingface.co/MiniMaxAI/MiniMax-M2.7) and
+  [MiniMax's own text-generation docs](https://platform.minimax.io/docs/guides/text-generation).
+
+  **Outcome: the demotion stands, now on repo-identity evidence.** MiniMaxAI publishes a
+  **single** M2.7 weights repo — there is no `MiniMax-M2.7-Turbo` and no
+  `MiniMax-M2.7-highspeed` repo — so every fast-serving spelling of the version resolves
+  back to one artifact. The lab documents its speed tier in its own words as *"M2.7
+  Highspeed: Same performance, faster and more agile (output speed approximately 100 tps)"*
+  against roughly 60 tps for the standard tier: an inference-layer tier of the same model,
+  priced at 2x. The catalog census agrees, and it agrees *inside the
+  entity*: `minimax/m@2.7` carries **54 instances**, **15** of which are M2.7 `-highspeed`
+  spellings (**25** `-highspeed` ids across the family's M2.5 and M2.7 lines together), and
+  the single `turbo` row sits right beside them — matching the seven canonical M2.7
+  `-highspeed` rows (fastrouter, llmgateway, merge-gateway, minimax, minimax-cn, novita-ai,
+  orcarouter) **exactly** on every axis: **0.6 / 2.4** per MTok, **204,800** context,
+  **131,072** max output, against the plain M2.7's **0.3 / 1.2** — the same doubling the
+  lab charges for its own speed tier. MiniMax's own first-party endpoints name that tier
+  `highspeed`, never `turbo`, and **no** provider ships both spellings for one version — the
+  aggregators that carry the tier all copy the lab's word. So `turbo` cannot be a
+  distinct artifact standing beside `highspeed`; it is nanogpt's own label for it. `highspeed`
+  is already attribute-class globally, so this is the consistent reading.
+
+  **Nothing you depend on moves.** This is a documentation and evidence change only:
+  `minimax/m@2.7` keeps its instances, no `minimax/m@2.7{turbo}` key is minted, and
+  regeneration was measured **byte-identical** — not one generated file changed. No key is
+  retired, so there is no migration to make.
+
 ## [0.2.9] - 2026-07-28
 
 **Schema:** unchanged at `0.6.0`.
@@ -1225,7 +2523,8 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...HEAD
+[0.2.10]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/dayvidpham/bestiary/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/dayvidpham/bestiary/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/dayvidpham/bestiary/compare/v0.2.6...v0.2.7

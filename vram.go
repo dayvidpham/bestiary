@@ -23,8 +23,17 @@ const VRAMFormulaVersion = 2
 // KV-head count, not the query-head count.
 //
 // The weights term is always the ingested GGUF file size passed in as
-// weightsBytes — it is the ground-truth measurement, never derived from
-// bits-per-weight arithmetic.
+// weightsBytes — for every BAKED figure it is the ground-truth measurement, never
+// derived from bits-per-weight arithmetic.
+//
+// Amendment: a separately-typed DERIVED weights projection exists for entities with
+// an attested total parameter count and no ingested file size (WeightsBasis /
+// DerivedWeightsBytes in fit.go). It is computed at display time from
+// TotalParams x BitsPerWeight, always carries BasisDerived and a weights-only
+// qualification, and NEVER reaches this function, QuantVRAM.WeightsBytes or
+// VRAMBytes. VRAMFormulaVersion is unaffected by it and stays 2. The invariant this
+// paragraph amends is about what the stored datum is, not about what a caller may
+// estimate for display.
 //
 // KV = 0 (weights-only lower bound) when ANY of layers, kvHeads, headDim, or
 // contextTokens is <= 0. When baking a QuantVRAM row, the caller sets
