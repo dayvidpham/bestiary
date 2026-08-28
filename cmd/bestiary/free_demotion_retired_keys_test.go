@@ -41,6 +41,14 @@ type retiredKeySeams struct {
 	// version the fused suffix had been hiding. Recorded here so the migration
 	// record is machine-checkable rather than a prose claim.
 	Successors []string `json:"successors"`
+	// DepartedInstances is the subset of RetiredInstances whose ids upstream removed
+	// from the catalog outright, so they re-home nowhere. It is OPTIONAL and empty for
+	// every conservation lever in this directory — a lever moves rows, it never deletes
+	// them. It is populated only by the refresh corpus, where a key can retire with SOME
+	// of its rows re-keyed and others genuinely gone, and recording the split is what
+	// lets a reader tell a migration from a deletion instead of inferring it from a
+	// successor set that does not add up.
+	DepartedInstances []string `json:"departed_instances,omitempty"`
 }
 
 //go:embed testdata/retired/free_demotion_retired_keys_corpus.json

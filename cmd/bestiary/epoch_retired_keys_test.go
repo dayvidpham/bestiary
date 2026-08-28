@@ -449,9 +449,14 @@ func perLeverRetiredCorpora(t *testing.T) []perLeverCorpus {
 		t.Fatalf("glob retired-key corpora: %v", err)
 	}
 	var out []perLeverCorpus
+	seenSkips := map[string]bool{}
 	for _, p := range paths {
 		name := filepath.Base(p)
 		if name == "epoch_retired_keys_corpus.json" {
+			continue
+		}
+		if _, skip := nonEpochBaselineCorpora[name]; skip {
+			seenSkips[name] = true
 			continue
 		}
 		data, err := os.ReadFile(p)
@@ -473,7 +478,36 @@ func perLeverRetiredCorpora(t *testing.T) []perLeverCorpus {
 	if len(out) == 0 {
 		t.Fatal("no per-lever retired-key corpora found; the reconciliation would pass vacuously")
 	}
+	// A declaration for a file that is not there is stale, and a stale skip silently
+	// removes a corpus from the reconciliation the day someone re-creates that filename.
+	for name, why := range nonEpochBaselineCorpora {
+		if !seenSkips[name] {
+			t.Errorf("nonEpochBaselineCorpora declares %q (%s), but no such file is in "+
+				"testdata/retired/; drop the stale declaration", name, why)
+		}
+	}
 	return out
+}
+
+// nonEpochBaselineCorpora names the retired-key corpora that are measured against a
+// baseline OTHER than the epoch baseline, and are therefore not reconcilable against
+// epoch_retired_keys_corpus.json.
+//
+// The reconciliation's premise is that a per-lever corpus and the epoch corpus describe
+// the SAME key diff at different granularities: the epoch corpus takes every key live at
+// the epoch baseline and absent at this tip, and each lever corpus takes the subset its
+// lever retired. A corpus whose baseline is a different point in history breaks that
+// premise in both directions — its keys are legitimately absent from the epoch set (they
+// were minted after the epoch baseline), and the epoch set's keys are legitimately absent
+// from it. Reconciling them would report both as defects.
+//
+// This is a declaration, not a silent exclusion: the entry states which baseline the file
+// uses, the file must exist, and its own runner enforces its own discipline.
+var nonEpochBaselineCorpora = map[string]string{
+	"refresh_2026_08_28_rekey_retired_keys_corpus.json": "measured against the PREVIOUS RELEASE bake " +
+		"(tag v0.2.10 @ 490814e), not the epoch baseline: it records the 19 keys the 2026-08-28 catalog " +
+		"refresh retired whose artifacts survive under a different key. Most of them were minted after " +
+		"the epoch baseline, so they are correctly absent from the cumulative epoch set",
 }
 
 // loadEpochRetiredKeyCorpus loads the epoch corpus under the three-guard discipline: an
