@@ -402,14 +402,14 @@ for its **Go module tags** (`vX.Y.Z`).
   and `nemotron#120b` still RESOLVE at plain `bestiary show`, because each remains a valid
   **under-specified reference** to exactly one live entity: the successor carries a version
   the retired key did not, so a ref omitting the version still names one model. Nothing was
-  added to let a retired key resolve — the exact-key seams (`bestiary.EntityByKey` and
-  `GET /entity/<key>`) are a hard 404 for all **26**, and `show --by-entity`, which routes
-  through the resolver like plain `show` and is therefore NOT an exact-key seam, also
-  reports not-found for all 26 here — and making these fail would mean breaking
-  ordinary under-specified
-  lookups whenever they happen to match a retired spelling. Nine further keys report the
-  under-specified error because their FAMILY survives them, exactly as `show gpt` and
-  `show claude` always have; the remaining fourteen are 404 on both seams.
+  added to let a retired key resolve: the exact-key seams (`bestiary.EntityByKey` and
+  `GET /entity/<key>`) are a hard 404 for all **26**, and making these fail would mean
+  breaking ordinary under-specified lookups whenever they happen to match a retired
+  spelling. `show --by-entity` is NOT an exact-key seam — it runs the input through the
+  model resolver, as plain `show` does — but for these 26 keys it measurably reports
+  not-found for every one. Nine further keys report the under-specified error because
+  their FAMILY survives them, exactly as `show gpt` and `show claude` always have; the
+  remaining fourteen are 404 on both seams.
 
   **Library consumers get a compile break, which is louder than a 404.**
   `entities_constants_gen.go` loses **26** `Entity__` declarations and gains **14**,
@@ -951,13 +951,13 @@ for its **Go module tags** (`vX.Y.Z`).
   **Retired-key behaviour, measured — the two keys differ, and that is correct.** `kling-v2@6` is a
   uniform hard 404: `ErrNotFound` on both `bestiary show kling-v2@6` and
   `bestiary show kling-v2@6 --by-entity`. Bare `ling` returns `ErrNotFound` on the
-  `--by-entity` seam but **`ErrAmbiguous`** on the looser `show` seam — both of these route
-  through the model resolver, so neither is an exact-key seam (those are `bestiary.EntityByKey`
-  and `GET /entity/<key>`) — not because it split, but
-  because its **family outlives the key** and the bare family token still has five live children,
-  exactly as `show gpt`, `show claude` and `show mimo` behave. That reading is pinned as measured and
-  must not be "corrected" into a 404. No alias is minted and no successor is listed by the tool on
-  either seam; this table is the pointer.
+  `--by-entity` seam but **`ErrAmbiguous`** on the looser `show` seam — not because it
+  split, but because its **family outlives the key** and the bare family token still has
+  five live children, exactly as `show gpt`, `show claude` and `show mimo` behave. Neither
+  of these is an exact-key seam: both run the input through the model resolver, and the
+  exact-key seams are `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is
+  pinned as measured and must not be "corrected" into a 404. No alias is minted and no
+  successor is listed by the tool on either seam; this table is the pointer.
 
   **Compile break for library consumers — 2 `Entity__` constants removed, 10 added**, counted from
   `entities_constants_gen.go`. Removed: `Entity__Ling`, `Entity__Kling_v2__Version_6`. Added:

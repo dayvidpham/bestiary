@@ -316,6 +316,28 @@ func TestCogitoNomen_OrgPrefixedRawIDResolves_OrgLessDoesNot(t *testing.T) {
 
 	tmpDB := t.TempDir() + "/cache.db"
 
+	// Positive, seam first: pin the RAW input scheme directly, so this half cannot be
+	// satisfied by some other admitting seam. The CLI assertion below alone cannot
+	// distinguish raw-scheme admission from the plain-`show` entity fallback, which
+	// renders the same raw id in its Instances/Nomina tables — a regression that moved
+	// this id off the raw seam would leave the CLI oracle green.
+	rawRefs, rawErr := bestiary.Resolve(published, bestiary.WithInputFormat(bestiary.InputFormatRaw))
+	if rawErr != nil {
+		t.Fatalf("Resolve(%q, InputFormatRaw) returned %v, want a match — %q is the raw API id the "+
+			"providers publish for %s, and the raw input scheme is the seam that admits it",
+			published, rawErr, published, entityKey)
+	}
+	if len(rawRefs) == 0 {
+		t.Fatalf("Resolve(%q, InputFormatRaw) returned no refs; the raw seam must admit the "+
+			"published id for %s", published, entityKey)
+	}
+	for _, r := range rawRefs {
+		if string(r.ID) != published {
+			t.Errorf("Resolve(%q, InputFormatRaw) returned a ref with ID %q; the raw seam is an "+
+				"EXACT upstream-id lookup and must not admit a different id", published, r.ID)
+		}
+	}
+
 	// Positive: the published raw id resolves through the raw input scheme and renders.
 	args := []string{"show", published, "--format=raw", "--db-path", tmpDB, "--output=table"}
 	var runErr error
