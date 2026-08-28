@@ -113,11 +113,21 @@ var epochOnlyRetiredKeys = map[string]string{
 // takes every key present in the entity keyspace at the release baseline and absent at
 // this tip, and pins what each one measurably does at the seams a user reaches.
 //
-// ONE invariant holds without exception, and it is the one the uniform-404 policy is
-// actually about: the EXACT-key entity lookup, bestiary.EntityByKey, is a hard 404 for
-// all 62. No alias is minted, no redirect is added, no successor is listed and no
-// nomen claim resurrects a retired key. The CHANGELOG migration tables are the only
-// pointer a user gets.
+// The rule this probe enforces, stated per seam:
+//
+//	A retired key is not found at the exact-key seams: EntityByKey, GET /entity/<key>.
+//	The CLI resolver keeps its short-reference fallback. An old spelling that is still a
+//	valid short reference can resolve or show candidates.
+//
+// So ONE invariant holds without exception, and it is the one the retired-key policy is
+// actually about: the EXACT-key lookup — bestiary.EntityByKey, and the web route
+// GET /entity/<key> that dereferences through it — is a hard 404 for all 62. No alias is
+// minted, no redirect is added, no successor is listed and no nomen claim resurrects a
+// retired key. The CHANGELOG migration tables are the only pointer a user gets.
+//
+// `bestiary show` and `show --by-entity` are NOT exact-key seams and are NOT uniform:
+// both resolve the input through the model resolver first, which keeps its
+// short-reference fallback, so they are pinned PER KEY below against the measured split.
 //
 // The looser seams are pinned PER KEY against the MEASURED split, not against a blanket
 // rule, because a blanket rule is false here in several directions at once. Each bullet

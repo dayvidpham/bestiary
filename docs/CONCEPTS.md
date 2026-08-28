@@ -48,6 +48,35 @@ Versions normalize **dotted-canonical at identity level**: where a family
 attests both `4` and `4.0` for the same tuple, they are one entity keyed
 `@4.0`, and a bare-version expression resolves to it.
 
+### Retired entity keys
+
+A curation repair can change how a model decomposes, which **retires** the old
+entity key: the key no longer names anything. No alias is minted, no redirect
+is added and no successor is listed at the tool — the CHANGELOG migration table
+for the change is the pointer.
+
+What a retired key does depends on the **seam**, and the two kinds of seam
+behave differently on purpose:
+
+> A retired key is not found at the exact-key seams: `EntityByKey`,
+> `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An
+> old spelling that is still a valid short reference can resolve or show
+> candidates.
+
+- **Exact-key seams** — the library call `bestiary.EntityByKey` and the web
+  route `GET /entity/<key>` — take a canonical key and look it up directly.
+  A retired key is a hard not-found there, without exception.
+- **The CLI seams** — `bestiary show <ref>` and `bestiary show <ref>
+  --by-entity` — run the input through the *model resolver* first, and that
+  resolver keeps its short-reference (under-specified) fallback. So a retired
+  spelling that remains a valid short reference to one live entity still
+  resolves, and one that names several live entities still lists them as
+  candidates. Making those fail would break ordinary under-specified lookups
+  whenever they happened to match a retired spelling.
+
+The per-key measured record for a release lives in
+`cmd/bestiary/testdata/retired/epoch_retired_keys_corpus.json`.
+
 ### ProviderInstance
 
 One concrete **offering** of an entity: a `(provider, host, region)` serving

@@ -243,6 +243,28 @@ for its **Go module tags** (`vX.Y.Z`).
   62 keys this release retires. Making the two CLI seams fail would mean breaking an
   under-specified reference because it happens to match a retired spelling.
 
+- **The retired-key rule, stated per seam.** This is the release's single normative
+  statement of what a retired key does, and it CORRECTS the looser wording used in some
+  stanzas below (which describe `bestiary show --by-entity` as "the exact-key seam" and
+  read the hard 404 as covering it). That wording is wrong about which seam is exact:
+
+  > A retired key is not found at the exact-key seams: `EntityByKey`,
+  > `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An old
+  > spelling that is still a valid short reference can resolve or show candidates.
+
+  So the invariant that admits no exception is the pair of EXACT-key seams — the library
+  call `bestiary.EntityByKey` and the web route `GET /entity/<key>` — and it holds for
+  all **62** keys this release retires. `bestiary show` and `bestiary show --by-entity`
+  are NOT exact-key seams: both run the input through the model resolver first, which
+  keeps its short-reference (under-specified) fallback, so a retired spelling that is
+  still a valid short reference answers there or lists candidates. Measured at the
+  shipped `bestiary show` seam, the 62 split **45 not-found / 12 under-specified /
+  5 resolved**; `show --by-entity` differs from `show` for a further four keys. The
+  per-key record is `cmd/bestiary/testdata/retired/epoch_retired_keys_corpus.json`,
+  probed by `TestEpochRetiredKeys_MeasuredPolicySplit`. No alias is minted, no redirect
+  is added and no successor is listed at the tool: the migration tables below are the
+  only pointer a user gets.
+
 - **Twenty-six entity keys are retired by the two changes above.** Twelve come from the
   tier re-key and fourteen from the leading-token strip. No alias is minted, no redirect
   is added and no successor is listed at the tool: this table is the migration record, and
