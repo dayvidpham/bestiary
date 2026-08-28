@@ -48,6 +48,162 @@ for its **Go module tags** (`vX.Y.Z`).
   930/2834/1/267. `archived_url` is attestation *data*, not identity, so the 159 snapshots
   add no nomina on their own.
 
+- **models.dev catalog re-vendored (2026-08-28) — the largest upstream jump this project
+  has ingested.** One polite `go run ./cmd/bestiary-gen` fetch of
+  `https://models.dev/catalog.json` (`fetched_at` `2026-08-28T07:54:37Z`, etag
+  `W/"cd4c3f129e5221534bd799eff950aad0"`), replacing the 2026-07-23 snapshot. UNIT:
+  vendored catalog records; AXIS: the three views the artifact carries; CONFIGURATION:
+  `parse/data/modelsdev/catalog.json` at this tree.
+
+  | view | before | after |
+  |---|---|---|
+  | providers | 170 | **204** |
+  | provider model rows | 5,765 | **7,430** |
+  | models view (lab rows) | 263 | **361** |
+
+  `github-models` was **removed** upstream; its row was dropped from
+  `parse/data/creator_providers.json` (the FK gate is loud at codegen, so a retired
+  provider slug aborts the bake rather than degrading).
+
+- **Upstream field shape did not move, and that is now a machine-checked fact rather than
+  an assertion.** The new census (below) measures **71 field paths** across the provider,
+  model and models-view scopes before and after: **0 added, 0 removed**. The whole jump is
+  more rows, not new shape.
+
+- **Entity keyspace 930 to 989** (`TestEntityConstants_ExactCensus`, `EntityKeys()`).
+  UNIT: canonical entity keys; AXIS: the generated `Entity__*` constant set;
+  CONFIGURATION: this tree's regenerated bake. **87 retired, 146 minted, net +59**
+  (930 - 87 + 146 = 989). The add set concentrates where upstream grew — gpt (21),
+  qwen (16), seed (6), hy (6), glm (6), gemini (5), nemotron (4), claude (4) — and the
+  retire set is dominated by product lines upstream dropped outright: **phi (6:
+  Microsoft retired the entire Phi-3/3.5 line, leaving only Phi-4)**, doubao (6),
+  ernie (3), bge (3), aion (3), and `codellama` in full. The complete removed and added
+  lists are in the PR description.
+
+- **Nomina census 4,216 to 4,993** (`TestNomina_CensusExact`). UNIT: minted nomina;
+  AXIS: per scheme; CONFIGURATION: this tree's bake.
+
+  | scheme | before | after | why |
+  |---|---|---|---|
+  | canonical | 930 | **989** | exactly one per entity, so it tracks the keyspace |
+  | provider-id | 2,834 | **3,562** | 1,665 new upstream rows carry new ID spellings |
+  | alias | 1 | 1 | unchanged |
+  | huggingface | 184 | **174** | see below |
+  | OCI | 267 | 267 | unchanged (no Ollama refresh in this slice) |
+  | **total** | **4,216** | **4,993** | |
+
+- **Ten harvested HuggingFace nomina removed, because upstream retired the entities they
+  named.** The catalog now carries **zero** phi-3 rows and **zero** codellama rows, so
+  `AlfredPros/CodeLlama-7b-Instruct-Solidity` and nine `microsoft/Phi-3*` repos resolved to
+  entity keys that no longer exist and failed the loud codegen FK gate. There is no honest
+  alias target — the surviving Phi family is Phi-4, a different generation — so the entries
+  were removed, which is exactly what `cmd/bestiary-hf` would itself emit on its next run
+  under that file's fetch-owned field-ownership rule. **Every surviving snapshot was
+  preserved**: of the 159 `archived_url` values captured in 0.2.10, the 153 belonging to
+  surviving repos are byte-identical before and after, and all 174 surviving records are
+  unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
+
+- **Four codegen gates fired on this refresh and each was resolved by curation, not by
+  loosening the gate.**
+  - `solar` and `ornith` are now emitted by upstream as bare families, colliding with the
+    hand-curated `FamilySolar` / `FamilyOrnith` supplements — the tree did not compile.
+    Both curated declarations retire; the generated constants take over unchanged.
+  - `ValidateNoBetaInIdentity` aborted the bake on four `grok/beta@4.20*` entities. Vercel
+    re-namespaced its beta aliases `xai/` to `spacexai/`, breaking three exact-ID pins;
+    requesty added `grok-4.2-beta`; and the new `llmgateway-providers` prefixes its rows by
+    backend host. Seven pins added; **beta stays a release stage and never an identity**.
+  - The `github-models` FK break above.
+  - The HuggingFace seed FK break above.
+
+- **Curation repairs the refresh exposed.** Each is a real defect, measured rather than
+  assumed:
+  - **Claude Fable was decomposing as a compound family** — `claude-fable` and
+    `claude-fable@5`, sitting outside the `claude` family entirely. Anthropic publishes it
+    with raw family `claude-fable` exactly as it publishes `claude-opus` / `claude-sonnet`
+    / `claude-haiku`, but `fable` was missing from both `families.json` members and
+    `family_overrides.json`. It now keys `claude/fable` / `claude/fable@5` like every
+    sibling tier. This wart pre-dates the refresh: both compound keys were live at the
+    v0.2.10 baseline.
+  - **Inkling was folded back onto inclusionAI's Ling family.** The Thinking Machines line
+    grew from 6 upstream rows to about 40 and gained `:free` / `:thinking` /
+    `:peft:262144` spellings whose suffix defeats the ID-driven read, re-minting the bare
+    `ling` key a prior epoch had retired. Three pins; `ling` is retired again.
+  - **`trendyol-asure-12b` was keyed as Google Gemma.** llmtr publishes it with raw family
+    `gemma`, and `gemma#12b` held that one row alone — an entire entity that was a
+    misattribution. It now keys `asure#12b`, and the lab's own models-view row joins it.
+  - **MiMo v2.5 Pro lost its version** through nano-gpt's `-crof` backend label (`crof` is
+    itself a provider in this catalog), re-minting the undated `mimo/pro`.
+  - **NVIDIA Nemotron 3.5 Lightning lost its version** in four spellings that put the tier
+    before the version, re-minting the undated `nemotron#30b-a3b`. Pinned to the reading
+    the dozen sibling spellings already produce.
+  - **Llama-4 Scout/Maverick lost their MoE shapes** on five new `llmgateway-providers`
+    backend-host spellings, keying `17b` instead of `17b-16e` / `17b-128e`.
+  - **The family-`o` junk bucket was crediting OpenAI with Fish Audio's speech models.**
+    Vercel publishes eight `fish-audio/*` rows under raw family `o` — the OpenAI o-series
+    bucket — and the keys `o` and `o/pro` held those eight rows and **nothing else**, while
+    `creators.json` maps family `o` to OpenAI. This is the same upstream defect the
+    `family_enforce` ledger already corrects for vercel's wan / tts / arrow rows, but after
+    the vendor namespace is stripped these ids are just `s1` / `s2-pro` / `transcribe-1`,
+    carrying no family token to enforce against — so they are pinned exactly. `o` and
+    `o/pro` are gone; `fish-audio/s@1`, `fish-audio/s@2{pro}`, `fish-audio/s@2.1{pro}` and
+    `fish-audio/transcribe@1` replace them. The `-free` spellings share their paid
+    sibling's tuple, per the free-demotion ruling.
+  - **A phantom `gpt@5.6` was hijacking resolution.** kilo published
+    `openai/gpt-5.6-sol-discounted`, the only `-discounted` id in the catalog; the
+    unrecognised token defeated the tier scan, lost the `sol` tier, and minted a bare
+    `gpt@5.6` holding that one instance. `bestiary show gpt/5.6` then answered with that
+    single discounted reseller listing instead of spanning the six real GPT-5.6 tier
+    entities. Pinned to `(gpt, sol, 5.6)` — a pricing label is an attribute of one
+    provider's offer, never identity — and `gpt@5.6` retires.
+  - **A dot-lost `mimo@25`.** inferx's new `mimo-v25` spelling names a version Xiaomi never
+    published; the row sat alone on a phantom line while ~40 siblings serve `mimo@2.5`.
+  - **The Dracarys 70B finetune edge was silently dropped.** Upstream re-spelled
+    `abacusai/dracarys-llama-3_1-70b-instruct` with a dot; `lineage.json` still keyed the
+    underscore form, so neither the full-id nor the post-`/` lookup matched and the baked
+    `Lineage` went empty. Re-keyed to the dotted spelling; the `DerivationFinetune` edge to
+    `llama@3.1` is baked again.
+  - The `eva@0.2#32b` override was **re-keyed**: upstream dropped the base-leading
+    `Qwen2.5-32B-EVA-v0.2` spelling and now serves only `EVA-UNIT-01/EVA-Qwen2.5-32B-v0.2`,
+    which unpinned decomposed to the bare `qwen` bucket.
+
+- **Two previously-retired keys are legitimately live again, and the retired-key corpora
+  say so.** Retirement is measured against a baseline, so it is not a one-way door.
+  `gpt/pro` (edenai's rolling `openai/gpt-pro-latest`) and `ministral#8b{instruct}`
+  (pioneer's original `mistralai/Ministral-8B-Instruct-2410`, whose 2410 is a date rather
+  than a version) each gained a genuinely undated occupant. Their rows were deleted from
+  the epoch corpus (**62 to 60**) and the gpt-tier corpus (**26 to 24**) in the same commit
+  as the refresh that un-retired them. Four other keys that came back did so through
+  version LOSS on new spellings and were repaired with the pins above instead, so they stay
+  retired.
+
+- **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
+  ledger.** `TestModelsdevUnlinked_MatchesJustifiedLedger` replaces
+  `TestModelsdevUnlinked_IsDrained` and asserts SET EQUALITY against
+  `unlinkedJustifiedExceptions`, which is strictly stronger than the count it replaces: a
+  NEW orphan fails because it is not listed, and a listed row that starts joining again
+  also fails as dead curation. Six rows were drained with honest aliases
+  (`seed{vision}`, `gemini/deep-research`, `gemini/pro@3.5{translate}`, `granite/small@4`,
+  `sakana-namazu`, plus `asure#12b` via the pin above). The remaining 12 are lab models no
+  provider serves at that exact tier — models.dev's models view is a LAB catalogue while
+  the provider rows are a SERVING catalogue — or models served only under a coarse key that
+  already holds other lab models. Each carries its reason in the ledger; aliasing them
+  anyway would point one lab's card at a different artifact, which is precisely the
+  collision hazard `modelsdev_aliases.json` documents.
+
+- **Declared path-unification corpus refresh.** `models_api.json` re-vendored through the
+  documented `jq .providers` form (5,765 to **7,430** records, 170 to **204** providers),
+  `decomp_baseline.tsv` re-captured in the same commit, and `snapshot_meta.json` restamped
+  to the 2026-08-28 capture. The cross-provider justified-residual ledger goes **4 rows to 12** with a per-row citation each: one row LEFT (vercel corrected its `aura` mislabel on
+  `sakana/fugu-ultra`) and nine joined, being three disagreements rather than nine — the
+  ByteDance Seed line published under three raw-family spellings (5 ids, deferred to a
+  curation slice because converging it moves entity keys and `family_aliases.json` requires
+  sign-off for a fold of that shape), two glued-tier member-variant reads, and two genuine
+  mislabels. At-scale pins re-measured: residual-unaccounted ceiling **303 to 353** (the
+  RATE improved, 5.26% to 4.75%) and populated-version floor **4,229 to 5,433**.
+  `upstream_git_commit` and `upstream_schema_version` are deliberately unchanged — the
+  artifact does not carry the repo HEAD, and the field census proves the schema did not
+  move.
+
 ### Known defects (observed during the capture; not fixed here)
 
 - **`cmd/bestiary-hf`'s summary line under-reports gated repos.** It prints a counter
@@ -62,6 +218,33 @@ for its **Go module tags** (`vX.Y.Z`).
   merge-on-refresh correctly preserved the curated entry. Consequence: it can never gain an
   `archived_url`, because the snapshot lookup enriches mechanically-linked repos only.
 
+
+### Added
+
+- **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
+  shape, with a loud drift guard.** Every field path the vendored catalog publishes, with
+  the number of records filling it: provider level, per-provider model rows, the models
+  view, and one level of object nesting in each. **71 paths** on this snapshot. UNIT: field
+  paths; AXIS: fill count per path; CONFIGURATION: the committed
+  `parse/data/modelsdev/catalog.json`.
+
+  A snapshot refresh was previously reviewable only on counts. Row and provider totals are
+  obvious in a diff; a field **added** upstream (nothing consumes it yet, so nothing fails)
+  or **removed** upstream (something downstream silently reads a zero value forever) was
+  invisible. `TestModelsdevFieldCensus_NoDrift` recomputes the census from the vendored
+  catalog and fails **naming the added and removed paths**, with a fix procedure per
+  direction; `_UpToDate` catches a fill count that moved while the path set held; and
+  `_EnvelopeContract` pins the committed-emission invariants (count agrees with the list,
+  explicit sort, empty-not-null, no wall clock, all three scopes non-vacuous).
+
+  The emission follows the established committed-report pattern: a pure
+  `buildModelsdevFieldCensus` returning bytes, wired into `runFixtureCodegenArtifacts` and
+  the **N=100** `TestCodegen_Reproducible_ByteIdentical` byte-identity loop — which is the
+  only place an omitted sort could surface, since the census walks JSON objects whose key
+  order Go randomizes on every decode. `TestBuildModelsdevFieldCensus_DetectsAnAddedField`
+  is the falsifier: it injects a synthetic field into an in-memory copy of the catalog and
+  asserts the census reports exactly that path and its nested subkey, so an emitter that
+  returned a constant path set cannot pass.
 
 ## [0.2.10] — 2026-08-28
 
@@ -399,17 +582,30 @@ for its **Go module tags** (`vX.Y.Z`).
 
   So the invariant that admits no exception is the pair of EXACT-key seams — the library
   call `bestiary.EntityByKey` and the web route `GET /entity/<key>` — and it holds for
-  all **62** keys this release retires. Neither CLI seam is one of those two, and the two
+  all **60** keys this release retires. Neither CLI seam is one of those two, and the two
   do not behave alike. `bestiary show --by-entity` is an exact match over the
   store-overlaid entity index, accepting the entity key, the entity preferred name or a
   concrete model id; it has NO short-reference path, so it never returns the
   under-specified error. `bestiary show` runs the input through the model resolver, which
   keeps its short-reference (under-specified) fallback, so a retired spelling that is
   still a valid short reference answers there or lists candidates. Measured at the
-  shipped `bestiary show` seam, the 62 split **45 not-found / 12 under-specified /
-  5 resolved**; `show --by-entity` differs from `show` for a further four keys. The
+  shipped `bestiary show` seam, the 60 split **45 not-found / 11 under-specified /
+  4 resolved**; `show --by-entity` differs from `show` for a further four keys. The
   per-key record is `cmd/bestiary/testdata/retired/epoch_retired_keys_corpus.json`,
-  probed by `TestEpochRetiredKeys_MeasuredPolicySplit`. No alias is minted, no redirect
+  probed by `TestEpochRetiredKeys_MeasuredPolicySplit`.
+
+  **This read 62 keys and 45 / 12 / 5 before the 2026-08-28 models.dev catalog refresh.**
+  Two movements, both re-measured rather than repaired. (1) Two keys were UN-RETIRED —
+  `gpt/pro` and `ministral#8b{instruct}`, each because upstream began serving a genuinely
+  undated occupant for the tuple the lever had emptied; both rows were deleted from the
+  corpus and from the migration table below, in the same commit as the refresh. See that
+  table's note for the per-key evidence. (2) `mistral/large#675b{instruct}` moved from the
+  RESOLVED class to the under-specified one: its successor
+  `mistral/large@3#675b{instruct}` is still ONE live entity and still the right successor,
+  but it went from one provider row to three and they group into two date-differentiated
+  candidates, so the retired spelling no longer names exactly one. Retirement is measured
+  against a baseline keyspace, so it is not a one-way door, and a corpus row asserting a
+  hard 404 for a key upstream has re-occupied would be asserting a falsehood. No alias is minted, no redirect
   is added and no successor is listed at the tool: the migration tables below are the
   only pointer a user gets.
 
@@ -417,6 +613,27 @@ for its **Go module tags** (`vX.Y.Z`).
   tier re-key and fourteen from the leading-token strip. No alias is minted, no redirect
   is added and no successor is listed at the tool: this table is the migration record, and
   the only pointer a user gets.
+
+  **Two of the twenty-six were UN-RETIRED by the 2026-08-28 models.dev catalog refresh and
+  their rows are removed from the table below, which now carries twenty-four.** Retirement
+  here is measured against a baseline keyspace, so it is not a one-way door: a refresh that
+  makes upstream serve a row which mints the old tuple again gives the key an occupant, and
+  a migration row pointing a user AWAY from a key that is once more live would send them to
+  the wrong place. Both keys came back for the same reason — a genuinely UNDATED artifact
+  appeared where the lever had previously left only dated siblings:
+
+  - `gpt/pro` (was → `gpt/pro@5.2`, `gpt/pro@5.4`, `gpt/pro@5.5`). edenai now serves
+    `openai/gpt-pro-latest`, a rolling alias that carries no version at all, so the undated
+    tier key is occupied again.
+  - `ministral#8b{instruct}` (was → `ministral@3#8b{instruct}`). pioneer now serves
+    `mistralai/Ministral-8B-Instruct-2410`, the ORIGINAL Ministral 8B Instruct. Its `2410`
+    is a date, not a version, so the row belongs on the undated key rather than on the
+    `ministral@3` line.
+
+  Neither lever was reverted and nothing was re-keyed to achieve this: the gpt tier re-key
+  and the redundant leading-token strip are unchanged, and the other twenty-four keys are
+  still retired with the same successors. The rows were deleted from this table and from
+  both retired-key corpora in the same commit as the refresh that un-retired them.
 
   | retired key (tier re-key + prefix strip) | instances re-home to |
   |---|---|
@@ -437,11 +654,9 @@ for its **Go module tags** (`vX.Y.Z`).
   | `gpt-terra/pro` | `gpt/terra@5.6{pro}` |
   | `gpt-terra/pro@5.6` | `gpt/terra@5.6{pro}` |
   | `gpt-terra@5.6` | `gpt/terra@5.6` |
-  | `gpt/pro` | `gpt/pro@5.2`, `gpt/pro@5.4`, `gpt/pro@5.5` |
-  | `kimi-k2{code}` | `kimi/k@2.7{code}` |
+    | `kimi-k2{code}` | `kimi/k@2.7{code}` |
   | `ministral#3b{instruct}` | `ministral@3#3b{instruct}` |
-  | `ministral#8b{instruct}` | `ministral@3#8b{instruct}` |
-  | `mistral/large#675b{instruct}` | `mistral/large@3#675b{instruct}` |
+    | `mistral/large#675b{instruct}` | `mistral/large@3#675b{instruct}` |
   | `mistral/mini#3b` | `voxtral/mini#3b` |
   | `mistral/small#24b` | `voxtral/small#24b` |
   | `nemotron#120b` | `nemotron@3#120b` |
@@ -455,19 +670,27 @@ for its **Go module tags** (`vX.Y.Z`).
   deliberately not stripped, and `gpt/pro` splits three ways because its rows are dated by
   two different mechanisms.
 
-  **Three keys deviate from the epoch-wide `show`-seam expectation, and the deviation is
-  recorded rather than repaired.** `ministral#3b{instruct}`, `mistral/large#675b{instruct}`
-  and `nemotron#120b` still RESOLVE at plain `bestiary show`, because each remains a valid
-  **under-specified reference** to exactly one live entity: the successor carries a version
-  the retired key did not, so a ref omitting the version still names one model. Nothing was
-  added to let a retired key resolve: the exact-key seams (`bestiary.EntityByKey` and
-  `GET /entity/<key>`) are a hard 404 for all **26**, and making these fail would mean
+  **Two keys deviate from the epoch-wide `show`-seam expectation, and the deviation is
+  recorded rather than repaired.** `ministral#3b{instruct}` and `nemotron#120b` still
+  RESOLVE at plain `bestiary show`, because each remains a valid **under-specified
+  reference** to exactly one live entity: the successor carries a version the retired key
+  did not, so a ref omitting the version still names one model. Nothing was added to let a
+  retired key resolve: the exact-key seams (`bestiary.EntityByKey` and
+  `GET /entity/<key>`) are a hard 404 for all **24**, and making these fail would mean
   breaking ordinary under-specified lookups whenever they happen to match a retired
   spelling. `show --by-entity` is a different lookup again — an exact match over the
   store-overlaid entity index (entity key, entity preferred name or concrete model id),
-  with no short-reference path — and it reports not-found for all 26. Nine further keys
-  report the under-specified error because their FAMILY survives them, exactly as `show gpt`
-  and `show claude` always have; the remaining fourteen are 404 on both seams.
+  with no short-reference path — and it reports not-found for all 24. Eight further keys
+  report the under-specified error; the remaining fourteen are 404 on both seams.
+
+  This was **three** resolving and **nine** under-specified before the 2026-08-28 refresh.
+  `mistral/large#675b{instruct}` moved between the two classes: its successor
+  `mistral/large@3#675b{instruct}` gained two provider rows (nano-gpt and nvidia joined
+  amazon-bedrock) which group into two date-differentiated candidates, so the short
+  reference no longer names exactly one of them. Seven of the eight under-specified keys are
+  under-specified because their FAMILY survives them, exactly as `show gpt` and
+  `show claude` always have; `mistral/large#675b{instruct}` is the eighth and is instead the
+  ordinary single-entity date fragmentation any multi-instance entity produces.
 
   **Library consumers get a compile break, which is louder than a 404.**
   `entities_constants_gen.go` loses **26** `Entity__` declarations and gains **14**,
@@ -1088,7 +1311,7 @@ for its **Go module tags** (`vX.Y.Z`).
   | `glm/free@5.2` | `glm@5.2` |
   | `hy/free@3` | `hy@3` |
   | `kimi/free` | `kimi/k@2.5`, `kimi/k@2.7{code}`, `kimi/k@3` |
-  | `laguna-s/free@2.1` | `laguna-s@2.1` |
+  | `laguna-s/free@2.1` | `laguna` |
   | `mimo/flash-free` | `mimo@2{flash}` |
   | `mimo/omni-free` | `mimo@2{omni}` |
   | `mimo/pro-free` | `mimo@2{pro}` |
@@ -1098,6 +1321,14 @@ for its **Go module tags** (`vX.Y.Z`).
   | `minimax/free` | `minimax/m@2.1`, `minimax/m@2.5`, `minimax/m@2.7` |
   | `minimax-m3/free` | `minimax/m@3` |
   | `nemotron/free@3` | `nemotron@3` |
+
+  **Re-measured at the 2026-08-28 models.dev catalog refresh: one row moved.**
+  `laguna-s/free@2.1` is recorded above as re-homing to `laguna`, not to `laguna-s@2.1` as it
+  did when the lever landed. Its single pinned row, `vercel|poolside/laguna-s-2.1-free`, is
+  still live and still spelled the same way; upstream changed what it stamps on that row, so
+  the row now decomposes onto the bare `laguna` key. `laguna-s@2.1` is still a live key — it
+  simply no longer holds this instance. The successor column is the measured destination, so
+  it follows the row.
 
   Two of these were the *only* key their family had, so the `deepseek-flash` and
   `minimax-m3` families disappear entirely — which is what they always were, phantom
