@@ -4368,6 +4368,17 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	"thinkingmachines/inkling:thinking":    {family: "inkling"},
 	"thinkingmachines/inkling:peft:262144": {family: "inkling"},
 
+	// requesty spells the SERVED CONTEXT LENGTH into the id as "inkling-256k", and the
+	// trailing "256k" lands in the VERSION slot — minting inkling@256k, a release Thinking
+	// Machines never published and the only context-length-shaped version in the whole
+	// keyspace. It is the same serving fact as the ":peft:262144" config pinned directly
+	// above: the requesty row and llmtr's bare thinkingmachines/inkling carry an identical
+	// 262144 window at an identical 1.8700 / 4.6800 price, so this is bare Inkling served
+	// at a 256k context, not a distinct artifact. A context length is a serving fact, never
+	// identity: pinned to the bare inkling entity its siblings already occupy, and
+	// inkling@256k retires with it.
+	"inkling-256k": {family: "inkling"},
+
 	// llmtr serves Trendyol's Asure 12B as "trendyol-asure-12b" with raw_family "gemma",
 	// which keyed a Turkish lab's own model onto Google's Gemma line — gemma#12b held
 	// that single row alone, so the whole entity was a misattribution. The id names the
@@ -4378,6 +4389,21 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// the models-view row trendyol/asure-12b then joins it mechanically instead of being
 	// reported unlinked. gemma#12b retires with it — it never held a Gemma model.
 	"trendyol-asure-12b": {family: "asure"},
+
+	// nano-gpt newly stamps raw_family "claude" on "Gemma-4-31B-Claude-4.6-Opus-Reasoning-
+	// Distilled" — a Google Gemma 4 31B open-weights model DISTILLED FROM Claude Opus 4.6.
+	// The distillation TEACHER is not the artifact's family. At the v0.2.10 baseline the
+	// same row carried family=null and the leading-token read gave the right answer
+	// (fam=gemma ver=4 size=31b); with the label present the pipeline trusts it and the row
+	// keys claude/opus#31b, crediting Anthropic with a Gemma derivative at a 31B size
+	// Anthropic has never published, on the flagship Opus line. That is the same
+	// misattribution class as the trendyol-asure-12b pin directly above (a Turkish lab's
+	// model labelled gemma) and the eight vercel fish-audio rows (Fish Audio labelled o).
+	// Pinned exactly: the row rejoins gemma@4#31b, the 31B size is recovered mechanically
+	// from the id, and claude/opus#31b retires — it never held an Anthropic artifact. The
+	// base relationship belongs in lineage.json as a distillation edge, never in the family
+	// token.
+	"gemma-4-31b-claude-4.6-opus-reasoning-distilled": {family: "gemma", version: "4"},
 
 	// interfaze-beta is the last row that put "beta" into an identity. vercel serves
 	// interfaze/interfaze-beta with an empty raw_family, so the leading-token pipeline
