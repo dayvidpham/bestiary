@@ -11,10 +11,8 @@ const (
 	FamilyAgi               Family = "agi"
 	FamilyAllenai           Family = "allenai"
 	FamilyAlpha             Family = "alpha"
-	FamilyAura              Family = "aura"
 	FamilyAuto              Family = "auto"
 	FamilyBaichuan          Family = "baichuan"
-	FamilyBart              Family = "bart"
 	FamilyBge               Family = "bge"
 	FamilyBigPickle         Family = "big-pickle"
 	FamilyCanopylabs        Family = "canopylabs"
@@ -22,6 +20,7 @@ const (
 	FamilyClaude            Family = "claude"
 	FamilyClaudeFable       Family = "claude-fable"
 	FamilyClaudeHaiku       Family = "claude-haiku"
+	FamilyClaudeMythos      Family = "claude-mythos"
 	FamilyClaudeOpus        Family = "claude-opus"
 	FamilyClaudeSonnet      Family = "claude-sonnet"
 	FamilyCodestral         Family = "codestral"
@@ -34,16 +33,13 @@ const (
 	FamilyDallE             Family = "dall-e"
 	FamilyDeepSeek          Family = "deepseek"
 	FamilyDeepSeekFlash     Family = "deepseek-flash"
-	FamilyDeepSeekFlashFree Family = "deepseek-flash-free"
 	FamilyDeepSeekThinking  Family = "deepseek-thinking"
 	FamilyDevstral          Family = "devstral"
-	FamilyDistilbert        Family = "distilbert"
 	FamilyElevenlabs        Family = "elevenlabs"
 	FamilyErnie             Family = "ernie"
 	FamilyFlux              Family = "flux"
 	FamilyFugu              Family = "fugu"
 	FamilyGemini            Family = "gemini"
-	FamilyGeminiEmbedding   Family = "gemini-embedding"
 	FamilyGeminiFlash       Family = "gemini-flash"
 	FamilyGeminiFlashLite   Family = "gemini-flash-lite"
 	FamilyGeminiPro         Family = "gemini-pro"
@@ -72,12 +68,9 @@ const (
 	FamilyGroq              Family = "groq"
 	FamilyHermes            Family = "hermes"
 	FamilyHunyuan           Family = "hunyuan"
-	FamilyHy3               Family = "hy3"
 	FamilyHy3Free           Family = "hy3-free"
 	FamilyIdeogram          Family = "ideogram"
 	FamilyImagen            Family = "imagen"
-	FamilyIndictrans        Family = "indictrans"
-	FamilyJais              Family = "jais"
 	FamilyJamba             Family = "jamba"
 	FamilyKatCoder          Family = "kat-coder"
 	FamilyKimi              Family = "kimi"
@@ -94,12 +87,10 @@ const (
 	FamilyLongcat           Family = "longcat"
 	FamilyLucid             Family = "lucid"
 	FamilyLyria             Family = "lyria"
-	FamilyM2m               Family = "m2m"
 	FamilyMagistral         Family = "magistral"
 	FamilyMagistralMedium   Family = "magistral-medium"
 	FamilyMagistralSmall    Family = "magistral-small"
 	FamilyMai               Family = "mai"
-	FamilyMelotts           Family = "melotts"
 	FamilyMercury           Family = "mercury"
 	FamilyMimo              Family = "mimo"
 	FamilyMimoFlashFree     Family = "mimo-flash-free"
@@ -128,6 +119,7 @@ const (
 	FamilyModelRouter       Family = "model-router"
 	FamilyMorph             Family = "morph"
 	FamilyMuse              Family = "muse"
+	FamilyMuseFree          Family = "muse-free"
 	FamilyNanoBanana        Family = "nano-banana"
 	FamilyNemotron          Family = "nemotron"
 	FamilyNemotronFree      Family = "nemotron-free"
@@ -141,11 +133,11 @@ const (
 	FamilyO                 Family = "o"
 	FamilyOMini             Family = "o-mini"
 	FamilyOPro              Family = "o-pro"
+	FamilyOrnith            Family = "ornith"
 	FamilyOsmosis           Family = "osmosis"
 	FamilyPalmyra           Family = "palmyra"
 	FamilyPhi               Family = "phi"
 	FamilyPixtral           Family = "pixtral"
-	FamilyPlamo             Family = "plamo"
 	FamilyQvq               Family = "qvq"
 	FamilyQwen              Family = "qwen"
 	FamilyQwenFree          Family = "qwen-free"
@@ -153,6 +145,7 @@ const (
 	FamilyQwen36            Family = "qwen3.6"
 	FamilyQwen37Max         Family = "qwen3.7-max"
 	FamilyQwen37Plus        Family = "qwen3.7-plus"
+	FamilyQwen38Max         Family = "qwen3.8-max"
 	FamilyQwerky            Family = "qwerky"
 	FamilyRay               Family = "ray"
 	FamilyRecraft           Family = "recraft"
@@ -161,9 +154,10 @@ const (
 	FamilyRing1TFree        Family = "ring-1t-free"
 	FamilyRnj               Family = "rnj"
 	FamilyRunway            Family = "runway"
+	FamilySakanaNamazu      Family = "sakana-namazu"
 	FamilySarvam            Family = "sarvam"
 	FamilySeed              Family = "seed"
-	FamilySmartTurn         Family = "smart-turn"
+	FamilySolar             Family = "solar"
 	FamilySolarMini         Family = "solar-mini"
 	FamilySolarPro          Family = "solar-pro"
 	FamilySonar             Family = "sonar"
@@ -178,7 +172,6 @@ const (
 	FamilyTitanEmbed        Family = "titan-embed"
 	FamilyTopazlabs         Family = "topazlabs"
 	FamilyTrinity           Family = "trinity"
-	FamilyTrinityMini       Family = "trinity-mini"
 	FamilyUnsloth           Family = "unsloth"
 	FamilyV0                Family = "v0"
 	FamilyVenice            Family = "venice"
@@ -195,10 +188,8 @@ var allFamilies = [...]Family{
 	"agi",
 	"allenai",
 	"alpha",
-	"aura",
 	"auto",
 	"baichuan",
-	"bart",
 	"bge",
 	"big-pickle",
 	"canopylabs",
@@ -206,6 +197,7 @@ var allFamilies = [...]Family{
 	"claude",
 	"claude-fable",
 	"claude-haiku",
+	"claude-mythos",
 	"claude-opus",
 	"claude-sonnet",
 	"codestral",
@@ -218,16 +210,13 @@ var allFamilies = [...]Family{
 	"dall-e",
 	"deepseek",
 	"deepseek-flash",
-	"deepseek-flash-free",
 	"deepseek-thinking",
 	"devstral",
-	"distilbert",
 	"elevenlabs",
 	"ernie",
 	"flux",
 	"fugu",
 	"gemini",
-	"gemini-embedding",
 	"gemini-flash",
 	"gemini-flash-lite",
 	"gemini-pro",
@@ -256,12 +245,9 @@ var allFamilies = [...]Family{
 	"groq",
 	"hermes",
 	"hunyuan",
-	"hy3",
 	"hy3-free",
 	"ideogram",
 	"imagen",
-	"indictrans",
-	"jais",
 	"jamba",
 	"kat-coder",
 	"kimi",
@@ -278,12 +264,10 @@ var allFamilies = [...]Family{
 	"longcat",
 	"lucid",
 	"lyria",
-	"m2m",
 	"magistral",
 	"magistral-medium",
 	"magistral-small",
 	"mai",
-	"melotts",
 	"mercury",
 	"mimo",
 	"mimo-flash-free",
@@ -312,6 +296,7 @@ var allFamilies = [...]Family{
 	"model-router",
 	"morph",
 	"muse",
+	"muse-free",
 	"nano-banana",
 	"nemotron",
 	"nemotron-free",
@@ -325,11 +310,11 @@ var allFamilies = [...]Family{
 	"o",
 	"o-mini",
 	"o-pro",
+	"ornith",
 	"osmosis",
 	"palmyra",
 	"phi",
 	"pixtral",
-	"plamo",
 	"qvq",
 	"qwen",
 	"qwen-free",
@@ -337,6 +322,7 @@ var allFamilies = [...]Family{
 	"qwen3.6",
 	"qwen3.7-max",
 	"qwen3.7-plus",
+	"qwen3.8-max",
 	"qwerky",
 	"ray",
 	"recraft",
@@ -345,9 +331,10 @@ var allFamilies = [...]Family{
 	"ring-1t-free",
 	"rnj",
 	"runway",
+	"sakana-namazu",
 	"sarvam",
 	"seed",
-	"smart-turn",
+	"solar",
 	"solar-mini",
 	"solar-pro",
 	"sonar",
@@ -362,7 +349,6 @@ var allFamilies = [...]Family{
 	"titan-embed",
 	"topazlabs",
 	"trinity",
-	"trinity-mini",
 	"unsloth",
 	"v0",
 	"venice",
