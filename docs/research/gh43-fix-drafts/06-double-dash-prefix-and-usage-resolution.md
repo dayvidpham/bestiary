@@ -9,7 +9,7 @@ labels: bug
 measured at 2.5% of all tokens. The sweep re-measured them. The result
 SPLITS the report in two.
 
-Part 1 — the cited spellings are NOT a parser defect. Every one decomposes
+Part 1 - the cited spellings are NOT a parser defect. Every one decomposes
 correctly:
 
 | Cited spelling | Key produced |
@@ -27,7 +27,7 @@ not found", because `Resolve` matches catalog ids and no catalog row spells
 the model this way. So the 2.5% gap is a RESOLUTION gap. The parser already
 knows the destination; the lookup will not use it.
 
-Part 2 — a REAL defect is in the catalog, and the cited spellings pointed
+Part 2 - a REAL defect is in the catalog, and the cited spellings pointed
 at it. A doubled dash after a vendor prefix destroys the version:
 
 | Id | Key | Correct key |

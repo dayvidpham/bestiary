@@ -9,7 +9,7 @@ The parser does not decode a leading `v` on a version token. The token then
 goes to the wrong slot, or it disappears. The sweep for #43 measured three
 shapes of one cause.
 
-Shape A — the version goes to the VARIANT slot. Eight keys, 31 records:
+Shape A - the version goes to the VARIANT slot. Eight keys, 31 records:
 
 | Key | Records |
 |---|---|
@@ -25,12 +25,12 @@ Shape A — the version goes to the VARIANT slot. Eight keys, 31 records:
 The correct sibling `deepseek@3.2` holds 1 record. The same product is
 therefore on two keys.
 
-Shape B — a BARE `v<major>` token is destroyed. `deepseek/deepseek-v4-pro`
+Shape B - a BARE `v<major>` token is destroyed. `deepseek/deepseek-v4-pro`
 keys `deepseek/pro`, which states no version. That key holds 39 records.
 `deepseek-ai/deepseek-v4-flash` keys `deepseek/flash`, 58 records. Together
 this is 97 records that state no version although their ids state one.
 
-Shape C — the dash-glued dot-lost spelling misreads the version.
+Shape C - the dash-glued dot-lost spelling misreads the version.
 `deepseek-v3-2` keys `deepseek@2`. The parser takes only the last segment.
 
 The cause is the `v` character, not the version format. The control proves
@@ -40,7 +40,7 @@ reaches the `@version` slot.
 
 This defect is also what makes #43's class 5 look like a labelling problem.
 The upstream family `deepseek-thinking` carries 158 served rows. 106 of
-them land on `deepseek/pro` — the version-less key of shape B.
+them land on `deepseek/pro` - the version-less key of shape B.
 
 ## Scope
 

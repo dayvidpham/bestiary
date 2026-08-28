@@ -6,8 +6,8 @@ labels: bug
 ## Problem
 
 The sweep for #43 verified the destination of the upstream family
-`deepseek-thinking`. The label itself is correctly discarded — no key
-contains it — and the 158 served rows land here:
+`deepseek-thinking`. The label itself is correctly discarded - no key
+contains it - and the 158 served rows land here:
 
 | Destination key | Served rows |
 |---|---|
@@ -38,7 +38,7 @@ The decision, stated as questions for the user:
 
 1. Does a distill get its own entity, or is it an instance of the base it
    was distilled from?
-2. If it gets its own entity, which axis names the distill — a variant, a
+2. If it gets its own entity, which axis names the distill - a variant, a
    modifier, or the lineage edge alone?
 3. Does the R1 line marker belong in the key, and if so, is it a version or
    a variant?

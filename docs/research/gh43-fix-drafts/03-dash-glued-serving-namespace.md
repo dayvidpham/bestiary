@@ -7,7 +7,7 @@ labels: bug
 
 Some providers glue their namespace to the model id with a dash instead of
 a slash. The parser strips a SLASH namespace. It does not strip a DASH one,
-so the namespace becomes model content — and it lands in a different slot
+so the namespace becomes model content - and it lands in a different slot
 depending on what follows it.
 
 The sweep for #43 measured the `z-ai` prefix on Zhipu ids:
