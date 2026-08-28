@@ -42,7 +42,7 @@ func TestParseData_RegexesValid(t *testing.T) {
 // is authoritative: if you add an override to the JSON, add a case there.
 func TestParseFamily_Overrides(t *testing.T) {
 	t.Parallel()
-	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 60)
+	corpus := loadFamilyVariantCorpus(t, familyOverridesCorpusJSON, 59)
 	requireInputCoverage(t, corpus, map[string]familyVariantExpected{
 		"claude-opus":         {Family: "claude", Variant: "opus"},
 		"gpt-oss":             {Family: "gpt", Variant: "oss"},

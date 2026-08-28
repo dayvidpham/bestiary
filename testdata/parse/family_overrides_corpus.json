@@ -577,22 +577,6 @@
       }
     },
     {
-      "name": "mimo-v2.5",
-      "input": "mimo-v2.5",
-      "expected": {
-        "family": "mimo",
-        "variant": ""
-      },
-      "classification": "must-pass",
-      "provenance": {
-        "source": "enum",
-        "ref": "family_overrides.json: mimo-v2.5 reduces to family 'mimo' with an EMPTY variant"
-      },
-      "mutation": {
-        "description": "curated compound-family reduction (empty variant) for mimo-v2.5"
-      }
-    },
-    {
       "name": "mimo-v2.5-pro",
       "input": "mimo-v2.5-pro",
       "expected": {

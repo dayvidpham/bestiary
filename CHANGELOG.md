@@ -16,6 +16,25 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Changed
 
+- **Two dead curation rows are swept.** Both were reachable only through data this
+  release itself removed, and both are deleted with a measured proof of deadness: a full
+  `go generate ./...` with and without each row is **byte-identical in every generated
+  file** — no key moves, no instance moves, no report row changes.
+
+  - `parse/data/creators.json`: the `{"family": "kimi-k2", "creator": "moonshotai"}` row.
+    The `kimi-k2` family was retired by the general series-compound recovery, so the row
+    named a family that no longer exists. Moonshot keeps its attribution through the
+    surviving `kimi` row, and `Creators()` is unmoved at **43**.
+  - `parse/data/family_overrides.json`: the `mimo-v2.5` row. It is subsumed by
+    `splitSeriesVariant`, which re-decomposes a letter-prefix series directly off the model
+    ID: `ParseFamilyDetailed(raw=mimo, id=mimo-v2.5)` already yields
+    `(mimo, "", "2.5", "")` without it, which is what the canonical seam and therefore every
+    entity key uses. The row only affected the raw-only `ParseFamily` primitive, whose
+    whole-token output (`v2.5`) is documented as SUPERSEDED downstream
+    (`parse/data/version_patterns.json`). Its case leaves
+    `testdata/parse/family_overrides_corpus.json` with it, since that corpus enumerates the
+    override rows. The sibling `mimo-v2.5-pro` row is **not** dead and stays.
+
 - **Kling's eight video keys state their version in the version slot.** The klingai rows
   are spelled `klingai/kling-v<version>[-turbo]-<modality>` upstream, and the leading-token
   decomposition read the whole remainder as ONE variant token, so the keys rendered
