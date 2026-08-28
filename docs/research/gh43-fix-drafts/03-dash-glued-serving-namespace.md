@@ -10,6 +10,12 @@ a slash. The parser strips a SLASH namespace. It does not strip a DASH one,
 so the namespace becomes model content - and it lands in a different slot
 depending on what follows it.
 
+A **record**, here and in the sweep report, is one DISTINCT raw id string
+within one catalog view, compared case-sensitively, among the rows the
+seed-token census matched. The counting rule is stated once in
+`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
+pinned in `TestGH43Sweep_TokenCensus`.
+
 The sweep for #43 measured the `z-ai` prefix on Zhipu ids:
 
 | Id | Key | What went wrong |

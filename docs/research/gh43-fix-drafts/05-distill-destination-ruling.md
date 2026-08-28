@@ -7,18 +7,26 @@ labels: bug
 
 The sweep for #43 verified the destination of the upstream family
 `deepseek-thinking`. The label itself is correctly discarded - no key
-contains it - and the 158 served rows land here:
+contains it.
 
-| Destination key | Served rows |
-|---|---|
-| `deepseek/pro` | 106 |
-| `deepseek` | 40 |
-| `deepseek#70b` | 6 |
-| `deepseek#32b` | 2 |
-| `deepseek/v3.2-exp` | 1 |
-| `deepseek#8b` | 1 |
-| `deepseek/v3.2` | 1 |
-| `deepseek#14b` | 1 |
+This class counts a DIFFERENT population from the sweep census: every row
+carrying the label, not the seed-token matches. So it is printed in BOTH
+units. The label carries 158 provider ROWS, which are 63 distinct served
+ids by the sweep's counting rule (one distinct raw id per catalog view,
+compared case-sensitively), plus 6 lab ids. Both columns are pinned in
+`TestGH43Sweep_TokenCensus`, and the table is total in both units.
+
+| Destination key | Records (distinct ids) | Provider rows |
+|---|---|---|
+| `deepseek/pro` | 35 | 106 |
+| `deepseek` | 19 | 40 |
+| `deepseek#70b` | 3 | 6 |
+| `deepseek#32b` | 2 | 2 |
+| `deepseek/v3.2-exp` | 1 | 1 |
+| `deepseek#8b` | 1 | 1 |
+| `deepseek/v3.2` | 1 | 1 |
+| `deepseek#14b` | 1 | 1 |
+| **TOTAL** | **63** | **158** |
 
 Most of the wrong keys here are the `v` version-token defect, which has its
 own issue. One group is NOT, and it needs a ruling.
@@ -26,7 +34,8 @@ own issue. One group is NOT, and it needs a ruling.
 The R1 distills key by SIZE alone. `deepseek-r1-distill-qwen-32b` keys
 `deepseek#32b`. The key states neither the R1 line that produced it nor the
 qwen base it was distilled from. A reader cannot tell it from any other
-32-billion deepseek row, and the sized keys above hold 10 rows in total.
+32-billion deepseek row. The four sized keys above hold 7 distinct ids and
+10 provider rows between them.
 
 The repository already carries a lineage ledger for derivation edges. A
 distill is exactly such an edge. What is undecided is whether the KEY must
@@ -71,7 +80,7 @@ Non-changes:
         |
         +--> 106 rows -> deepseek/pro      <-- the `v` version defect, own issue
         +-->  40 rows -> deepseek          <-- correct: alias endpoints, no version
-        +-->  10 rows -> deepseek#<size>   <-- THIS issue
+        +-->  10 rows -> deepseek#<size>   <-- THIS issue (7 distinct ids)
                            |
                            v
               "deepseek-r1-distill-qwen-32b"

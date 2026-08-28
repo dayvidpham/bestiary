@@ -99,7 +99,15 @@ const gh43ExpectedTBD = "EXPECTED_TBD"
 
 // gh43CaseCount is the EXACT authored case count. An exact control (not a floor)
 // catches a drop as well as a stray add.
-const gh43CaseCount = 41
+const gh43CaseCount = 42
+
+// gh43CatalogPath is the vendored catalog snapshot every figure in this file and
+// in the report is measured against. gh43ReportPath is the prose those figures
+// live in: a red test sends the reader there, so the path must resolve.
+const (
+	gh43CatalogPath = "parse/data/modelsdev/catalog.json"
+	gh43ReportPath  = "docs/research/gh43-parser-conformance-sweep.md"
+)
 
 // gh43ClassCount is the number of defect classes GH#43 cites. Every one must be
 // covered by at least one case.
@@ -123,39 +131,112 @@ type gh43Expected struct {
 	WantKey string `json:"want_key"`
 }
 
+// gh43Index holds the three catalog-derived sets the corpus needs: the registry's
+// own serving-id -> entity-key map, and the id sets of the two catalog views. The
+// id sets exist so a case's PREMISE is checked, not only its key: a case that says
+// "this is a lab row" or "this string is absent from the catalog" must go red when
+// that stops being true, or its verdict rots green.
+type gh43Index struct {
+	// servingKeys maps a LOWERCASED served id to the key of the Entity that
+	// carries it. Lowercased because the registry's own instance index is
+	// case-insensitive.
+	servingKeys map[string]string
+	// servedIDs and labIDs hold every id of the provider (served) view and the
+	// models (lab) view, lowercased, for the premise checks.
+	servedIDs map[string]bool
+	labIDs    map[string]bool
+}
+
+// gh43LoadCatalog reads and parses the vendored catalog snapshot. Both tests in
+// this file measure against the SAME snapshot, so they load it the same way.
+func gh43LoadCatalog(t *testing.T) Catalog {
+	t.Helper()
+	raw, err := os.ReadFile(gh43CatalogPath)
+	if err != nil {
+		t.Fatalf("read the vendored catalog snapshot: %v", err)
+	}
+	cat, err := ParseCatalogJSON(raw)
+	if err != nil {
+		t.Fatalf("parse the vendored catalog snapshot: %v", err)
+	}
+	return cat
+}
+
+// gh43BuildIndex builds the serving-id -> entity-key map from the registry's OWN
+// entities, so the key a case asserts is the key the entity actually carries, and
+// the two view id sets from the catalog snapshot.
+func gh43BuildIndex(cat Catalog) gh43Index {
+	idx := gh43Index{
+		servingKeys: make(map[string]string),
+		servedIDs:   make(map[string]bool),
+		labIDs:      make(map[string]bool),
+	}
+	for _, e := range Entities() {
+		key := e.Ref.String()
+		for _, inst := range e.Instances {
+			idx.servingKeys[strings.ToLower(string(inst.ID))] = key
+		}
+	}
+	for _, m := range cat.Models {
+		idx.servedIDs[strings.ToLower(string(m.ID))] = true
+	}
+	for _, md := range cat.Metadata {
+		idx.labIDs[strings.ToLower(string(md.MetadataID))] = true
+	}
+	return idx
+}
+
 // gh43ProductionKey drives one corpus string through the PRODUCTION path for its
 // kind and returns the entity key. It never re-implements a decomposition.
-func gh43ProductionKey(t *testing.T, in gh43Input, servingKeys map[string]string) string {
+//
+// Every kind is premise-guarded. The three kinds make three DIFFERENT factual
+// claims about the catalog, and each claim is load-bearing for a verdict in the
+// report, so each one fatals with the same message shape when it stops holding.
+func gh43ProductionKey(t *testing.T, in gh43Input, idx gh43Index) string {
 	t.Helper()
+	low := strings.ToLower(in.Raw)
 	switch in.Kind {
 	case gh43Serving:
-		key, ok := servingKeys[strings.ToLower(in.Raw)]
+		key, ok := idx.servingKeys[low]
 		if !ok {
 			t.Fatalf("serving id %q holds no entity instance in the registry\n"+
 				"  What: the corpus claims this is a served catalog row, but no Entity carries it\n"+
-				"  How to fix: re-measure against parse/data/modelsdev/catalog.json; if the row"+
-				" is gone upstream, re-classify the case as off-catalog-id", in.Raw)
+				"  How to fix: re-measure against %s; if the row"+
+				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, gh43CatalogPath)
 		}
 		return key
-	case gh43Lab, gh43OffCatalog:
+	case gh43Lab:
+		if !idx.labIDs[low] {
+			t.Fatalf("lab id %q is absent from the models (metadata) view\n"+
+				"  What: the corpus claims this is a lab row, but the catalog snapshot"+
+				" carries no metadata row with this id\n"+
+				"  Why it matters: metadataEntityRef answers for ANY string, so without this"+
+				" check the case would still produce a key and the premise would rot green\n"+
+				"  How to fix: re-measure against %s; if the row"+
+				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, gh43CatalogPath)
+		}
+		return metadataEntityRef(MetadataID(in.Raw)).String()
+	case gh43OffCatalog:
+		if idx.servedIDs[low] || idx.labIDs[low] {
+			view := "models (metadata)"
+			if idx.servedIDs[low] {
+				view = "provider (served)"
+			}
+			t.Fatalf("off-catalog id %q IS present in the %s view\n"+
+				"  What: the corpus claims this spelling appears only in USAGE data and is"+
+				" absent from the vendored catalog, and it no longer is\n"+
+				"  Why it matters: the class 6 refutation rests on this premise. A string that"+
+				" became a catalog row must be measured on the path its view uses, not on the"+
+				" id-only decomposition, or the sweep reports agreement it did not measure\n"+
+				"  How to fix: re-classify the case as serving-id or lab-id and re-measure the"+
+				" key, then re-check the class 6 verdict in %s",
+				in.Raw, view, gh43ReportPath)
+		}
 		return metadataEntityRef(MetadataID(in.Raw)).String()
 	default:
 		t.Fatalf("case input kind %q is not a member of the closed set", in.Kind)
 		return ""
 	}
-}
-
-// gh43ServingKeyIndex builds the serving-id -> entity-key map from the registry's
-// OWN entities, so the key a case asserts is the key the entity actually carries.
-func gh43ServingKeyIndex() map[string]string {
-	idx := make(map[string]string)
-	for _, e := range Entities() {
-		key := e.Ref.String()
-		for _, inst := range e.Instances {
-			idx[strings.ToLower(string(inst.ID))] = key
-		}
-	}
-	return idx
 }
 
 func TestGH43Conformance_CitedStrings(t *testing.T) {
@@ -169,7 +250,7 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 	// Non-vacuity: classification + provenance + mutation on every case.
 	assert.RequireValid(t, corpus)
 
-	servingKeys := gh43ServingKeyIndex()
+	idx := gh43BuildIndex(gh43LoadCatalog(t))
 
 	classSeen := map[int]int{}
 	classDefects := map[int]int{}
@@ -219,7 +300,7 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 		}
 
 		t.Run(c.Name, func(t *testing.T) {
-			got := gh43ProductionKey(t, c.Input, servingKeys)
+			got := gh43ProductionKey(t, c.Input, idx)
 			if got != c.Expected.Key {
 				t.Errorf("%s %q: production key = %q, corpus pins %q\n"+
 					"  What: the sweep's measured key for this string MOVED\n"+
@@ -330,6 +411,135 @@ var gh43SeedTokens = []gh43LabToken{
 // sum of every gh43LabToken.Want must equal it, and the census must match it.
 const gh43CensusTotal = 3105
 
+// ---------------------------------------------------------------------------
+// The counting rule, and the per-key record counts the report states
+// ---------------------------------------------------------------------------
+
+// THE COUNTING RULE. Everywhere the sweep, the report and the six fix issues say
+// "records" for a key, the unit is:
+//
+//	ONE DISTINCT RAW ID STRING, WITHIN ONE CATALOG VIEW, COMPARED CASE-SENSITIVELY,
+//	AMONG THE RECORDS THE SEED-TOKEN CENSUS MATCHED.
+//
+// Three parts of that sentence are load-bearing and each was measured:
+//
+//   - PER VIEW. The provider (served) view and the models (lab) view are counted
+//     separately, so an id present in both counts twice. A served id is keyed by
+//     the registry's entity index; a lab id by metadataEntityRef.
+//   - DISTINCT ID, not row. One id served by N providers is ONE record. The
+//     universe is 7,791 rows; 6,666 of them match a seed token; they collapse to
+//     3,105 distinct (view, id) pairs.
+//   - CASE-SENSITIVE. "tencent/hy3" and "tencent/Hy3" are two records even though
+//     the registry's serving index is case-INsensitive and both reach one entity.
+//
+// A different unit gives a very different number for the same key: deepseek/flash
+// is 58 records under this rule and 148 provider instances under a row rule. So
+// the unit is named beside every figure, in the report and here.
+
+// gh43KeyRecords pins the record count for ONE entity key under the counting rule
+// above. Every key whose count the report or a posted fix issue states appears in
+// this table, so a moved count fails HERE first, naming the key.
+type gh43KeyRecords struct {
+	Key  string
+	Want int
+	// Where names the prose the figure appears in, so a red row says what to
+	// re-measure and where to correct it.
+	Where string
+}
+
+// gh43KeyRecordCounts is the pinned per-key table. It is SNAPSHOT-RELATIVE by
+// construction, exactly like the per-lab census: a re-vendored catalog moves these
+// counts, the test goes red, and the prose is re-measured instead of going stale.
+var gh43KeyRecordCounts = []gh43KeyRecords{
+	// Class 1, shape A: the version in the variant slot. These eight sum to 31.
+	{Key: "deepseek/v3.2", Want: 12, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.2-exp", Want: 6, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.1", Want: 5, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.1-terminus", Want: 4, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.2-speciale", Want: 1, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.2-maas", Want: 1, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.2-251201", Want: 1, Where: "class 1 table; issue #48"},
+	{Key: "deepseek/v3.1-maas", Want: 1, Where: "class 1 table; issue #48"},
+	// Class 1, the correct sibling, and shape B. 39 + 58 = 97.
+	{Key: "deepseek@3.2", Want: 1, Where: "class 1 prose; issue #48"},
+	{Key: "deepseek/pro", Want: 39, Where: "class 1 shape B; issue #48"},
+	{Key: "deepseek/flash", Want: 58, Where: "class 1 shape B; issue #48"},
+	// Class 2.
+	{Key: "deepseek-ocr@2", Want: 3, Where: "class 2 table; issue #49"},
+	{Key: "claude-mythos@5", Want: 2, Where: "class 2 table; issue #49"},
+	{Key: "claude/fable@5", Want: 12, Where: "class 2 prose, refuted"},
+	// Class 3.
+	{Key: "glm/z", Want: 3, Where: "class 3 prose; issue #50"},
+	{Key: "glm/z#9b", Want: 1, Where: "class 3 prose; issue #50"},
+	{Key: "glm/v@4.6{flash}", Want: 5, Where: "class 3 prose; issue #50"},
+	// Class 4.
+	{Key: "deepseek{turbo}", Want: 2, Where: "class 4 table; issue #51"},
+	{Key: "claude{code}", Want: 1, Where: "class 4 table; issue #51"},
+	// Class 6. These two are the pair the report first stated as 14 and 10.
+	{Key: "claude/opus", Want: 19, Where: "class 6 prose; issue #53"},
+	{Key: "claude/sonnet", Want: 13, Where: "class 6 prose; issue #53"},
+}
+
+// gh43DoubledDash is the vendor-prefix spelling class 6 blames. The report states
+// how many of the claude/opus and claude/sonnet records carry it, so that figure
+// is pinned too: it is the doubled dash's real blast radius, and it is much
+// smaller than the key totals above.
+const gh43DoubledDash = "--"
+
+// gh43DoubledDashCounts pins the doubled-dash subset of two class-6 keys.
+var gh43DoubledDashCounts = []gh43KeyRecords{
+	{Key: "claude/opus", Want: 6, Where: "class 6 prose; issue #53"},
+	{Key: "claude/sonnet", Want: 6, Where: "class 6 prose; issue #53"},
+}
+
+// gh43Class5Label is the upstream family label class 5 is about. Class 5 counts a
+// DIFFERENT population from the census: every row carrying this label, not the
+// seed-token matches. Its figures are therefore pinned separately, and the report
+// states both units side by side.
+const gh43Class5Label = "deepseek-thinking"
+
+const (
+	// gh43Class5ServedRows is the ROW count: provider rows carrying the label.
+	// The issue reported 96; this is the figure comparable with it.
+	gh43Class5ServedRows = 158
+	// gh43Class5ServedIDs is the same population under the counting rule above:
+	// distinct case-sensitive served ids.
+	gh43Class5ServedIDs = 63
+	// gh43Class5LabIDs is the models-view side, distinct ids.
+	gh43Class5LabIDs = 6
+)
+
+// gh43Class5Dest pins one destination of the class-5 label in BOTH units, because
+// the report prints both and a reader must be able to tell them apart.
+type gh43Class5Dest struct {
+	Key  string
+	IDs  int
+	Rows int
+}
+
+// gh43Class5Destinations is the class-5 destination table.
+var gh43Class5Destinations = []gh43Class5Dest{
+	{Key: "deepseek/pro", IDs: 35, Rows: 106},
+	{Key: "deepseek", IDs: 19, Rows: 40},
+	{Key: "deepseek#70b", IDs: 3, Rows: 6},
+	{Key: "deepseek#32b", IDs: 2, Rows: 2},
+	{Key: "deepseek/v3.2-exp", IDs: 1, Rows: 1},
+	{Key: "deepseek#8b", IDs: 1, Rows: 1},
+	{Key: "deepseek/v3.2", IDs: 1, Rows: 1},
+	{Key: "deepseek#14b", IDs: 1, Rows: 1},
+}
+
+// gh43MatchedRows is the ROW-level match count: catalog rows whose id or raw
+// family carries a seed token, with no de-duplication. It is pinned beside
+// gh43CensusTotal because the report prints both, and because the gap between
+// them (6,666 rows -> 3,105 distinct ids) IS the de-duplication step: a reader who
+// re-runs the census without it gets the larger number and concludes the report is
+// wrong.
+const gh43MatchedRows = 6666
+
+// gh43UniverseRows is the whole vendored catalog: provider rows plus models rows.
+const gh43UniverseRows = 7791
+
 // gh43IsLetter reports whether b is an ASCII letter. The census boundary rule is
 // stated in terms of LETTERS, not word characters, deliberately: a lab token is
 // routinely glued to a digit ("hy3", "gpt-5", "step3", "glm-4.6"), so a digit must
@@ -386,20 +596,17 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 			" total must state the same fact", sum, gh43CensusTotal)
 	}
 
-	raw, err := os.ReadFile("parse/data/modelsdev/catalog.json")
-	if err != nil {
-		t.Fatalf("read the vendored catalog snapshot: %v", err)
-	}
-	cat, err := ParseCatalogJSON(raw)
-	if err != nil {
-		t.Fatalf("parse the vendored catalog snapshot: %v", err)
-	}
-
-	servingKeys := gh43ServingKeyIndex()
+	cat := gh43LoadCatalog(t)
+	idx := gh43BuildIndex(cat)
 
 	got := make([]int, len(gh43SeedTokens))
 	seen := make(map[string]bool)
 	unkeyed := 0
+	matchedRows := 0
+	// keyRecords counts RECORDS per entity key under the counting rule declared
+	// above: one distinct case-sensitive raw id per view, among the census matches.
+	keyRecords := make(map[string]int)
+	doubledDash := make(map[string]int)
 	// Provider view: every SERVED catalog row. ParseCatalogJSON puts the upstream
 	// family string in ModelInfo.Family (the codegen pipeline reads it from there
 	// as the RAW family), so that is the field the census greps beside the id.
@@ -408,14 +615,21 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		if !ok {
 			continue
 		}
+		matchedRows++
 		uk := "serving|" + string(m.ID)
 		if seen[uk] {
 			continue
 		}
 		seen[uk] = true
 		got[i]++
-		if _, keyed := servingKeys[strings.ToLower(string(m.ID))]; !keyed {
+		key, keyed := idx.servingKeys[strings.ToLower(string(m.ID))]
+		if !keyed {
 			unkeyed++
+			continue
+		}
+		keyRecords[key]++
+		if strings.Contains(string(m.ID), gh43DoubledDash) {
+			doubledDash[key]++
 		}
 	}
 	// Models view: every LAB (metadata) row.
@@ -424,6 +638,7 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		if !ok {
 			continue
 		}
+		matchedRows++
 		uk := "lab|" + string(md.MetadataID)
 		if seen[uk] {
 			continue
@@ -433,7 +648,11 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		// Every lab row is driven through the production decomposition too, so
 		// "no match skipped" means every match reached the parser, not merely
 		// that it was counted.
-		_ = metadataEntityRef(md.MetadataID).String()
+		key := metadataEntityRef(md.MetadataID).String()
+		keyRecords[key]++
+		if strings.Contains(string(md.MetadataID), gh43DoubledDash) {
+			doubledDash[key]++
+		}
 	}
 
 	measured := 0
@@ -446,7 +665,7 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 				" the total; a stale table makes the report a false statement\n"+
 				"  How to fix: re-run the sweep after the catalog re-vendor and update BOTH"+
 				" this table and gh43CensusTotal, then re-check the report in"+
-				" docs/research/gh43_parser_conformance_sweep.md", lab.Name, got[i], lab.Want)
+				" "+gh43ReportPath, lab.Name, got[i], lab.Want)
 		}
 		if got[i] == 0 {
 			t.Errorf("lab %q matched nothing; a seed lab with no match makes the census vacuous", lab.Name)
@@ -465,6 +684,53 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		t.Errorf("%d matched serving records carry no entity key; no match may be skipped", unkeyed)
 	}
 
+	// The two units the report prints must both hold. The gap between them is the
+	// de-duplication step, and stating only one of them is what makes the census
+	// look wrong to a reader who re-derives it.
+	if universe := len(cat.Models) + len(cat.Metadata); universe != gh43UniverseRows {
+		t.Errorf("the catalog snapshot holds %d rows, the report states %d\n"+
+			"  How to fix: re-measure and correct the Method section of %s",
+			universe, gh43UniverseRows, gh43ReportPath)
+	}
+	if matchedRows != gh43MatchedRows {
+		t.Errorf("%d catalog ROWS carry a seed token, the report states %d\n"+
+			"  What: the row-level match figure moved. It is NOT the census total:"+
+			" the rows collapse to %d distinct (view, id) records\n"+
+			"  How to fix: re-measure and correct the Method section of %s",
+			matchedRows, gh43MatchedRows, gh43CensusTotal, gh43ReportPath)
+	}
+
+	// The per-key record counts the report and the six posted fix issues state.
+	// Without this pin the prose figures are unguarded, and six of them were
+	// measurably wrong before it existed.
+	for _, kr := range gh43KeyRecordCounts {
+		if got := keyRecords[kr.Key]; got != kr.Want {
+			t.Errorf("key %q holds %d records, the pinned table says %d\n"+
+				"  What: a per-key RECORD count the prose states has MOVED. A record is one"+
+				" distinct case-sensitive raw id within one catalog view, among the census"+
+				" matches; see the counting rule at the top of this section\n"+
+				"  Why it matters: this figure sizes and orders the fix work. It is stated in"+
+				" %s\n"+
+				"  How to fix: re-measure, then correct BOTH this pin and every mirror of the"+
+				" figure: %s, the matching draft in docs/research/gh43-fix-drafts/, and the"+
+				" POSTED GitHub issue body",
+				kr.Key, got, kr.Want, kr.Where, gh43ReportPath)
+		}
+	}
+	for _, kr := range gh43DoubledDashCounts {
+		if got := doubledDash[kr.Key]; got != kr.Want {
+			t.Errorf("key %q holds %d records whose raw id carries the doubled dash %q,"+
+				" the pinned table says %d\n"+
+				"  What: the doubled dash's real BLAST RADIUS moved. It is a SUBSET of the"+
+				" key's record count, and the report must not state the key total as if it"+
+				" were the blast radius\n"+
+				"  How to fix: re-measure, then correct this pin, %s and %s",
+				kr.Key, got, gh43DoubledDash, kr.Want, gh43ReportPath, kr.Where)
+		}
+	}
+
+	gh43CheckClass5(t, cat, idx)
+
 	if testing.Verbose() {
 		names := make([]string, 0, len(gh43SeedTokens))
 		for i, lab := range gh43SeedTokens {
@@ -473,5 +739,74 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		sort.Strings(names)
 		t.Logf("GH#43 census over %d records:\n%s\nTOTAL %d",
 			len(cat.Models)+len(cat.Metadata), strings.Join(names, "\n"), measured)
+	}
+}
+
+// gh43CheckClass5 pins the class-5 destination table. Class 5 measures a DIFFERENT
+// population from the census — every row carrying the upstream family label, not
+// the seed-token matches — so it is measured and pinned separately, in BOTH units,
+// because the report prints both and a reader must be able to tell them apart.
+func gh43CheckClass5(t *testing.T, cat Catalog, idx gh43Index) {
+	t.Helper()
+	rows := 0
+	ids := make(map[string]bool)
+	destIDs := make(map[string]int)
+	destRows := make(map[string]int)
+	for _, m := range cat.Models {
+		if !strings.EqualFold(string(m.Family), gh43Class5Label) {
+			continue
+		}
+		rows++
+		key := idx.servingKeys[strings.ToLower(string(m.ID))]
+		destRows[key]++
+		if ids[string(m.ID)] {
+			continue
+		}
+		ids[string(m.ID)] = true
+		destIDs[key]++
+	}
+	labIDs := make(map[string]bool)
+	for _, md := range cat.Metadata {
+		if strings.EqualFold(string(md.RawFamily), gh43Class5Label) {
+			labIDs[string(md.MetadataID)] = true
+		}
+	}
+
+	fix := "re-measure, then correct this pin, the class 5 section of " + gh43ReportPath +
+		", docs/research/gh43-fix-drafts/05-distill-destination-ruling.md and the POSTED issue #52"
+	if rows != gh43Class5ServedRows {
+		t.Errorf("upstream family %q carries %d provider ROWS, the pin says %d\n  How to fix: %s",
+			gh43Class5Label, rows, gh43Class5ServedRows, fix)
+	}
+	if len(ids) != gh43Class5ServedIDs {
+		t.Errorf("upstream family %q carries %d distinct served IDS, the pin says %d\n  How to fix: %s",
+			gh43Class5Label, len(ids), gh43Class5ServedIDs, fix)
+	}
+	if len(labIDs) != gh43Class5LabIDs {
+		t.Errorf("upstream family %q carries %d distinct lab IDS, the pin says %d\n  How to fix: %s",
+			gh43Class5Label, len(labIDs), gh43Class5LabIDs, fix)
+	}
+	sumIDs, sumRows := 0, 0
+	for _, d := range gh43Class5Destinations {
+		sumIDs += d.IDs
+		sumRows += d.Rows
+		if got := destIDs[d.Key]; got != d.IDs {
+			t.Errorf("class 5 destination %q holds %d distinct ids, the pin says %d\n  How to fix: %s",
+				d.Key, got, d.IDs, fix)
+		}
+		if got := destRows[d.Key]; got != d.Rows {
+			t.Errorf("class 5 destination %q holds %d provider rows, the pin says %d\n  How to fix: %s",
+				d.Key, got, d.Rows, fix)
+		}
+	}
+	// The destination table must be TOTAL: it accounts for every row and every id
+	// the label carries, so a destination cannot be quietly dropped from the prose.
+	if sumIDs != gh43Class5ServedIDs {
+		t.Errorf("the class 5 destination table sums to %d ids but the label carries %d;"+
+			" the table must account for every id\n  How to fix: %s", sumIDs, gh43Class5ServedIDs, fix)
+	}
+	if sumRows != gh43Class5ServedRows {
+		t.Errorf("the class 5 destination table sums to %d rows but the label carries %d;"+
+			" the table must account for every row\n  How to fix: %s", sumRows, gh43Class5ServedRows, fix)
 	}
 }

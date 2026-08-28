@@ -9,18 +9,52 @@ It reports only.
 
 ## Method
 
-1. The universe is EVERY record in the vendored catalog: 7,430 rows in the
+1. The universe is EVERY row in the vendored catalog: 7,430 rows in the
    provider (served) view and 361 rows in the models (lab) view — 7,791
-   records.
-2. Each record's raw model id AND its raw upstream `family` string are
-   grepped for the 19 seed lab tokens.
-3. Every match is driven through the PRODUCTION parser. A served row is
+   rows.
+2. Each row's raw model id AND its raw upstream `family` string are
+   grepped for the 19 seed lab tokens. 6,666 of the 7,791 rows match.
+3. The matched rows are DE-DUPLICATED into records, by the counting rule
+   below. 6,666 matched rows collapse to 3,105 records.
+4. Every record is driven through the PRODUCTION parser. A served row is
    keyed by the registry's own entity index (the key the `Entity` actually
    carries, built by `bestiary-gen` from `ParseFamilyDetailed`). A lab row
    and an off-catalog usage spelling go through `metadataEntityRef`, the
    function the models.dev metadata join itself uses. No parsing is
    re-implemented.
-4. The resulting key is compared against the correct key.
+5. The resulting key is compared against the correct key.
+
+### The counting rule
+
+Every figure in this report that is called a RECORD, including every
+`Records` column and every count in the six fix issues, uses ONE unit:
+
+> A **record** is one DISTINCT raw id string, WITHIN ONE catalog view,
+> compared CASE-SENSITIVELY, among the rows the seed-token census matched.
+
+Three parts of that sentence are load-bearing, and each was measured:
+
+- **Per view.** The provider view and the models view are counted
+  separately, so an id that appears in both counts twice. This is not
+  double counting: the two views reach the parser by two different code
+  paths, and the sweep is about what each path produces.
+- **Distinct id, not row.** One id served by many providers is ONE record.
+  This is step 3 above, and it is the whole gap between 6,666 and 3,105.
+  A reader who counts rows gets a number about twice as large for the
+  census and about three times as large for a busy key.
+- **Case-sensitive.** `tencent/hy3` and `tencent/Hy3` are two records, even
+  though the registry's serving index is case-INsensitive and both reach
+  one entity. Casing variants of one id therefore inflate a count slightly.
+
+Two figures in this report deliberately use a DIFFERENT unit, and both say
+so where they appear: the class 5 destination table prints provider ROWS
+beside the record count, because the cited issue reported rows; and the
+class 6 doubled-dash figure is a SUBSET of a key's records.
+
+Every per-key record count stated below is PINNED in
+`TestGH43Sweep_TokenCensus`, together with the 7,791 / 6,666 / 3,105
+figures and the class 5 table. A moved count fails the test and names the
+key, so no figure here is unguarded prose.
 
 ### Boundary rule
 
@@ -31,17 +65,35 @@ The rule is stated in LETTERS, not word characters, on purpose: a lab token
 is routinely glued to a digit — `tencent/hy3`, `gpt-5`, `stepfun-ai/step3`,
 `glm-4.6`. A word-character rule would miss all of them.
 
-Excluded false positives, by this rule:
+What the rule actually excludes was MEASURED, not imagined. Against this
+snapshot, 18 distinct (view, id) records that a plain substring rule would
+attribute are dropped by the letter rule, and NO record changes lab:
 
-| Excluded | Token | Why |
-|---|---|---|
-| `midjourney-steps`-style ids | `step` | `step` is followed by the letter `s` |
-| `codellama` spellings | `llama` | `llama` is preceded by a letter |
-| `sophia`-style ids | `phi` | `phi` is preceded and followed by letters |
+| Excluded spelling | Token | Why | Records |
+|---|---|---|---|
+| `nanogpt/coding-router` and `fastgpt` | `gpt` | `gpt` is preceded by a letter | 6 |
+| `mixtral`, `pixtral`, `voxtral` | `mistral` | `mistral` is preceded by a letter | 5 |
+| `paligemma`, `medgemma`, `diffusiongemma` | `gemma` | `gemma` is preceded by a letter | 3 |
+| `autoglm-phone` ids | `glm` | `glm` is preceded by a letter | 2 |
+| `deepclaude` | `claude` | `claude` is preceded by a letter | 1 |
+| `stepfun-ai/gelab-zero-4b-preview` | `step` | `step` is followed by the letter `f` | 1 |
 
-The `codellama` exclusion is a deliberate, declared cost of the rule: it is
-consistent, and no `codellama` row in the current catalog changes any
-verdict below.
+Read that table as a declared COST, not as a validation. Several of those
+rows are real products of the lab whose token was blocked: `mixtral` is
+Mistral's, `medgemma` and `paligemma` are Google's, `autoglm` is Zhipu's.
+The rule under-counts those labs, consistently and visibly, and it buys a
+rule that never has to guess at a stem boundary. The last row is the sharp
+edge: the `stepfun` NAMESPACE is itself excluded, so a StepFun row is
+counted only when its own id or raw family carries a delimited `step`.
+
+One further exclusion changes nothing and is recorded so it is not
+re-discovered: in `cognitivecomputations/dolphin-mistral-24b-venice-edition`
+the `phi` inside `dolphin` is letter-bounded on both sides and is blocked,
+but the row matches `mistral` and is attributed to Mistral anyway.
+
+The earlier draft of this section named `codellama`, `midjourney-steps` and
+`sophia`-style ids. Those three shapes have ZERO rows in this snapshot; the
+table above replaces them with what was measured.
 
 ### Attribution rule
 
@@ -77,9 +129,17 @@ for.
 | StepFun | step | 31 |
 | **TOTAL** | | **3,105** |
 
-The sum of the column is 3,105, which equals the distinct matched-record
-total. No match is skipped: every matched served row reaches an entity key
-(0 unkeyed), and every matched lab row is driven through the decomposition.
+The column counts RECORDS, by the counting rule above. The sum is 3,105,
+which equals the distinct matched-record total. Attribution is disjoint, so
+the sum and the total are two statements of one fact.
+
+The row-level figure is 6,666: that many of the 7,791 catalog rows carry a
+seed token before de-duplication. Both numbers are true and they answer
+different questions. 3,105 is the number of distinct ids the parser was
+driven over; 6,666 is the number of catalog rows those ids account for.
+
+No match is skipped: every matched served row reaches an entity key (0
+unkeyed), and every matched lab row is driven through the decomposition.
 
 These numbers are pinned in `TestGH43Sweep_TokenCensus`. They are
 SNAPSHOT-RELATIVE: a re-vendored catalog moves them, and the test then goes
@@ -104,6 +164,7 @@ removal. One key the issue did not cite has joined: `deepseek/v3.2-maas`.
 | `deepseek/v3.2-maas` | 1 |
 | `deepseek/v3.2-251201` | 1 |
 | `deepseek/v3.1-maas` | 1 |
+| **TOTAL** | **31** |
 
 The correct sibling `deepseek@3.2` holds 1 record.
 
@@ -117,8 +178,9 @@ much larger than the eight keys above:
 - A BARE `v<major>` token is not misplaced, it is DESTROYED.
   `deepseek/deepseek-v4-pro` keys `deepseek/pro` — no version at all — and
   `deepseek-ai/deepseek-v4-flash` keys `deepseek/flash`. `deepseek/pro`
-  holds 39 records and `deepseek/flash` holds 58. The control
-  `deepseek-4-flash` (no `v`) keys `deepseek/flash@4` correctly.
+  holds 39 records and `deepseek/flash` holds 58, so 97 records state no
+  version although their ids state one. The control `deepseek-4-flash`
+  (no `v`) keys `deepseek/flash@4` correctly.
 - The dash-glued dot-lost spelling MISREADS the version: `deepseek-v3-2`
   keys `deepseek@2`, taking only the trailing segment.
 
@@ -141,6 +203,17 @@ much larger than the eight keys above:
   — `llama-3.3-nemotron-super-49b/v1.5@3.3#49b` — while the SERVED row for
   the identical id keys `nemotron/v1.5@3.3#49b`. The metadata join and the
   registry disagree about one model.
+
+  The DISAGREEMENT is the measured fact, and the corpus pins BOTH keys, one
+  case per path, so the disagreement itself goes red the moment either path
+  moves. Where the two paths must MEET is a curation ruling this sweep does
+  not make, so both cases carry the `EXPECTED_TBD` marker, exactly as class
+  4 and the class 5 distill do. The served key is not automatically the
+  answer: it states the version `v1.5` in the variant slot, which is the
+  class 1 defect. A third candidate, `nemotron/super@3.3#49b`, reads `super`
+  as the variant and drops `v1.5`; it is a candidate, not a verdict. Fix
+  issue #49 states the ruling as an open question and does not presume the
+  destination.
 
 ### Class 3 — split encodings: CONFIRMED
 
@@ -177,29 +250,37 @@ The corpus records these three cases with the `EXPECTED_TBD` marker.
 
 ### Class 5 — upstream family `deepseek-thinking`: CONFIRMED, destination measured
 
-The issue reported 96 rows. At this tip the upstream label carries 158
-served rows and 6 lab rows. The label itself is correctly DISCARDED — no
-key contains it — and identity comes from the id. The destinations:
+This class counts a DIFFERENT population from the census: every row
+carrying the upstream label, not the seed-token matches. It is therefore
+printed in BOTH units. The issue reported 96 rows. At this tip the label
+carries 158 provider ROWS, which are 63 distinct served ids by the counting
+rule, plus 6 lab ids. The label itself is correctly DISCARDED — no key
+contains it — and identity comes from the id. The destinations:
 
-| Destination key | Served rows |
-|---|---|
-| `deepseek/pro` | 106 |
-| `deepseek` | 40 |
-| `deepseek#70b` | 6 |
-| `deepseek#32b` | 2 |
-| `deepseek/v3.2-exp` | 1 |
-| `deepseek#8b` | 1 |
-| `deepseek/v3.2` | 1 |
-| `deepseek#14b` | 1 |
+| Destination key | Records (distinct ids) | Provider rows |
+|---|---|---|
+| `deepseek/pro` | 35 | 106 |
+| `deepseek` | 19 | 40 |
+| `deepseek#70b` | 3 | 6 |
+| `deepseek#32b` | 2 | 2 |
+| `deepseek/v3.2-exp` | 1 | 1 |
+| `deepseek#8b` | 1 | 1 |
+| `deepseek/v3.2` | 1 | 1 |
+| `deepseek#14b` | 1 | 1 |
+| **TOTAL** | **63** | **158** |
+
+Both columns are pinned, and the table is TOTAL in both units: it accounts
+for every id and every row the label carries, so no destination can be
+dropped from this prose without the test going red.
 
 The destination is therefore VERIFIED and is not itself the defect. What
-it exposes is class 1: 106 of the 158 rows land on `deepseek/pro`, a key
-that states no version, because their ids carry the bare `v4` token that
-class 1 destroys. A further group are R1 distills of other labs' bases
+it exposes is class 1: 106 of the 158 rows, 35 of the 63 ids, land on
+`deepseek/pro`, a key that states no version, because their ids carry the
+bare `v4` token that class 1 destroys. A further group are R1 distills of other labs' bases
 (`deepseek-r1-distill-qwen-32b` keys `deepseek#32b`), where the R1 line
-marker is dropped and the key states neither the line nor the base. That
-last destination is a curation ruling, and the corpus marks it
-`EXPECTED_TBD`.
+marker is dropped and the key states neither the line nor the base. The
+four sized keys hold 7 ids and 10 rows between them. That last destination
+is a curation ruling, and the corpus marks it `EXPECTED_TBD`.
 
 ### Class 6 — tier before version: REFUTED as a parser defect; a DIFFERENT defect confirmed
 
@@ -230,16 +311,33 @@ vendor prefix, and it IS in the catalog:
 | `anthropic--claude-4.8-opus` | `claude/opus` | `claude/opus@4.8` |
 
 The single-dash control `anthropic-claude-4.6-sonnet` keys
-`claude/sonnet@4.6` correctly, so the doubled dash is the cause. Fourteen
-records sit on the version-less `claude/opus` key and ten on
-`claude/sonnet`.
+`claude/sonnet@4.6` correctly, so the doubled dash is the cause.
+
+Two figures follow, and they are different sizes on purpose:
+
+| Figure | `claude/opus` | `claude/sonnet` |
+|---|---|---|
+| Records on the version-less key | 19 | 13 |
+| Of those, records whose raw id carries the doubled dash | 6 | 6 |
+
+So the doubled dash's blast radius is 6 and 6, not the key totals. The
+other records lose the version for OTHER reasons, and this issue does not
+repair them: `anthropic/claude-opus-latest`, the
+`anthropic/claude-opus-4.6:thinking*` suffixed spellings, and the
+`duo-chat-opus-*` ids. Both rows of the table are pinned in
+`TestGH43Sweep_TokenCensus`.
+
+An earlier draft of this section stated 14 and 10. Those figures counted
+the same keys while silently dropping the family-matched `duo-chat-*` ids
+(5 on opus, 3 on sonnet), which no other table in this report drops. The
+counting rule above now applies here too, and the figures are 19 and 13.
 
 ## Committed deliverables
 
 | Artifact | What it does |
 |---|---|
-| `testdata/parse/gh43_conformance_corpus.json` | 41 authored cases: every cited string, the measured witnesses, and the conforming controls |
-| `gh43_conformance_internal_test.go` | `TestGH43Conformance_CitedStrings` (exact count 41, `RequireValid` non-vacuity, verdict consistency, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestGH43Sweep_TokenCensus` (the census, its per-lab pins, and the sum-equals-total mirror) |
+| `testdata/parse/gh43_conformance_corpus.json` | 42 authored cases: every cited string, the measured witnesses, and the conforming controls |
+| `gh43_conformance_internal_test.go` | `TestGH43Conformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestGH43Sweep_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash subset, and the class 5 destination table in both units) |
 | `fixtures_gh43_test.go` | the `//go:embed` of the corpus into the test binary only |
 | `TESTING.md` | corpus table: `testdata/parse/` 49 -> 50, total 127 -> 128 |
 

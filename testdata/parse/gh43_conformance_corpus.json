@@ -366,17 +366,38 @@
       },
       "expected": {
         "key": "llama-3.3-nemotron-super-49b/v1.5@3.3#49b",
-        "conformance": "defect",
+        "conformance": "undecided",
         "defect_class": 2,
-        "want_key": "nemotron/super@3.3#49b"
+        "want_key": "EXPECTED_TBD"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 2, measured at this tip: the lab-side (metadata) decomposition of this id makes the WHOLE id the family, and disagrees with the serving-side key nemotron/v1.5@3.3#49b for the same id."
+        "ref": "GH#43 defect class 2, measured at this tip: the lab-side (metadata) decomposition of this id makes the WHOLE id the family. It DISAGREES with the serving-side key nemotron/v1.5@3.3#49b for the identical id, and the served sibling case pins that other key, so the disagreement itself is the falsifiable fact. Which key both paths must agree ON is a curation ruling the sweep does not invent: the served key states the version v1.5 in the variant slot, which is the class 1 defect, so it is not automatically the right destination either."
       },
       "mutation": {
         "description": "the lab-id path has no upstream raw family to lean on; the id-only decomposition then takes the entire id as the family"
+      }
+    },
+    {
+      "name": "class2_nemotron_serving_id_disagrees_with_lab",
+      "input": {
+        "raw": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "nemotron/v1.5@3.3#49b",
+        "conformance": "undecided",
+        "defect_class": 2,
+        "want_key": "EXPECTED_TBD"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, measured at this tip: the SERVED side of the identical id keys nemotron/v1.5@3.3#49b, while the lab side keys llama-3.3-nemotron-super-49b/v1.5@3.3#49b. This case is the second half of the disagreement pair: with both keys pinned, the disagreement is falsifiable, and it goes green only when the two paths agree. The destination is a curation ruling, so the case carries EXPECTED_TBD, as classes 4 and 5 do."
+      },
+      "mutation": {
+        "description": "the served path reads the upstream raw family beside the id, so it reduces the compound name where the id-only lab path cannot"
       }
     },
     {

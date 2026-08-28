@@ -37,8 +37,23 @@ at it. A doubled dash after a vendor prefix destroys the version:
 
 The control isolates the cause: the SINGLE-dash spelling
 `anthropic-claude-4.6-sonnet` keys `claude/sonnet@4.6` correctly. Only the
-doubled dash fails. Fourteen records sit on the version-less `claude/opus`
-key and ten on `claude/sonnet`.
+doubled dash fails.
+
+Two figures follow, and they are different sizes on purpose. A **record**
+is one distinct raw id string within one catalog view, compared
+case-sensitively, among the rows the sweep's seed-token census matched.
+
+| Figure | `claude/opus` | `claude/sonnet` |
+|---|---|---|
+| Records on the version-less key | 19 | 13 |
+| Of those, records whose raw id carries the doubled dash | 6 | 6 |
+
+The doubled dash's blast radius is therefore 6 and 6, NOT the key totals.
+The other records lose the version for other reasons and this issue does
+not repair them: `anthropic/claude-opus-latest`, the
+`anthropic/claude-opus-4.6:thinking*` suffixed spellings, and the
+`duo-chat-opus-*` ids. Both rows of the table are pinned in
+`TestGH43Sweep_TokenCensus`.
 
 ## Scope
 
@@ -60,6 +75,9 @@ Non-changes:
 
 - `anthropic--claude-4.6-sonnet` keys `claude/sonnet@4.6`, and reaches the
   SAME entity as `anthropic-claude-4.6-sonnet`.
+- The 6 doubled-dash records on `claude/opus` and the 6 on `claude/sonnet`
+  all carry their version. The remaining records on those two keys are NOT
+  in scope, and the regen diff says so by naming what moved.
 - The single-dash control stays green.
 - Each of the seven cited usage spellings resolves to its entity, and the
   result states that it came from the decomposition fallback.

@@ -8,6 +8,12 @@ labels: bug
 A compound family token must reduce to a family plus a variant. Some do not.
 The sweep for #43 measured what is left after the earlier fable repair.
 
+A **record**, here and in the sweep report, is one DISTINCT raw id string
+within one catalog view, compared case-sensitively, among the rows the
+seed-token census matched. The counting rule is stated once in
+`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
+pinned in `TestGH43Sweep_TokenCensus`.
+
 Confirmed, still open:
 
 | Key | Records | What it should be |
@@ -38,6 +44,16 @@ On the lab path the WHOLE id becomes the family. The lab path has no
 upstream family string to lean on, so an id-only decomposition takes
 everything it cannot classify.
 
+The DISAGREEMENT is what the sweep measured, and the conformance corpus
+pins BOTH keys, one case per path, so it goes red the moment either path
+moves. WHERE the two paths must meet is a curation ruling the sweep does
+not make, so both cases carry the `EXPECTED_TBD` marker, the same treatment
+the class 4 modifiers and the class 5 distill get. The served key is not
+automatically the answer: `nemotron/v1.5@3.3#49b` states the version `v1.5`
+in the variant slot, which is the separate `v`-token defect. A third
+candidate, `nemotron/super@3.3#49b`, reads `super` as the variant and drops
+`v1.5`. This issue asks for the ruling; it does not presume it.
+
 Refuted at this tip, and recorded so the fix is not repeated:
 `claude-fable`, `claude-fable@5` and `glm-4.1v-thinking/flash` all key
 correctly now.
@@ -64,8 +80,14 @@ Non-changes:
 - `anthropic/claude-mythos-5` keys `claude/mythos@5`.
 - A NEW, unseen Anthropic tier name reduces without a curated entry. A test
   states this with a synthetic tier, so the generalisation is falsifiable.
-- `nvidia/llama-3.3-nemotron-super-49b-v1.5` produces the SAME key on both
-  paths. A test asserts the equality directly.
+- The destination is RULED, in writing, with its reason: the served key
+  `nemotron/v1.5@3.3#49b`, the lab key
+  `llama-3.3-nemotron-super-49b/v1.5@3.3#49b`, or a third key such as
+  `nemotron/super@3.3#49b`. Naming the winner is part of closing this issue.
+- `nvidia/llama-3.3-nemotron-super-49b-v1.5` then produces THAT key on both
+  paths. A test asserts the equality directly, and names the key.
+- The two `EXPECTED_TBD` nemotron cases in the GH#43 conformance corpus are
+  replaced by real expectations carrying the ruled key.
 - The regen diff is stated as a measured count of added, retired and moved
   keys.
 

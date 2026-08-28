@@ -10,6 +10,12 @@ something the lab does not sell as a distinct artifact. The sweep for #43
 measured them and did NOT rule on them, because the destination is a
 curation decision.
 
+A **record**, here and in the sweep report, is one DISTINCT raw id string
+within one catalog view, compared case-sensitively, among the rows the
+seed-token census matched. The counting rule is stated once in
+`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
+pinned in `TestGH43Sweep_TokenCensus`.
+
 | Key | Records | Ids |
 |---|---|---|
 | `deepseek{turbo}` | 2 | `deepseek/deepseek-r1-turbo`, `deepseek/deepseek-v3-turbo` |
