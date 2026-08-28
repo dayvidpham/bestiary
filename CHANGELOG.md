@@ -14,6 +14,10 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.2.10] — 2026-08-28
+
+**Schema:** `0.6.0` → `0.7.0` (additive). SQLite store schema `8` → `9`.
+
 ### Changed
 
 - **Two dead curation rows are swept.** Both were reachable only through data this
@@ -2519,7 +2523,8 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...HEAD
+[0.2.10]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/dayvidpham/bestiary/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/dayvidpham/bestiary/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/dayvidpham/bestiary/compare/v0.2.6...v0.2.7
