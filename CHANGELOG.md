@@ -92,9 +92,9 @@ for its **Go module tags** (`vX.Y.Z`).
   | OCI | 267 | 267 | unchanged (no Ollama refresh in this slice) |
   | **total** | **4,216** | **4,993** | |
 
-  Both starred cells are refresh figures and are corrected further down by the two round-2
-  review pins, exactly as the keyspace bullet above is: canonical **989 to 987** and the
-  total **4,993 to 4,991**.
+  The canonical and total cells are refresh figures and are corrected further down by the two
+  round-2 review pins, exactly as the keyspace bullet above is: canonical **989 to 987** and
+  the total **4,993 to 4,991**.
 
 - **Ten harvested HuggingFace nomina removed, because upstream retired the entities they
   named.** The catalog now carries **zero** phi-3 rows and **zero** codellama rows, so
@@ -108,14 +108,14 @@ for its **Go module tags** (`vX.Y.Z`).
   unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
 
   This deviates from the slice brief, which asked for `159+` `archived_url` values before
-  and after; the deviation is PENDING A RULING and is flagged for one in the PR. The
-  reasoning OFFERED for it, which no authority has yet accepted, is that a literal floor
-  over a corpus upstream has legitimately shrunk is the wrong rule. The invariant asserted
-  in its place — ZERO ERASURES AMONG SURVIVORS — is no longer prose: it is enforced by
-  `TestHFArchivedURL_CensusExact` (both counts with their arithmetic, 184→174 records and
-  159→153 snapshots), `TestHFArchivedURL_NoErasureAmongSurvivors` (the survivor SET is
-  pinned in `testdata/hf_archived_url_survivors.txt`, so a repo that loses its snapshot
-  fails BY NAME rather than hiding behind an addition), and
+  and after; the deviation was ACCEPTED at the 2026-08-28 merge-gate ruling, which is
+  recorded in the PR. The reasoning offered for it, now the accepted rationale, is that a
+  literal floor over a corpus upstream has legitimately shrunk is the wrong rule. The
+  invariant asserted in its place — ZERO ERASURES AMONG SURVIVORS — is no longer prose: it
+  is enforced by `TestHFArchivedURL_CensusExact` (both counts with their arithmetic,
+  184→174 records and 159→153 snapshots), `TestHFArchivedURL_NoErasureAmongSurvivors`
+  (the survivor SET is pinned in `testdata/hf_archived_url_survivors.txt`, so a repo that
+  loses its snapshot fails BY NAME rather than hiding behind an addition), and
   `TestHFArchivedURL_EveryArchivedRecordIsWellFormed` (a present-but-empty value is an
   erasure wearing the shape of a live field, invisible to both a count and a set check).
 
@@ -222,7 +222,8 @@ for its **Go module tags** (`vX.Y.Z`).
 
 - **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
   ledger.** This deviates from the slice brief, which asked for a drained-to-zero report,
-  and the deviation is PENDING A RULING and is flagged for one in the PR.
+  and the deviation was ACCEPTED at the 2026-08-28 merge-gate ruling, which is recorded in
+  the PR. The reasoning offered for it is now the accepted rationale.
   `TestModelsdevUnlinked_MatchesJustifiedLedger`
   replaces `TestModelsdevUnlinked_IsDrained` and asserts SET EQUALITY against
   `unlinkedJustifiedExceptions`. Set equality is not strictly stronger than the zero gate it

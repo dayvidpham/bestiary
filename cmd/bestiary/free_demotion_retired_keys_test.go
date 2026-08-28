@@ -418,8 +418,9 @@ func assertChangelogTableMatchesCorpus(
 		}
 		if got-want != diff {
 			t.Errorf("CHANGELOG migration table has %d row(s), corpus has %d case(s), and %d "+
-				"correction(s) are declared; the two are the same record and must be edited together",
-				got, want, diff)
+				"correction(s) are declared, %d of which drop a corpus case; the two are the "+
+				"same record and must be edited together",
+				got, want, len(corrections), diff)
 		}
 	}
 
