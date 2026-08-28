@@ -23,14 +23,16 @@ const gptTierRekeyRetiredKeyCount = 26
 // the gpt tier re-key and the redundant leading-token strip retire, at the exact-key
 // seam — bestiary.EntityByKey, and the web route GET /entity/<key> that dereferences
 // through it — and at the two production seams a user actually reaches:
-// `bestiary show <key> --by-entity` and `bestiary show <key>`. NEITHER of the two CLI
-// seams is an exact-key seam: both resolve the input through the model resolver first,
-// which keeps its short-reference fallback.
+// `bestiary show <key> --by-entity` and `bestiary show <key>`. Neither CLI seam is the
+// exact-key seam, and the two do not behave alike: `--by-entity` is an exact match over
+// the store-overlaid entity index (entity key, entity preferred name or concrete model
+// id) with no short-reference path, while plain `show` runs the input through the model
+// resolver, which keeps that fallback.
 //
 // The policy is a uniform hard 404 on the exact-key seam: no alias is minted, no
 // redirect is added and no successor is listed. That arm holds for all 26. The
-// `--by-entity` seam also reports not-found for all 26 here, but that is a MEASURED
-// per-key result, not a consequence of exactness.
+// `--by-entity` seam also reports not-found for all 26 here, recorded per key from the
+// corpus: none of the three spellings it accepts names a live entity for any of them.
 //
 // The looser `show` seam is pinned PER KEY against what it measurably does, not
 // against one blanket rule, and this set contains all three outcomes:
@@ -70,10 +72,12 @@ func TestRetiredKeys_GptTierRekey_PolicySplit(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// Seam 1 — the exact-key lookup, bestiary.EntityByKey, and above it the
-			// resolver-routed `show --by-entity`. The uniform-404 policy is about the
-			// exact-key arm, which admits no per-key exception in this set; the
-			// --by-entity not-found for all 26 is measured, not structural.
+			// Seam 1 — the exact-key lookup, bestiary.EntityByKey, and above it
+			// `show --by-entity`, an exact match over the store-overlaid entity index
+			// (entity key, entity preferred name or concrete model id) with no
+			// short-reference path. The uniform-404 policy is about the exact-key arm,
+			// which admits no per-key exception in this set; the --by-entity not-found
+			// for all 26 is recorded per key from the corpus.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}

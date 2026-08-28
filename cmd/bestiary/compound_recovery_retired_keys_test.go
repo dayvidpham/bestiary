@@ -21,9 +21,11 @@ const compoundRecoveryRetiredKeyCount = 4
 
 // TestRetiredKeys_CompoundRecovery_PolicySplit pins the retired-key policy for every
 // key the bare-integer series-compound family recovery retires, at the two production
-// seams a user actually reaches: `bestiary show <key> --by-entity` (the exact-key
-// entity lookup with its resolver front-end) and `bestiary show <key>` (the looser
-// model resolver with its entity fallback).
+// seams a user actually reaches: `bestiary show <key> --by-entity` (an exact match over
+// the store-overlaid entity index — entity key, entity preferred name or concrete model
+// id — with no short-reference path) and `bestiary show <key>` (the model resolver, which
+// keeps its short-reference fallback). The exact-key seams are bestiary.EntityByKey and
+// GET /entity/<key>.
 //
 // The policy is a hard 404 with no alias, no redirect and no successor listing, and it
 // holds unconditionally at the EXACT-key seam — bestiary.EntityByKey — for all four.
@@ -32,13 +34,13 @@ const compoundRecoveryRetiredKeyCount = 4
 // The two CLI seams are pinned PER KEY against what they measurably do. This set
 // contains a DEVIATION the epoch's earlier levers did not produce, and it is recorded
 // rather than repaired: `kimi-k2` and `kimi-k3` are the upstream raw_family spellings,
-// and once the recovery reduces them they remain valid UNDER-SPECIFIED references that
-// the ordinary resolver matches to exactly one live entity each (kimi/k@2 and
-// kimi/k@3). So they answer on BOTH CLI seams, including `--by-entity`, which every
-// earlier retired key 404s on. No alias, redirect or successor-listing instrument is
-// involved — the resolver is doing its ordinary job on a string that still names one
-// model. Making them fail would mean breaking an under-specified reference for the sake
-// of a slogan, and it would break it for every user who types the upstream spelling.
+// and both are still LIVE concrete model ids. So they answer on BOTH CLI seams, including
+// `--by-entity`, which every earlier retired key 404s on: its concrete-model-id arm finds
+// the model and renders the owning entity (kimi/k@2 and kimi/k@3). No alias, redirect or
+// successor-listing instrument is involved — both seams are doing their ordinary job on a
+// string that still names one live model. Making them fail would mean breaking a working
+// lookup for the sake of a slogan, and it would break it for every user who types the
+// upstream spelling.
 //
 // `kimi{instruct}` takes the third outcome, the under-specified error at the looser
 // seam — but NOT for the bare-family reason `show gpt` and `show claude` illustrate, and
@@ -64,8 +66,8 @@ func TestRetiredKeys_CompoundRecovery_PolicySplit(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// The invariant, admitting no per-key exception: the exact-key entity
-			// lookup is a hard 404 for every retired key.
+			// The invariant, admitting no per-key exception: the exact-key lookup,
+			// bestiary.EntityByKey, is a hard 404 for every retired key.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}

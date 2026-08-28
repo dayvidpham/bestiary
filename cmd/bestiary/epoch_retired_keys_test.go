@@ -42,8 +42,8 @@ const epochRetiredKeyCount = 62
 // `mistral/large#675b{instruct}`, `nemotron#120b`).
 //
 // 18 = those same 14 + 4 keys that agree at library and `show` but diverge at
-// `show --by-entity` (`agi`, `ling`, `mimo`, `kimi{instruct}`: AMBIGUOUS at both
-// exact-key seams, NOT-FOUND by entity).
+// `show --by-entity` (`agi`, `ling`, `mimo`, `kimi{instruct}`: AMBIGUOUS at both of
+// those, NOT-FOUND by entity).
 const (
 	epochRetiredKeyLibraryShowDisagreements = 14
 	epochRetiredKeyAnySeamDisagreements     = 18
@@ -80,10 +80,11 @@ const (
 //     Peasant canonical parse finds the live entities.
 //
 // CLIByEntity is the outcome of `bestiary show <key> --by-entity`. It is pinned
-// SEPARATELY from the exact-key seam because the two are not the same thing: the CLI
-// resolves its input through the model resolver before reaching the entity view, so a
-// retired key whose spelling is still a valid under-specified reference can answer there
-// while the exact-key lookup 404s.
+// SEPARATELY from the exact-key seam because the two are not the same lookup: the CLI
+// matches its input against the store-overlaid entity index by entity key, entity
+// preferred name or concrete model id, so a retired key whose spelling is still a live
+// concrete model id can answer there while the exact-key lookup 404s. It has no
+// short-reference path, so it never returns the under-specified error.
 //
 // CoveredBy names the per-lever retired-key corpora that also carry this key. It is the
 // reconciliation datum: a key with an EMPTY CoveredBy is recorded here and nowhere else,
@@ -125,9 +126,11 @@ var epochOnlyRetiredKeys = map[string]string{
 // minted, no redirect is added, no successor is listed and no nomen claim resurrects a
 // retired key. The CHANGELOG migration tables are the only pointer a user gets.
 //
-// `bestiary show` and `show --by-entity` are NOT exact-key seams and are NOT uniform:
-// both resolve the input through the model resolver first, which keeps its
-// short-reference fallback, so they are pinned PER KEY below against the measured split.
+// `bestiary show` and `show --by-entity` are neither the exact-key seams nor each other:
+// `--by-entity` is an exact match over the store-overlaid entity index (entity key,
+// entity preferred name or concrete model id) with no short-reference path, while plain
+// `show` runs the input through the model resolver, which keeps that fallback. Both are
+// pinned PER KEY below against the measured split.
 //
 // The looser seams are pinned PER KEY against the MEASURED split, not against a blanket
 // rule, because a blanket rule is false here in several directions at once. Each bullet
@@ -165,13 +168,13 @@ var epochOnlyRetiredKeys = map[string]string{
 //
 //   - 5 keys RESOLVE at `bestiary show`. Two of them, `kimi-k2` and `kimi-k3`, also
 //     answer on `show --by-entity`, which every other retired key 404s on. They are the
-//     upstream raw_family spellings, and after the series-compound recovery reduced them
-//     they remain valid UNDER-SPECIFIED references matching exactly one live entity each.
-//     The other three (`ministral#3b{instruct}`, `mistral/large#675b{instruct}`,
-//     `nemotron#120b`) answer at `show` but 404 on `--by-entity`. In every case the CLI
-//     resolves its input through the model resolver before reaching the entity view, so
-//     it finds them; the exact-key lookup above still 404s. Recorded as measured
-//     deviations, not repaired.
+//     upstream raw_family spellings, and both are still LIVE concrete model ids, so
+//     `--by-entity` finds them through its concrete-model-id arm — which is why these two
+//     are its only exceptions in the epoch. The other three (`ministral#3b{instruct}`,
+//     `mistral/large#675b{instruct}`, `nemotron#120b`) answer at `show` alone, as
+//     under-specified references the model resolver matches to one live entity;
+//     `--by-entity` has no short-reference path, so it 404s on them. The exact-key lookup
+//     above 404s on all five. Recorded as measured deviations, not repaired.
 func TestEpochRetiredKeys_MeasuredPolicySplit(t *testing.T) {
 	corpus := loadEpochRetiredKeyCorpus(t)
 

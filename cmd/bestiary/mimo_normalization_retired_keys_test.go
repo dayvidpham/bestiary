@@ -19,8 +19,10 @@ const mimoRetiredKeyCount = 10
 
 // TestRetiredKeys_MimoNormalization_MeasuredSplit pins the retired-key policy for every
 // key the keyspace-wide mimo normalization retires, at the two seams a user reaches:
-// `bestiary show <key> --by-entity` (the exact-key entity lookup) and `bestiary show
-// <key>` (the looser model resolver with its entity fallback).
+// `bestiary show <key> --by-entity` (an exact match over the store-overlaid entity index
+// — entity key, entity preferred name or concrete model id — with no short-reference
+// path) and `bestiary show <key>` (the model resolver, which keeps its short-reference
+// fallback). The exact-key seams are bestiary.EntityByKey and GET /entity/<key>.
 //
 // The policy is a uniform hard 404 — no alias is minted, no redirect is added, no
 // successor is listed. The corpus pins the MEASURED split rather than that blanket rule,
@@ -73,8 +75,10 @@ func TestRetiredKeys_MimoNormalization_MeasuredSplit(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// Seam 1 — the exact-key entity lookup behind `show --by-entity`. This one has
-			// no ambiguity path at all, so every retired key 404s here, bare `mimo` included.
+			// Seam 1 — the exact-key lookup bestiary.EntityByKey, and above it
+			// `show --by-entity`, which matches the store-overlaid entity index by
+			// entity key, entity preferred name or concrete model id. It has no
+			// short-reference path, so every retired key 404s here, bare `mimo` included.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}

@@ -55,8 +55,8 @@ entity key: the key no longer names anything. No alias is minted, no redirect
 is added and no successor is listed at the tool — the CHANGELOG migration table
 for the change is the pointer.
 
-What a retired key does depends on the **seam**, and the two kinds of seam
-behave differently on purpose:
+What a retired key does depends on the **seam**, and the seams behave
+differently on purpose:
 
 > A retired key is not found at the exact-key seams: `EntityByKey`,
 > `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An
@@ -66,12 +66,17 @@ behave differently on purpose:
 - **Exact-key seams** — the library call `bestiary.EntityByKey` and the web
   route `GET /entity/<key>` — take a canonical key and look it up directly.
   A retired key is a hard not-found there, without exception.
-- **The CLI seams** — `bestiary show <ref>` and `bestiary show <ref>
-  --by-entity` — run the input through the *model resolver* first, and that
-  resolver keeps its short-reference (under-specified) fallback. So a retired
-  spelling that remains a valid short reference to one live entity still
-  resolves, and one that names several live entities still lists them as
-  candidates. Making those fail would break ordinary under-specified lookups
+- **`bestiary show <ref> --by-entity`** is a third lookup — exact, but not the
+  same one: it matches the input against the store-overlaid entity index by
+  entity key, entity preferred name or concrete model id. It has no
+  short-reference path, so it never returns the under-specified error, and a
+  retired key is not found there unless one of those three spellings still
+  names a live entity.
+- **`bestiary show <ref>`** runs the input through the *model resolver*, and
+  that resolver keeps its short-reference (under-specified) fallback. So a
+  retired spelling that remains a valid short reference to one live entity
+  still resolves, and one that names several live entities still lists them as
+  candidates. Making that fail would break ordinary under-specified lookups
   whenever they happened to match a retired spelling.
 
 The per-key measured record for a release lives in

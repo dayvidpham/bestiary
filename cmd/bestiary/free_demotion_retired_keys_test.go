@@ -19,10 +19,12 @@ type retiredKeyInput = string
 
 // retiredKeySeams is the expected outcome on each of the two user-facing lookup seams.
 // The values are the measured split, not an aspiration: "not-found" means the seam
-// returns *bestiary.ErrNotFound, "ambiguous" means the under-specified error the CLI
-// returns when the key retires but its family stays live, and "resolved" means the
-// retired spelling remains a valid under-specified reference to exactly one live entity
-// and still answers. assertRunSeam rejects anything else by name.
+// returns *bestiary.ErrNotFound, "ambiguous" means the under-specified error the model
+// resolver returns when the key retires but its family stays live (a `show`-only outcome:
+// `--by-entity` has no short-reference path), and "resolved" means the seam still answers
+// the retired spelling — at `show` because it remains a valid under-specified reference
+// to one live entity, at `--by-entity` because the spelling is still a live concrete
+// model id. assertRunSeam rejects anything else by name.
 type retiredKeySeams struct {
 	ByEntity string `json:"by_entity"`
 	Show     string `json:"show"`
@@ -46,8 +48,11 @@ var freeDemotionRetiredKeysCorpusJSON []byte
 
 // TestRetiredKeys_FreeDemotion_UniformHardNotFound pins the retired-key policy for
 // every key the global free-tier demotion retires, at the two production seams a user
-// actually reaches: `bestiary show <key> --by-entity` (the exact-key entity lookup) and
-// `bestiary show <key>` (the looser model resolver with its entity fallback).
+// actually reaches: `bestiary show <key> --by-entity` (an exact match over the
+// store-overlaid entity index — entity key, entity preferred name or concrete model id —
+// with no short-reference path) and `bestiary show <key>` (the model resolver, which
+// keeps its short-reference fallback). The exact-key seams are bestiary.EntityByKey and
+// GET /entity/<key>.
 //
 // The policy is a uniform hard 404 — no alias is minted, no redirect is added, and no
 // successor is listed. The CHANGELOG old -> new migration table is the only pointer a
@@ -86,7 +91,9 @@ func TestRetiredKeys_FreeDemotion_UniformHardNotFound(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// Seam 1 — the exact-key entity lookup behind `show --by-entity`.
+			// Seam 1 — the exact-key lookup bestiary.EntityByKey, and above it
+			// `show --by-entity`, which matches the store-overlaid entity index by
+			// entity key, entity preferred name or concrete model id.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}
@@ -187,8 +194,9 @@ func assertRunSeam(t *testing.T, want, key string, args []string) {
 		// exactly one live entity. The successor carries a field the retired key did
 		// not (a version, typically), so a ref omitting that field still names one
 		// model and the ordinary resolver answers it. No alias, redirect or
-		// successor-listing instrument is involved, and the exact-key seam is still a
-		// hard 404 — see the corpus rows that declare this outcome for why making it
+		// successor-listing instrument is involved, and the exact-key seam,
+		// bestiary.EntityByKey, is still a hard 404 — see the corpus rows that
+		// declare this outcome for why making it
 		// fail instead would break working lookups.
 		if runErr != nil {
 			t.Errorf("run %v returned %v, want a successful resolution — %q is recorded as a "+

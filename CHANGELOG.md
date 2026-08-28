@@ -324,9 +324,10 @@ for its **Go module tags** (`vX.Y.Z`).
 
   Two of these four are a MEASURED DEVIATION from the epoch's uniform-404 reading, and
   they are recorded rather than repaired. `kimi-k2` and `kimi-k3` are the upstream
-  raw_family spellings; once reduced they remain valid UNDER-SPECIFIED references that the
-  ordinary resolver matches to exactly one live entity each, so they still answer on both
-  `bestiary show` and `bestiary show --by-entity`. The hard 404 that admits no exception is
+  raw_family spellings, and both are still LIVE concrete model ids, so both CLI seams
+  still answer them: `bestiary show` finds the model directly, and `bestiary show
+  --by-entity` finds it through its concrete-model-id arm and renders the owning entity
+  (`kimi/k@2`, `kimi/k@3`). The hard 404 that admits no exception is
   at the EXACT-key seam (`bestiary.EntityByKey`), and it holds for all four — and for all
   62 keys this release retires. Making the two CLI seams fail would mean breaking an
   under-specified reference because it happens to match a retired spelling.
@@ -334,9 +335,9 @@ for its **Go module tags** (`vX.Y.Z`).
 - **The retired-key rule, stated per seam.** This is the release's single normative
   statement of what a retired key does, and it governs every per-key stanza below. An
   earlier draft of some stanzas below described `bestiary show --by-entity` as "the
-  exact-key seam" and read the hard 404 as covering it; that wording was wrong about which
-  seam is exact and, because it never shipped, is rewritten in place rather than appended
-  to. The rule:
+  exact-key seam" and read the hard 404 as covering it; that wording conflated two
+  different exact lookups, and because it never shipped it is rewritten in place rather
+  than appended to — in the CHANGELOG and in every retired-key test docblock. The rule:
 
   > A retired key is not found at the exact-key seams: `EntityByKey`,
   > `GET /entity/<key>`. The CLI resolver keeps its short-reference fallback. An old
@@ -344,8 +345,11 @@ for its **Go module tags** (`vX.Y.Z`).
 
   So the invariant that admits no exception is the pair of EXACT-key seams — the library
   call `bestiary.EntityByKey` and the web route `GET /entity/<key>` — and it holds for
-  all **62** keys this release retires. `bestiary show` and `bestiary show --by-entity`
-  are NOT exact-key seams: both run the input through the model resolver first, which
+  all **62** keys this release retires. Neither CLI seam is one of those two, and the two
+  do not behave alike. `bestiary show --by-entity` is an exact match over the
+  store-overlaid entity index, accepting the entity key, the entity preferred name or a
+  concrete model id; it has NO short-reference path, so it never returns the
+  under-specified error. `bestiary show` runs the input through the model resolver, which
   keeps its short-reference (under-specified) fallback, so a retired spelling that is
   still a valid short reference answers there or lists candidates. Measured at the
   shipped `bestiary show` seam, the 62 split **45 not-found / 12 under-specified /
@@ -405,9 +409,10 @@ for its **Go module tags** (`vX.Y.Z`).
   added to let a retired key resolve: the exact-key seams (`bestiary.EntityByKey` and
   `GET /entity/<key>`) are a hard 404 for all **26**, and making these fail would mean
   breaking ordinary under-specified lookups whenever they happen to match a retired
-  spelling. `show --by-entity` is NOT an exact-key seam — it runs the input through the
-  model resolver, as plain `show` does — but for these 26 keys it measurably reports
-  not-found for every one. Nine further keys report the under-specified error because
+  spelling. `show --by-entity` is a different lookup again — an exact match over the
+  store-overlaid entity index (entity key, entity preferred name or concrete model id),
+  with no short-reference path — and it reports not-found for all 26. Nine further keys
+  report the under-specified error because
   their FAMILY survives them, exactly as `show gpt` and `show claude` always have; the
   remaining fourteen are 404 on both seams.
 
@@ -953,9 +958,12 @@ for its **Go module tags** (`vX.Y.Z`).
   `bestiary show kling-v2@6 --by-entity`. Bare `ling` returns `ErrNotFound` on the
   `--by-entity` seam but **`ErrAmbiguous`** on the looser `show` seam — not because it
   split, but because its **family outlives the key** and the bare family token still has
-  five live children, exactly as `show gpt`, `show claude` and `show mimo` behave. Neither
-  of these is an exact-key seam: both run the input through the model resolver, and the
-  exact-key seams are `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is
+  five live children, exactly as `show gpt`, `show claude` and `show mimo` behave. The
+  asymmetry is in the seams, not in the key: `--by-entity` is an exact match over the
+  store-overlaid entity index (entity key, entity preferred name or concrete model id)
+  with no short-reference path, so it cannot come back ambiguous, while plain `show` runs
+  the input through the model resolver, which keeps that fallback. The exact-key seams are
+  `bestiary.EntityByKey` and `GET /entity/<key>`. That reading is
   pinned as measured and must not be "corrected" into a 404. No alias is minted and no
   successor is listed by the tool on either seam; this table is the pointer.
 

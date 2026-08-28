@@ -21,8 +21,10 @@ const cogitoRetiredKeyCount = 2
 
 // TestRetiredKeys_CogitoDecomposition_MeasuredSplit pins the retired-key policy for both
 // keys the cogito repair retires, at the two seams a user reaches: `bestiary show <key>
-// --by-entity` (the exact-key entity lookup) and `bestiary show <key>` (the looser model
-// resolver with its entity fallback).
+// --by-entity` (an exact match over the store-overlaid entity index — entity key, entity
+// preferred name or concrete model id — with no short-reference path) and `bestiary show
+// <key>` (the model resolver, which keeps its short-reference fallback). The exact-key
+// seams are bestiary.EntityByKey and GET /entity/<key>.
 //
 // The policy is a uniform hard 404 — no alias is minted, no redirect is added, no
 // successor is listed. Unlike the ling and mimo sets, this one has no bare-family row: a
@@ -61,7 +63,9 @@ func TestRetiredKeys_CogitoDecomposition_MeasuredSplit(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// Seam 1 — the exact-key entity lookup behind `show --by-entity`.
+			// Seam 1 — the exact-key lookup bestiary.EntityByKey, and above it
+			// `show --by-entity`, which matches the store-overlaid entity index by
+			// entity key, entity preferred name or concrete model id.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}

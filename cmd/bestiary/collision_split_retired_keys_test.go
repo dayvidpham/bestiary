@@ -27,8 +27,11 @@ var collisionSplitSurvivingLingKeys = map[string]int{
 
 // TestRetiredKeys_CollisionSplit_MeasuredSeamSplit pins the retired-key policy for the
 // keys the ling/inkling/kling collision split retires, at the two production seams a
-// user actually reaches: `bestiary show <key> --by-entity` (the exact-key entity lookup)
-// and `bestiary show <key>` (the looser model resolver with its entity fallback).
+// user actually reaches: `bestiary show <key> --by-entity` (an exact match over the
+// store-overlaid entity index — entity key, entity preferred name or concrete model id —
+// with no short-reference path) and `bestiary show <key>` (the model resolver, which
+// keeps its short-reference fallback). The exact-key seams are bestiary.EntityByKey and
+// GET /entity/<key>.
 //
 // The policy is a uniform hard 404 — no alias is minted, no redirect is added, and no
 // successor is listed. The CHANGELOG old -> new migration table is the only pointer a
@@ -37,8 +40,9 @@ var collisionSplitSurvivingLingKeys = map[string]int{
 //
 // This lever is where the policy's ONE anticipated deviation actually lands, so the
 // corpus carries a per-key seam expectation rather than one blanket rule. `kling-v2@6`
-// 404s on both seams: nothing of it survives. Bare `ling` 404s only on the exact-key
-// seam and comes back AMBIGUOUS on the looser one — not because it split, but because
+// 404s on both seams: nothing of it survives. Bare `ling` 404s on `--by-entity` (and at
+// bestiary.EntityByKey) but comes back AMBIGUOUS at plain `show` — not because it split,
+// but because
 // its FAMILY outlives the key. Five inclusionAI ling entities are still live, so the
 // bare family token still names a real set, exactly as `show gpt`, `show claude` and
 // `show mimo` do. That reading is measured and pinned; it must never be "corrected" into
@@ -79,8 +83,10 @@ func TestRetiredKeys_CollisionSplit_MeasuredSeamSplit(t *testing.T) {
 	for _, c := range corpus.Cases {
 		key := c.Input
 		t.Run(c.Name, func(t *testing.T) {
-			// Seam 1 — the exact-key entity lookup behind `show --by-entity`. It has no
-			// ambiguity path at all, so both keys 404 here regardless of the family.
+			// Seam 1 — the exact-key lookup bestiary.EntityByKey, and above it
+			// `show --by-entity`, which matches the store-overlaid entity index by
+			// entity key, entity preferred name or concrete model id. It has no
+			// short-reference path, so both keys 404 here regardless of the family.
 			if _, ok := bestiary.EntityByKey(key); ok {
 				t.Errorf("EntityByKey(%q) still resolves; the key was retired and must be a hard 404", key)
 			}
