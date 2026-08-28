@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -144,40 +146,26 @@ func TestModelsdevFieldCensus_UpToDate(t *testing.T) {
 	var moved []string
 	for p, n := range want {
 		if old, ok := have[p]; ok && old != n {
-			moved = append(moved, p+": "+itoa(old)+" -> "+itoa(n))
+			moved = append(moved, p+": "+strconv.Itoa(old)+" -> "+strconv.Itoa(n))
 		}
 	}
 	sort.Strings(moved)
+	// A byte mismatch with NO moved fill count means the divergence is in the envelope —
+	// schema_version, the _comment, or the path set itself (which the drift test names).
+	// Without this arm the message reads "Fill counts that moved (0): " and tells the
+	// reader nothing about the one case it cannot explain.
+	movedLine := "  Fill counts that moved (" + strconv.Itoa(len(moved)) + "): " + strings.Join(moved, ", ") + "\n"
+	if len(moved) == 0 {
+		movedLine = "  NO fill count moved: the difference is in the emission ENVELOPE (schema_version,\n" +
+			"    the _comment) or in the PATH SET, which TestModelsdevFieldCensus_NoDrift names\n"
+	}
 	t.Errorf("committed field census is STALE relative to the vendored catalog\n"+
 		"  What: %s does not match what buildModelsdevFieldCensus produces from %s\n"+
-		"  Fill counts that moved (%d): %s\n"+
+		"%s"+
 		"  When: after a snapshot refresh that changed row counts without changing field shape\n"+
 		"  What it means for the caller: the committed census describes an older snapshot\n"+
 		"  How to fix: run `go generate ./...` and commit the regenerated census",
-		modelsdevFieldCensusFile, vendoredCatalogPath, len(moved), strings.Join(moved, ", "))
-}
-
-// itoa is a local strconv.Itoa to keep this file's imports minimal.
-func itoa(i int) string {
-	if i == 0 {
-		return "0"
-	}
-	neg := i < 0
-	if neg {
-		i = -i
-	}
-	var b [20]byte
-	p := len(b)
-	for i > 0 {
-		p--
-		b[p] = byte('0' + i%10)
-		i /= 10
-	}
-	if neg {
-		p--
-		b[p] = '-'
-	}
-	return string(b[p:])
+		modelsdevFieldCensusFile, vendoredCatalogPath, movedLine)
 }
 
 // TestModelsdevFieldCensus_EnvelopeContract pins the committed-emission invariants the
@@ -334,7 +322,12 @@ func TestBuildModelsdevFieldCensus_DetectsAnAddedField(t *testing.T) {
 	if err != nil {
 		t.Fatalf("re-read vendored catalog: %v", err)
 	}
-	if len(reread) != len(raw) {
-		t.Fatal("the vendored catalog changed on disk during the mutation test — the probe must stay in memory")
+	if !bytes.Equal(reread, raw) {
+		t.Fatal("the vendored catalog changed on disk during the mutation test — the probe must stay " +
+			"in memory.\n" +
+			"  Why the comparison is byte-for-byte: this is the FALSIFIER, the one test whose whole job\n" +
+			"    is to be believed about what it proves. A length check passes any same-length edit,\n" +
+			"    and swapping one JSON field value for another of equal width is exactly that.\n" +
+			"  How to fix: restore the committed catalog from git; the mutation must never leave memory")
 	}
 }

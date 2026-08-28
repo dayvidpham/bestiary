@@ -708,13 +708,37 @@ func run(args []string) error {
 
 	// Emit modelsdev_field_census.json — the upstream FIELD-SHAPE census. It is built
 	// from the SAME rawJSON the decomposition consumed (never a re-read), so the census
-	// can never describe a different snapshot than the one that was baked. A write
-	// failure is non-fatal, on the same diagnostic footing as the unlinked report.
-	censusData, censusErr := buildModelsdevFieldCensus(rawJSON)
-	if censusErr != nil {
-		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not build %s: %v\n", modelsdevFieldCensusFile, censusErr)
-	} else if err := os.WriteFile(modelsdevFieldCensusFile, censusData, 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", modelsdevFieldCensusFile, err)
+	// can never describe a different snapshot than the one that was baked.
+	//
+	// Both failure arms are FATAL, which puts this emission on the vendored-catalog
+	// footing rather than the unlinked report's diagnostic footing. The distinction the
+	// codegen discipline draws is between a diagnostic AID and a committed ARTIFACT that
+	// a gate later reads: parse_failures.json and modelsdev_unlinked.json are aids, and a
+	// missing one costs a reader some context. The census is an artifact —
+	// TestModelsdevFieldCensus_NoDrift recomputes it and compares — so a skipped write
+	// leaves the PREVIOUS, now stale census committed, and the gate then fails far from
+	// the cause, in a later test run, against an emission nobody knew was old. A warning
+	// in a long codegen run is exactly the signal that scrolls past.
+	//
+	// A build failure here also cannot be a data problem that a warning would let a
+	// curator work around: rawJSON was already decoded successfully earlier in this run,
+	// for the bake itself, so reaching the build error means something went badly wrong.
+	censusData, err := buildModelsdevFieldCensus(rawJSON)
+	if err != nil {
+		return fmt.Errorf("bestiary-gen: build %s: %w", modelsdevFieldCensusFile, err)
+	}
+	if err := os.WriteFile(modelsdevFieldCensusFile, censusData, 0o644); err != nil {
+		return fmt.Errorf(
+			"bestiary-gen: write %s: %w\n"+
+				"  What: the upstream field-shape census could not be written\n"+
+				"  Where: %s\n"+
+				"  When: after the catalog was baked, emitting the committed census\n"+
+				"  What it means for the caller: the bake STOPS. Continuing would leave the previous,\n"+
+				"    now stale census on disk, and TestModelsdevFieldCensus_NoDrift would then fail in\n"+
+				"    a later run against an emission nobody knew was old\n"+
+				"  How to fix: check the path is writable and the working tree is the repo root",
+			modelsdevFieldCensusFile, err, modelsdevFieldCensusFile,
+		)
 	}
 
 	// Emit the two creator-dimension reports. Both are diagnostic aids on the same
@@ -2939,7 +2963,9 @@ func buildModelsdevFieldCensus(rawJSON []byte) ([]byte, error) {
 				"  What: the models.dev catalog JSON could not be decoded into {providers, models}\n"+
 				"  Where: %s (the committed codegen input)\n"+
 				"  When: building the upstream field-shape census, after the catalog was read\n"+
-				"  What it means for the caller: the census cannot be emitted and the bake stops\n"+
+				"  What it means for the caller: the census cannot be emitted and the bake STOPS —\n"+
+				"    the call site returns this error rather than warning, so no generated file is\n"+
+				"    written from a catalog that will not decode\n"+
 				"  How to fix: re-run the vendoring step (`go run ./cmd/bestiary-gen`) to replace a "+
 				"truncated or corrupt snapshot",
 			err, vendoredCatalogPath,

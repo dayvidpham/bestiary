@@ -45,6 +45,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -1364,19 +1365,50 @@ func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
 		total, len(changes), fix, improve, regress, justified)
 	t.Logf("divergence: before=%d  after=%d", divBefore, divAfter)
 
-	// Only persist the committed artifact when the gate
-	// PASSES. A failing run must NOT leave a dirty/mismatched report in the working tree
-	// (which would pollute git status and could mask the failure under a re-commit).
+	// The committed diff report is a BASELINE ARTIFACT, not a scratch output, so an
+	// ordinary `go test` never writes it — it COMPARES.
+	//
+	// It used to re-emit itself on any run whose gate passed, and that is a real hazard
+	// while an engineer is iterating: dropping a curation pin leaves the (c) count at zero
+	// but moves the other figures, so the report was silently rewritten in the working
+	// tree beside a red test elsewhere and was easy to sweep into the commit that "fixed"
+	// it. A file that re-emits itself cannot falsify anything — it always agrees with
+	// whatever the code currently does.
+	//
+	// Refreshing it is now the same declared, env-gated act as re-capturing the baseline
+	// (TestCaptureDecompositionBaseline above), and for the same reason: it is committed
+	// evidence, and evidence that rewrites itself to stay green is not evidence.
 	reportPath := filepath.Join(snapshotDir(), "decomp_diff_report.json")
-	if regress == 0 {
-		reportBytes, err := json.MarshalIndent(report, "", "  ")
-		if err != nil {
-			t.Fatalf("marshal diff report: %v", err)
+	reportBytes, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal diff report: %v", err)
+	}
+	reportBytes = append(reportBytes, '\n')
+
+	if os.Getenv("BESTIARY_CAPTURE_BASELINE") == "1" {
+		if regress != 0 {
+			t.Fatalf("refusing to re-emit %s while the gate is RED (%d category-(c) regressions) — "+
+				"capturing a report that records unjustified regressions freezes them into the "+
+				"committed evidence", reportPath, regress)
 		}
-		if err := os.WriteFile(reportPath, append(reportBytes, '\n'), 0o644); err != nil {
+		if err := os.WriteFile(reportPath, reportBytes, 0o644); err != nil {
 			t.Fatalf("write diff report: %v", err)
 		}
-		t.Logf("committed report → %s", reportPath)
+		t.Logf("captured report → %s", reportPath)
+	} else if committed, err := os.ReadFile(reportPath); err != nil {
+		t.Errorf("read the committed diff report %s: %v\n"+
+			"  How to fix: capture it with\n"+
+			"    BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestPathUnification_ZeroUnexpectedRegression",
+			reportPath, err)
+	} else if !bytes.Equal(committed, reportBytes) {
+		t.Errorf("the committed diff report %s no longer matches the measured diff\n"+
+			"  What: the before/after diff this run computes differs from the committed record\n"+
+			"  Why it matters: the report is committed EVIDENCE of what a curation lever moved. It is\n"+
+			"    deliberately not self-refreshing, so a change that moves the diff has to be declared\n"+
+			"  How to fix: confirm the change is intended and the (c) count is still zero, then\n"+
+			"    re-capture in the SAME commit as the change:\n"+
+			"    BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestPathUnification_ZeroUnexpectedRegression",
+			reportPath)
 	}
 
 	if regress != 0 {
