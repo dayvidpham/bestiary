@@ -1,14 +1,24 @@
 {
-  "total_multi_provider_ids": 908,
-  "total_divergent_ids": 4,
+  "total_multi_provider_ids": 1071,
+  "total_divergent_ids": 12,
   "cat_a_vendor_case_count": 0,
   "cat_b_bare_gen_split_count": 2,
-  "cat_c_member_variant_count": 1,
-  "cat_d_genuine_mislabel_count": 1,
+  "cat_c_member_variant_count": 4,
+  "cat_d_genuine_mislabel_count": 6,
   "genuine_mislabel_pairs": [
     {
-      "family_a": "aura",
-      "family_b": "fugu",
+      "family_a": "doubao-seed",
+      "family_b": "seed",
+      "count": 4
+    },
+    {
+      "family_a": "doubao",
+      "family_b": "seed",
+      "count": 1
+    },
+    {
+      "family_a": "qvq",
+      "family_b": "qwen",
       "count": 1
     }
   ],

@@ -444,33 +444,6 @@
       }
     },
     {
-      "name": "retired_gpt_pro",
-      "input": "gpt/pro",
-      "expected": {
-        "by_entity": "not-found",
-        "show": "ambiguous",
-        "retired_instances": [
-          "digitalocean|openai-gpt-5.2-pro",
-          "digitalocean|openai-gpt-5.4-pro",
-          "venice|openai-gpt-54-pro",
-          "venice|openai-gpt-55-pro"
-        ],
-        "successors": [
-          "gpt/pro@5.2",
-          "gpt/pro@5.4",
-          "gpt/pro@5.5"
-        ]
-      },
-      "classification": "must-fail",
-      "provenance": {
-        "source": "requirement",
-        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
-      },
-      "mutation": {
-        "description": "the undated gpt Pro key, held entirely by venice's squashed-version ids (`openai-gpt-54-pro`, `openai-gpt-55-pro`) and digitalocean's `openai-gpt-5.2-pro`. Each is dated by a different mechanism — a curated venice pin for the squashed spellings, the creator-prefix strip for the dotted one — so this key SPLITS across three successors rather than folding onto one. The gpt family stays live, hence the ambiguity on the `show` seam."
-      }
-    },
-    {
       "name": "retired_kimi_k2_code",
       "input": "kimi-k2{code}",
       "expected": {
@@ -515,33 +488,11 @@
       }
     },
     {
-      "name": "retired_ministral_8b_instruct",
-      "input": "ministral#8b{instruct}",
-      "expected": {
-        "by_entity": "not-found",
-        "show": "ambiguous",
-        "retired_instances": [
-          "amazon-bedrock|mistral.ministral-3-8b-instruct"
-        ],
-        "successors": [
-          "ministral@3#8b{instruct}"
-        ]
-      },
-      "classification": "must-fail",
-      "provenance": {
-        "source": "requirement",
-        "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
-      },
-      "mutation": {
-        "description": "amazon-bedrock's `mistral.ministral-3-8b-instruct`, same rule, merging onto a gen-3 sibling that already existed."
-      }
-    },
-    {
       "name": "retired_mistral_large_675b_instruct",
       "input": "mistral/large#675b{instruct}",
       "expected": {
         "by_entity": "not-found",
-        "show": "resolved",
+        "show": "ambiguous",
         "retired_instances": [
           "amazon-bedrock|mistral.mistral-large-3-675b-instruct"
         ],
@@ -555,7 +506,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
       },
       "mutation": {
-        "description": "amazon-bedrock's `mistral.mistral-large-3-675b-instruct` — here the creator token and the family token are the same word, and the carrier check licenses the strip because family `mistral` genuinely declares creator `mistral`. The generation `3` behind it becomes reachable. The harvested HuggingFace repo `mistralai/Mistral-Large-3-675B-Instruct-2512` pointed at this key and is re-pointed at the successor in the same change. MEASURED DEVIATION on the `show` seam, same shape as the ministral 3b row: the string stays a valid under-specified reference to one live entity."
+        "description": "amazon-bedrock's `mistral.mistral-large-3-675b-instruct` — here the creator token and the family token are the same word, and the carrier check licenses the strip because family `mistral` genuinely declares creator `mistral`. The generation `3` behind it becomes reachable. The harvested HuggingFace repo `mistralai/Mistral-Large-3-675B-Instruct-2512` pointed at this key and is re-pointed at the successor in the same change. MEASURED DEVIATION on the `show` seam, same shape as the ministral 3b row: the string stays a valid under-specified reference to one live entity.. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): the `show` seam moved from RESOLVED to the under-specified reading. Nothing about the lever changed and the successor is still `mistral/large@3#675b{instruct}` — that ONE entity simply gained two more provider rows (nano-gpt and nvidia joined amazon-bedrock), and they group into two distinct date-differentiated candidates. So this key leaves the \"resolves to one live entity\" class and joins the ordinary single-entity date-fragmentation class that `kimi{instruct}` is already filed under. The exact-key seam is still a hard 404"
       }
     },
     {
@@ -632,7 +583,7 @@
         "by_entity": "not-found",
         "show": "ambiguous",
         "retired_instances": [
-          "venice|nvidia-nemotron-cascade-2-30b-a3b"
+          "vultr|nvidia/Nemotron-Cascade-2-30B-A3B"
         ],
         "successors": [
           "nemotron@2#30b-a3b"
@@ -644,7 +595,7 @@
         "ref": "the epoch-wide retired-key policy: a retired entity key is a uniform hard 404 on the exact-key seam — no alias, no redirect, no successor listing. The CHANGELOG old->new table is the only pointer a user gets."
       },
       "mutation": {
-        "description": "venice's `nvidia-nemotron-cascade-2-30b-a3b`; the creator token is dropped and the generation `2` behind it is recovered."
+        "description": "venice's `nvidia-nemotron-cascade-2-30b-a3b`; the creator token is dropped and the generation `2` behind it is recovered.. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): venice DELETED its Nemotron Cascade 2 row (it now lists nvidia-nemotron-3-nano-30b-a3b, a different artifact that keys to `nemotron/nano@3#30b-a3b`), and vultr ADDED `nvidia/Nemotron-Cascade-2-30B-A3B` — the same artifact this key was minted from. The pinned row is re-measured to the vultr spelling because the population of a retired key is \"the rows that would carry that pre-lever spelling today\", and vultr's row is the only such row. The successor is unchanged: `nemotron@2#30b-a3b` is live and holds exactly this one instance"
       }
     }
   ]

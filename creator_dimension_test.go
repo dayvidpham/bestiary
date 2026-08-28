@@ -186,9 +186,13 @@ func TestCreatorsJSON_WithheldIsDisjointAndReported(t *testing.T) {
 //   - glm: the lab spells itself "zhipuai", the curated token is "zhipu" — one
 //     organization, two spellings, so applying the lab value would churn the token
 //     without changing the fact.
+//   - seed: the lab spells itself "bytedance-seed", the curated token is "bytedance" —
+//     the same one-organization-two-spellings shape as glm.
 //   - llama / mistral: NVIDIA re-publishes both labs' weights under its own "nvidia/"
 //     prefix, so the catalog carries two originators for one family and applying
 //     either would silently pick a winner.
+//   - gemma: AI Singapore re-publishes Google's Gemma weights under an "aisingapore/"
+//     prefix, which is the same multi-org shape.
 //
 // The set was FOUR rows until the ling/inkling/kling collision split. The fourth was
 // "ling", withheld: its only lab-scoped row was thinkingmachines/inkling, reaching it
@@ -199,8 +203,8 @@ func TestCreatorsJSON_WithheldIsDisjointAndReported(t *testing.T) {
 // about. The withhold list is now empty and the class is unexercised here by design;
 // TestCreatorsJSON_WithheldIsDisjointAndReported covers the mechanism itself.
 //
-// All three surviving rows are mechanical disagreements, and auto-applying any of the
-// three would have produced a WRONG creator. That is the measured justification for the
+// All five surviving rows are mechanical disagreements, and auto-applying any of them
+// would have produced a WRONG creator. That is the measured justification for the
 // derivation being report-only rather than self-applying.
 func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 	type want struct {
@@ -208,10 +212,26 @@ func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 		class bestiary.CreatorLabClass
 		count int
 	}
+	// 3 rows -> 5 with the 2026-08-28 models.dev catalog refresh, and every evidence
+	// weight moved. The two new rows are the same two mechanical classes the existing
+	// rows already document:
+	//   - gemma (multi-org): the models view now carries aisingapore-scoped Gemma rows
+	//     beside google's, so the catalog itself names two originators for the family.
+	//     AI Singapore's SEA-LION Gemma derivatives are re-publications of Google's
+	//     weights — the identical shape as llama/meta+nvidia — so applying either lab
+	//     would silently pick a winner.
+	//   - seed (spelling-variant): the curated creator is "bytedance" and the only lab
+	//     prefix reaching the family is "bytedance-seed". One organization, two
+	//     spellings, exactly the glm/zhipu case; applying the lab value would churn the
+	//     token without changing the fact.
+	// Counts: glm 14 -> 17, llama 5 -> 10, mistral 11 -> 12 — evidence weights, which
+	// rise with the metadata rows the refresh added (models view 263 -> 361).
 	wanted := map[bestiary.Family]want{
-		"glm":     {labs: []string{"zhipuai"}, class: bestiary.CreatorLabClassSpellingVariant, count: 14},
-		"llama":   {labs: []string{"meta", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 5},
-		"mistral": {labs: []string{"mistral", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 11},
+		"gemma":   {labs: []string{"aisingapore", "google"}, class: bestiary.CreatorLabClassMultiOrg, count: 5},
+		"glm":     {labs: []string{"zhipuai"}, class: bestiary.CreatorLabClassSpellingVariant, count: 17},
+		"llama":   {labs: []string{"meta", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 10},
+		"mistral": {labs: []string{"mistral", "nvidia"}, class: bestiary.CreatorLabClassMultiOrg, count: 12},
+		"seed":    {labs: []string{"bytedance-seed"}, class: bestiary.CreatorLabClassSpellingVariant, count: 12},
 	}
 
 	got := bestiary.CreatorLabDisagreementsFromBaked()
@@ -253,8 +273,10 @@ func TestCreatorLabDisagreements_Pinned(t *testing.T) {
 			mechanical++
 		}
 	}
-	if mechanical != 3 {
-		t.Errorf("mechanical disagreements = %d, want 3 (glm spelling + llama/mistral multi-org)", mechanical)
+	// 3 -> 5 with the 2026-08-28 catalog refresh: the gemma multi-org and seed
+	// spelling-variant rows join (see the note on the wanted table above).
+	if mechanical != 5 {
+		t.Errorf("mechanical disagreements = %d, want 5 (glm/seed spelling + gemma/llama/mistral multi-org)", mechanical)
 	}
 	if mechanical != len(got) {
 		t.Errorf("%d of %d rows are withheld deferrals; the withhold list is empty, so every "+

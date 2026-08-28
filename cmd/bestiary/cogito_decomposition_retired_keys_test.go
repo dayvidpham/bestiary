@@ -19,6 +19,36 @@ var cogitoDecompositionRetiredKeysCorpusJSON []byte
 // the key diff itself, so it moves only alongside a re-measured diff.
 const cogitoRetiredKeyCount = 2
 
+// cogitoUpstreamEmptiedKeys names retired keys whose ENTIRE pre-lever instance
+// population upstream DELETED at the 2026-08-28 models.dev catalog refresh, together with
+// the evidence for that reading. It is a ledger, not a switch: a key listed here keeps
+// every one of its seam pins (the exact-key 404, both CLI seams) and keeps its CHANGELOG
+// migration row; what it loses is the RE-DERIVATION of its successor set, because
+// re-deriving "where did this key's rows go" needs rows, and this key has none left
+// anywhere in the catalog.
+//
+// The entry is spelled out by hand rather than inferred from an empty instance list so
+// that blanking a population can never be a way to make this file go green: an emptied
+// case that is not named here still fails, and a named case that is not actually empty
+// fails too.
+//
+// `cogito/v2.1-671b#671b` held two rows, kilo and openrouter, both spelling the artifact
+// `deepcogito/cogito-v2.1-671b` with the dot intact. At the refresh BOTH rows were gone.
+// Neither provider left the catalog — kilo still lists 365 models and openrouter 355 —
+// and neither carries any deepcogito id at all any more, nor any near-spelling of this
+// one. Only two deepcogito rows survive catalog-wide (togetherai's dash-spelled
+// cogito-v2-1-671b, which is the OTHER case in this corpus, and a nano-gpt v1-preview row
+// that belongs to the qwen keyspace), so the dotted spelling this key was minted from is
+// published by nobody. That is a deletion, not a rename, and the rows are removed rather
+// than replaced: substituting the togetherai row would claim a re-homing the catalog does
+// not record.
+var cogitoUpstreamEmptiedKeys = map[string]string{
+	"cogito/v2.1-671b#671b": "both pre-lever rows (kilo, openrouter — the dotted " +
+		"deepcogito/cogito-v2.1-671b) were deleted upstream at the 2026-08-28 catalog refresh; " +
+		"no provider publishes the dotted spelling any more, so the key's population is empty " +
+		"and its successor set is no longer re-derivable",
+}
+
 // TestRetiredKeys_CogitoDecomposition_MeasuredSplit pins the retired-key policy for both
 // keys the cogito repair retires, at the two seams a user reaches: `bestiary show <key>
 // --by-entity` (an exact match over the store-overlaid entity index — entity key, entity
@@ -89,6 +119,13 @@ func TestRetiredKeys_CogitoDecomposition_MeasuredSplit(t *testing.T) {
 // rename and the other a merge, so nothing may be created or destroyed: the instances
 // pinned across the retired keys and the instances living on the surviving cogito
 // keyspace must be the same SET, not merely the same count.
+//
+// The 2026-08-28 models.dev catalog refresh shrank that set from three rows to one. kilo
+// and openrouter both dropped the dotted `deepcogito/cogito-v2.1-671b` id, which emptied
+// `cogito/v2.1-671b#671b` completely (see cogitoUpstreamEmptiedKeys); togetherai's
+// dash-spelled row is untouched. Conservation is still asserted as SET equality and is
+// still green — the lever neither created nor destroyed anything — but it now holds over a
+// one-row population, and the emptied key's successor set is no longer re-derivable.
 func TestRetiredKeys_CogitoDecomposition_SuccessorSetsMatchMeasuredRehoming(t *testing.T) {
 	corpus := loadRetiredKeyCorpus(t, cogitoDecompositionRetiredKeysCorpusJSON, cogitoRetiredKeyCount)
 	home := instanceHomes(t)
@@ -96,9 +133,24 @@ func TestRetiredKeys_CogitoDecomposition_SuccessorSetsMatchMeasuredRehoming(t *t
 	for _, c := range corpus.Cases {
 		key, exp := c.Input, c.Expected
 		t.Run(c.Name, func(t *testing.T) {
+			if reason, emptied := cogitoUpstreamEmptiedKeys[key]; emptied {
+				// The PREMISE of the re-derivation below — that the key still has rows to
+				// follow — is factually false for this key after the 2026-08-28 refresh.
+				// Assert the emptiness the ledger claims (so the ledger cannot go stale in
+				// the other direction) and stop, rather than compare an empty measurement
+				// against a recorded successor set it can no longer produce.
+				if len(exp.RetiredInstances) != 0 {
+					t.Errorf("retired key %q is listed in cogitoUpstreamEmptiedKeys (%s) but still "+
+						"pins %d instance(s); the ledger and the corpus disagree",
+						key, reason, len(exp.RetiredInstances))
+				}
+				t.Skipf("retired key %q has no live rows to re-derive from: %s", key, reason)
+			}
 			if len(exp.RetiredInstances) == 0 {
 				t.Fatalf("retired key %q records no instances; the migration record for a key that "+
-					"held no rows is unfalsifiable — pin the instances it held before the lever", key)
+					"held no rows is unfalsifiable — pin the instances it held before the lever, or "+
+					"record it in cogitoUpstreamEmptiedKeys with the evidence that upstream deleted "+
+					"them all", key)
 			}
 			if len(exp.Successors) == 0 {
 				t.Fatalf("retired key %q records no successors; every retired key's rows re-home "+
@@ -231,9 +283,15 @@ func TestCogitoKeyspace_IsExactlyTheOneSurvivingKey(t *testing.T) {
 			"an extra key means an id spelling declined the pin and minted a residue key, a missing "+
 			"one means a distinction was collapsed", got, want)
 	}
-	if instances != 3 {
-		t.Errorf("cogito holds %d instances, want 3 — the lever is one rename and one merge, so the "+
-			"instance total is conserved exactly", instances)
+	// 3 -> 1 with the 2026-08-28 models.dev catalog refresh: kilo and openrouter both
+	// dropped their deepcogito rows entirely, leaving togetherai's dash-spelled
+	// cogito-v2-1-671b as the only Cogito v2.1 671B row in the catalog. The lever still
+	// creates and destroys nothing — the conservation assertion in the companion test
+	// compares SETS and is green — but the population it conserves is now one row, so the
+	// literal below is a re-measurement, not a relaxation.
+	if instances != 1 {
+		t.Errorf("cogito holds %d instances, want 1 — the lever is one rename and one merge, so the "+
+			"instance total is conserved exactly over whatever population upstream serves", instances)
 	}
 
 	// The size must be stated exactly once. Before the repair the key read
@@ -281,20 +339,27 @@ func countSubstring(s, sub string) int {
 
 // TestCogitoNomen_OrgPrefixedRawIDResolves_OrgLessDoesNot turns a prose claim into an
 // executable guard. The decomposition's user-facing story is that the ONE raw API id the
-// providers actually publish — `deepcogito/cogito-v2.1-671b`, org prefix included — still
+// providers actually publish — `deepcogito/cogito-v2-1-671b`, org prefix included — still
 // reaches the surviving entity through the raw input scheme, while the org-LESS spelling
-// `cogito-v2.1-671b` reaches nothing. Both halves were measured; only the prose recorded
+// `cogito-v2-1-671b` reaches nothing. Both halves were measured; only the prose recorded
 // them, so a change to the org-id nomen path could silently break admission for this
 // entity with every test still green.
 //
-// The negative half is the load-bearing one. `cogito-v2.1-671b` not resolving is the
+// The negative half is the load-bearing one. `cogito-v2-1-671b` not resolving is the
 // UNCHANGED pre-existing behaviour, not a regression the decomposition introduced, and
 // pinning it here is what stops a later "fix" from quietly minting a nomen for a spelling
 // no provider publishes — which would re-open the fused-variant defect the lever closed.
 func TestCogitoNomen_OrgPrefixedRawIDResolves_OrgLessDoesNot(t *testing.T) {
+	// The pinned id is re-measured, not chosen. `deepcogito/cogito-v2.1-671b` (dotted) ->
+	// `deepcogito/cogito-v2-1-671b` (dashed) with the 2026-08-28 models.dev catalog refresh:
+	// the two providers that served the DOTTED spelling, kilo and openrouter, both dropped
+	// their deepcogito rows, so togetherai's dashed spelling is now the only Cogito v2.1
+	// 671B id any provider publishes. The claim under test is unchanged — the ORG-PREFIXED
+	// raw id providers actually serve resolves, the org-LESS spelling reaches nothing — only
+	// the published id it is anchored to moved.
 	const (
-		published = "deepcogito/cogito-v2.1-671b" // the raw id providers actually serve
-		orgLess   = "cogito-v2.1-671b"            // the same string with the org dropped
+		published = "deepcogito/cogito-v2-1-671b" // the raw id providers actually serve
+		orgLess   = "cogito-v2-1-671b"            // the same string with the org dropped
 		entityKey = "cogito@2.1#671b"             // the one surviving cogito key
 	)
 

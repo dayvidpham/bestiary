@@ -366,6 +366,9 @@ func loadCuratedStrayLines(t *testing.T) map[bestiary.Family]bestiary.Family {
 //
 // The tree groups by Series.Family so that the curated strays table is honoured:
 // series.json re-homes gemma4 onto the gemma-4 line, and the tree shows it there.
+// (At the 2026-08-28 catalog refresh all three curated strays lost their upstream rows,
+// so the derived expectation is empty; see the note in the body — the mechanism is
+// unchanged and the assertion is strictly stronger while that holds.)
 // But Entity.Creator is a function of the entity's OWN family token, which knows
 // nothing of that re-homing — so a stray's own creator can be CreatorNone while
 // the line it was re-homed onto is attributed.
@@ -407,17 +410,34 @@ func TestCreatorGroups_CreatorDivergenceIsOnlyStrays(t *testing.T) {
 			want[own] = true
 		}
 	}
-	// Non-vacuity: if the derivation ever yields nothing, the set equality below
-	// would pass against an empty tree walk and assert nothing at all.
+	// Non-vacuity. The derivation IS empty at this tip, and the reason is documented
+	// and asserted rather than assumed: the 2026-08-28 models.dev catalog refresh
+	// retired the upstream rows behind all three curated strays, so gemma4,
+	// gemma-4-31b-larkspur and gemini-exp no longer name any corpus entity and a row
+	// for a family the corpus does not carry is correctly invisible here.
+	//
+	// The check is NOT deleted and NOT weakened. With an empty derivation the set
+	// equality below becomes STRICTLY STRONGER — it now says no entity anywhere in the
+	// tree may sit under a foreign creator — and the two named misattribution failures
+	// still sweep every entity. What an empty `want` would genuinely make vacuous is a
+	// tree walk that visits nothing, so that, and the documented cause of the emptiness,
+	// are what is asserted here instead of a bare Fatal.
 	if len(want) == 0 {
-		t.Fatalf("derived expectation is empty: no curated stray in %s re-homes a corpus family across a creator boundary\n"+
-			"  What it means: the set equality below would be vacuous.\n"+
-			"  How to fix: if the curation genuinely no longer crosses a creator boundary, this test has nothing left to pin "+
-			"and should be reconsidered rather than left green.", "parse/data/series.json")
+		for own := range rehomed {
+			if present[own] {
+				t.Errorf("derived expectation is empty, but curated stray family %q IS carried by the corpus\n"+
+					"  What it means: the emptiness no longer has its documented cause (every stray family absent from the corpus).\n"+
+					"  How to fix: re-derive — either the stray now re-homes within one creator, or the derivation broke.", own)
+			}
+		}
+		t.Logf("derived expectation is empty: every curated stray in parse/data/series.json (%d rows) names a family "+
+			"the corpus no longer carries, so no re-homing crosses a creator boundary. The set equality below "+
+			"consequently asserts that NO entity sits under a foreign creator.", len(rehomed))
 	}
 
 	got := map[bestiary.Family]bool{}
 	var divergences []string
+	visited := 0
 	for _, cg := range bestiary.CreatorGroups() {
 		for _, fg := range cg.Families {
 			for _, sg := range fg.Series {
@@ -427,6 +447,7 @@ func TestCreatorGroups_CreatorDivergenceIsOnlyStrays(t *testing.T) {
 					all = append(all, rg.Entities...)
 				}
 				for _, e := range all {
+					visited++
 					if e.Creator == cg.Creator {
 						continue
 					}
@@ -449,6 +470,19 @@ func TestCreatorGroups_CreatorDivergenceIsOnlyStrays(t *testing.T) {
 				}
 			}
 		}
+	}
+
+	// Tree-walk non-vacuity: the set equality only means something if the walk actually
+	// visited the corpus. This is the guard that matters now that the derivation is
+	// empty — a CreatorGroups() that returned nothing would otherwise pass silently.
+	// The floor is deliberately far below the ~989-entity registry so ordinary catalog
+	// churn never trips it.
+	const minVisited = 500
+	if visited < minVisited {
+		t.Errorf("the creator-group walk visited only %d entities, want at least %d\n"+
+			"  What it means: the set equality above compared against an essentially empty tree and asserted nothing.\n"+
+			"  How to fix: check CreatorGroups() — a collapsed tree, not a curation change, is the likely cause.",
+			visited, minVisited)
 	}
 
 	// Set equality against the derivation, in both directions.

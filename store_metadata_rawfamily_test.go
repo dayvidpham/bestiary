@@ -161,14 +161,21 @@ func TestEnsureEntityMetadataColumnsV6_Idempotent(t *testing.T) {
 // over the baked row, the merged row's RawFamily is the STORE's — so the family-presence
 // gate stays apples-to-apples only if raw_family persists. Before that column
 // round-tripped, the cached rows lost RawFamily and the join re-synthesized three
-// standalones; this pins the overlay census to exactly the 4 ornith rows.
+// standalones; this pins the overlay census, which is empty at this tip (see the note
+// on wantStandalone).
 func TestAfterSyncOverlay_CensusStaysPinned(t *testing.T) {
-	wantStandalone := map[string]bool{
-		"ornith@1.0#9b":   true,
-		"ornith@1.0#31b":  true,
-		"ornith@1.0#35b":  true,
-		"ornith@1.0#397b": true,
-	}
+	// 4 ornith rows -> empty with the 2026-08-28 models.dev catalog refresh. Premise
+	// change, not a relaxed pin: ornith was a genuine catalog absence (zero serving
+	// entries) and is now served eight times over (inferx "Ornith-1.0-35B-FP8", six
+	// nano-gpt "ornith-ai/ornith-1.5-*" rows, runinfra "ornith-ai/Ornith-1.5-35B-A3B"),
+	// so the presence gate correctly stops synthesizing for it. Same cause and same
+	// measurement as the curated set in TestMetadataCensus_SynthesizedStandalonesPinned.
+	//
+	// The census this test exists to pin is the AFTER-SYNC one, and it stays fully in
+	// force: the load-bearing assertion is that the three round-tripped rows below do NOT
+	// resurface as standalones once raw_family has been through the store. An empty
+	// expected set makes that assertion strictly stronger, not weaker.
+	wantStandalone := map[string]bool{}
 	unaliased := map[MetadataID]bool{
 		"google/gemini-omni-flash-preview": true,
 		"openai/gpt-realtime-2.1":          true,

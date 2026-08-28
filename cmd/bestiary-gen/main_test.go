@@ -707,19 +707,53 @@ func TestNoFetch_MissingVendoredCatalog_ActionableError(t *testing.T) {
 // nemotron via the curated idFamilyOverrides entry — both providers converge on
 // (nemotron,v1.5,3.3) — so it is gone from the set.
 //
-// The ledger now carries FOUR rows, all of them surfaced by the corpus refresh that
-// reground the committed snapshot on the vendored codegen catalog (5,765 records, up from
-// the 4,979-record stale fixture). Every one is a REAL upstream disagreement about the
-// raw family a provider publishes for a shared model ID — the stale fixture predated the
-// providers that disagree, so it hid them. None is a pipeline regression: each row's
-// tuples are exactly what the two upstream raw-family spellings decompose to, and they
-// are carried as honest residuals rather than papered over with curation (curating them
-// would move entity keys, which this corpus refresh must not do).
+// Every row is a REAL upstream disagreement about the raw family a provider publishes for
+// a shared model ID. None is a pipeline regression: each row's tuples are exactly what the
+// two upstream raw-family spellings decompose to, and they are carried as honest residuals
+// rather than papered over with curation (curating them would move entity keys, which a
+// corpus refresh must not do in the same act).
+//
+// 4 -> 12 with the 2026-08-28 models.dev catalog refresh and its declared corpus
+// re-capture (7,430 records, up from 5,765). One row LEFT the set — sakana/fugu-ultra
+// converged, because vercel corrected its "aura" mislabel to "fugu" upstream — and nine
+// joined it. The nine are three distinct disagreements, not nine independent ones:
+//
+//   - The ByteDance Seed line (5 ids) is published under THREE raw-family spellings:
+//     "seed", "doubao-seed" and "doubao". volcengine says "doubao-seed", its resellers
+//     say "seed". This one has already leaked into the keyspace — doubao-seed@1.6,
+//     doubao-seed/pro@2.0, doubao-seed/lite@2.0, doubao-seed/mini@2.0 and four siblings
+//     now sit beside the seed/* keys for the same product line. A family_aliases.json row
+//     (doubao-seed -> seed) would converge all of them, but that file's own contract
+//     requires user sign-off for a fold of this shape, and it would move entity keys, so
+//     it is deliberately DEFERRED to a curation slice rather than smuggled into a refresh.
+//   - Two member-variant reads (z-ai/glm-4.7-flashx, upstage/solar-pro4): one provider
+//     resolves a glued tier token ("flashx", "pro4") to the member and the other leaves it
+//     on the bare family. Category C in the divergence report.
+//   - Two genuine mislabels (qvq-max, openai/gpt-latest): a provider files Alibaba's QVQ
+//     visual-reasoning line under "qwen", and files OpenAI's rolling gpt-latest under the
+//     "sol" tier. Category D.
 var crossProviderJustifiedResidual = map[string]string{
 	"text-embedding-3-small": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): openai/azure/azure-cognitive-services publish raw family \"text-embedding\" → (text-embedding,small,3), while sap-ai-core publishes NO raw family, so the ID-driven path reads the family token as \"text-embedding-3\" → (text-embedding-3,small,3). Two spellings of one model, not a decomposition regression.",
 	"text-embedding-3-large": "REAL UPSTREAM DIVERGENCE (hidden by the stale fixture): same empty-raw-vs-populated-raw split as text-embedding-3-small — openai/azure/azure-cognitive-services say \"text-embedding\", sap-ai-core says nothing and the ID yields \"text-embedding-3\".",
 	"poolside/laguna-s-2.1":  "REAL UPSTREAM DIVERGENCE: poolside labels its own model raw family \"laguna\" → (laguna,\"\",\"\"), while openrouter and vercel label it \"laguna-s\" → (laguna-s,\"\",2.1). The lab and its resellers disagree on where the line designator ends.",
-	"sakana/fugu-ultra":      "REAL UPSTREAM MISLABEL: pioneer and openrouter publish raw family \"fugu\" → (fugu,ultra,\"\"); vercel publishes \"aura\" → (aura,\"\",\"\") for the same Fugu Ultra id. This is the one genuine family mislabel in the refreshed corpus (the aura↔fugu pair in the divergence report).",
+
+	// The ByteDance Seed line, published under three raw-family spellings. Deferred to a
+	// curation slice (family_aliases.json doubao-seed -> seed) because converging it moves
+	// entity keys and that file requires sign-off for a fold of this shape.
+	"volcengine/doubao-seed-2.0-pro":  "REAL UPSTREAM DIVERGENCE: volcengine publishes raw family \"doubao-seed\" → (doubao-seed,pro,2.0); its resellers publish \"seed\" → (seed,pro,\"\"). One product line, two vendor spellings of the family token.",
+	"volcengine/doubao-seed-2.0-lite": "REAL UPSTREAM DIVERGENCE: same doubao-seed↔seed spelling split as doubao-seed-2.0-pro, on the lite tier.",
+	"volcengine/doubao-seed-2.0-mini": "REAL UPSTREAM DIVERGENCE: same doubao-seed↔seed spelling split as doubao-seed-2.0-pro, on the mini tier.",
+	"volcengine/doubao-seed-2.0-code": "REAL UPSTREAM DIVERGENCE: same doubao-seed↔seed spelling split as doubao-seed-2.0-pro, with no tier token.",
+	"doubao-seed-1-6-vision-250815":   "REAL UPSTREAM DIVERGENCE: the THIRD spelling of the same family — volcengine publishes \"doubao\" → (doubao,\"\",1.6) while ofox publishes \"seed\" → (seed,\"\",\"\"). Same deferral as its 2.0 siblings.",
+
+	// Member-variant reads: a glued tier token that one provider resolves to the member
+	// and the other leaves on the bare family. Category C in the divergence report.
+	"z-ai/glm-4.7-flashx": "REAL UPSTREAM DIVERGENCE: one provider reads the glued \"flashx\" tier as the flash member → (glm,flash,4.7), another leaves it on the bare family → (glm,\"\",4.7). Curating it would have to rule on whether FlashX is the Flash tier or its own; left as an honest residual.",
+	"upstage/solar-pro4":  "REAL UPSTREAM DIVERGENCE: \"pro4\" is read as the pro member by one provider → (solar,pro,\"\") and left on the bare family by another → (solar,\"\",\"\"). The glued generation digit is what defeats agreement.",
+
+	// Genuine family mislabels. Category D.
+	"qvq-max":           "REAL UPSTREAM MISLABEL: QVQ is Alibaba's visual-reasoning line and is published as raw family \"qvq\" → (qvq,\"\",\"\"), but one provider files it under \"qwen\" → (qwen,max,\"\"). qvq is a DISTINCT family (it is in family_enforce.json), so this is the provider's error, not a decomposition one.",
+	"openai/gpt-latest": "REAL UPSTREAM MISLABEL: one provider publishes OpenAI's rolling gpt-latest under the \"sol\" tier → (gpt,sol,\"\") while the rest leave it on the bare family → (gpt,\"\",\"\"). sol is a real GPT tier, so the mislabel is not detectable without knowing which artifact gpt-latest currently points at — exactly the moving-target problem StageLatest records.",
 }
 
 // crossProviderResidualUnaccountedCeiling pins the at-scale count of
@@ -741,7 +775,19 @@ var crossProviderJustifiedResidual = map[string]string{
 // other way in the same run, from 4,064 to 4,229 populated versions, which is the fact
 // the strip was made for. A residual regression of the kind this ceiling exists to catch
 // would raise the residual WITHOUT raising the version floor.
-const crossProviderResidualUnaccountedCeiling = 303
+//
+// 303 -> 353 with the 2026-08-28 catalog refresh and its declared corpus re-capture. This
+// is a ceiling on an ABSOLUTE count over a corpus that grew 29% (5,765 -> 7,430 records),
+// so the raw number had to move; what matters is whether coverage got WORSE, and it got
+// BETTER: the residual RATE fell from 303/5,765 = 5.26% to 353/7,430 = 4.75%. The
+// companion floor below moves the right way in the same run (4,229 -> 5,433 populated
+// versions, 73.4% -> 73.1% of records, flat). Two curation pins in this refresh account
+// for most of the improvement — the claude-fable family override, which stopped a whole
+// new Anthropic tier decomposing as a compound family, and the Nemotron 3.5 Lightning
+// version pins. A genuine residual regression is the case this ceiling exists to catch
+// and looks different: the residual rate RISES while the version floor does not follow.
+// Pinned at the MEASURED value, not padded — this ceiling is tighten-only by contract.
+const crossProviderResidualUnaccountedCeiling = 353
 
 // crossProviderPopulatedVersionFloor pins the at-scale count of snapshot records whose
 // production decomposition yields a NON-EMPTY Version (landing pin; supersedes the
@@ -754,7 +800,13 @@ const crossProviderResidualUnaccountedCeiling = 303
 // (loosen-only: more version coverage passes; a regression that drops version-presence
 // — the inverse of the residual-ceiling guard — trips it). Pinned alongside the residual
 // ceiling so both the "version populated" and "tokens unaccounted" at-scale counts are gated.
-const crossProviderPopulatedVersionFloor = 4229
+//
+// 4,229 -> 5,433 with the 2026-08-28 catalog refresh and its declared corpus re-capture
+// (5,765 -> 7,430 records). As a share of the corpus this is flat — 73.4% -> 73.1% — so
+// the floor tracks corpus growth rather than any change in version coverage. Raising it
+// keeps the guard as tight as it was: left at 4,229 it would have been satisfied by a
+// decomposition that lost version presence on a thousand records.
+const crossProviderPopulatedVersionFloor = 5433
 
 // TestStaticDataset_CrossProviderConsistency is the HARDENED cross-provider
 // consistency GATE. It REPLACES the earlier heuristic gate that carried 5 escape
@@ -1729,6 +1781,11 @@ type codegenArtifacts struct {
 	// parse/data/creators_lab_disagreements.json).
 	creatorProvidersUnserved []byte
 	creatorsLabDisagreements []byte
+	// modelsdevFieldCensus is the committed upstream field-shape census
+	// (parse/data/modelsdev_field_census.json). It is built from the RAW catalog bytes
+	// rather than the decomposed models, so it is the one artifact here that proves the
+	// emitter is stable against JSON map-iteration order at the WIRE level.
+	modelsdevFieldCensus []byte
 }
 
 // runFixtureCodegen returns just the three generated .go sources, for the many callers
@@ -1752,7 +1809,7 @@ func runFixtureCodegenArtifacts(t *testing.T, fixtureJSON []byte, lastSynced str
 	catalogURL = srv.URL
 	defer func() { catalogURL = origURL }()
 
-	_, models, metadata, provMeta, _, err := fetchModelsWithRaw(context.Background(), false)
+	rawJSON, models, metadata, provMeta, _, err := fetchModelsWithRaw(context.Background(), false)
 	if err != nil {
 		t.Fatalf("runFixtureCodegen: fetchModelsWithRaw: %v", err)
 	}
@@ -1798,6 +1855,10 @@ func runFixtureCodegenArtifacts(t *testing.T, fixtureJSON []byte, lastSynced str
 	out.creatorsLabDisagreements, err = buildCreatorsLabDisagreements(metadata)
 	if err != nil {
 		t.Fatalf("runFixtureCodegenArtifacts: buildCreatorsLabDisagreements: %v", err)
+	}
+	out.modelsdevFieldCensus, err = buildModelsdevFieldCensus(rawJSON)
+	if err != nil {
+		t.Fatalf("runFixtureCodegenArtifacts: buildModelsdevFieldCensus: %v", err)
 	}
 	return out
 }
@@ -2010,6 +2071,15 @@ func TestCodegen_Reproducible_ByteIdentical(t *testing.T) {
 				"  Why: the derivation emitted families in map-iteration order, or a row's labs list was left unsorted\n"+
 				"  Where: bestiary.DeriveCreatorLabDisagreements / buildCreatorsLabDisagreements\n"+
 				"  How to fix: keep the sort.Slice on family and the sort.Strings on each row's labs",
+				i+1)
+		}
+		if !bytes.Equal(refArtifacts.modelsdevFieldCensus, iterArtifacts.modelsdevFieldCensus) {
+			t.Fatalf("iteration %d: buildModelsdevFieldCensus output is not byte-identical to the reference\n"+
+				"  What: the upstream field-shape census changed between runs over identical input\n"+
+				"  Why: the census walks JSON objects, whose key order Go randomizes on every decode,\n"+
+				"       so an omitted sort in output position surfaces HERE and nowhere else\n"+
+				"  Where: buildModelsdevFieldCensus\n"+
+				"  How to fix: keep the explicit sort.Slice on Path and emit no timestamp",
 				i+1)
 		}
 

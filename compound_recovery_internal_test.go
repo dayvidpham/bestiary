@@ -51,7 +51,10 @@ func TestCompoundSeriesFamilyRecovery_Corpus(t *testing.T) {
 			Family: "kimi", Variant: "k", Version: "3", EntityKey: "kimi/k@3"},
 		{Raw: "kimi-k2", ID: "umans-coder", Provider: "umans-ai"}: {
 			Family: "kimi", Variant: "coder", Version: "", EntityKey: "kimi/coder"},
-		{Raw: "kimi-k2", ID: "moonshotai/Kimi-K2.5-TEE", Provider: "chutes"}: {
+		// Kimi-K2.5-TEE -> Kimi-K2.6-TEE at the 2026-08-28 catalog refresh: chutes retired
+		// the 2.5 row and serves the 2.6 one, which understates identically (raw family
+		// "kimi-k2", dotted version only in the id) and decomposes to the same shape.
+		{Raw: "kimi-k2", ID: "moonshotai/Kimi-K2.6-TEE", Provider: "chutes"}: {
 			Family: "kimi", Variant: "", Version: "", EntityKey: "kimi"},
 		{Raw: "kimi-k3"}:          {Family: "kimi"},
 		{Raw: "kimi-k2"}:          {Family: "kimi"},

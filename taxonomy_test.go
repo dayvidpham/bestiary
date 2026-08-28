@@ -2,6 +2,7 @@ package bestiary_test
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -138,9 +139,9 @@ func equalStrings(a, b []string) bool {
 
 func TestSeriesAll_CensusExact(t *testing.T) {
 	const (
-		wantSeries        = 410 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines); 416 -> 415: the cogito variant pin retires the phantom cogito gen-1 line by merging its sole occupant onto the repaired gen-2.1 line; 415 -> 410: the gpt tier re-key retires six lines and adds one — the three bare gpt-luna/gpt-sol/gpt-terra lines and the three versioned gpt-<tier>@5.6 lines all disappear as the tiers become variants of gpt, the tiers' undated keys join the EXISTING bare gpt line (adding no line), and the dated keys mint the one new gpt gen-5.6 line. -6 +1 = -5; 410 -> 411: the redundant leading-token strip retires NO line and adds exactly one, the agi gen-01 line, because every other key it re-dates lands on a generation line that already existed; 411 -> 409: the general bare-integer series-compound family recovery retires the two compound-family bare lines kimi-k2 and kimi-k3 outright (their occupants merge onto the kimi line, which already existed) and adds none — kimi/coder is a new RELEASE on the existing bare kimi line, not a new line. -2 +0 = -2; 409 -> 410: the kling variant-shape normalization empties the bare kling line and mints the kling gen-2.5 and gen-3.0 lines (gen-2.6 already existed). -1 +2 = +1
-		wantVersionLines  = 210 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line; 210 -> 209 as the cogito variant pin then empties the phantom cogito gen-1 line by merging it onto that new line; 209 -> 207 as the gpt tier re-key retires the three gpt-<tier>@5.6 lines and mints the single gpt gen-5.6 line: -3 +1 = -2; 207 -> 208 as the leading-token strip mints the agi gen-01 line; UNMOVED by the series-compound recovery, which touches only bare lines — re-measured at 208; 208 -> 210 as the kling variant-shape normalization moves the eight video keys off the bare kling line onto generation lines, two of which (kling gen-2.5 and gen-3.0) are new while gen-2.6 already existed)
-		wantBareLines     = 200 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line; UNCHANGED by the cogito variant pin, which moves only versioned lines. 206 -> 203 as the gpt tier re-key retires the three bare gpt-luna/gpt-sol/gpt-terra lines; their undated successors are variants of gpt and join the bare gpt line, which already existed, so nothing is added. UNCHANGED by the leading-token strip: the bare agi line keeps agi/mini and agi/pro after agi itself becomes agi@01, and no other bare line empties. 203 -> 201 as the series-compound recovery empties the two compound-family bare lines kimi-k2 and kimi-k3; the bare kimi line survives (it keeps its own occupants and gains kimi/coder), so nothing is added. 201 -> 200 as the kling variant-shape normalization empties the bare kling line: it held nothing but the eight video keys, and every one of them now carries a version. 210 + 200 = 410.
+		wantSeries        = 420 // 411 -> 419: 2026-07-23 refresh (+4 versioned incl. gemini-3.6, +4 bare); 419 -> 417: v0.2.8 slice — the deepseek dot-lost merges retire the two phantom versioned lines deepseek gen-1 / gen-2 (command/a{translate} joins the existing command/a line, adding none); 417 -> 415: the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417: the ling/inkling/kling split adds the bare `inkling` and `kling` lines (the kling-v2 versioned line is replaced one-for-one by kling@2.6); 417 -> 416: the keyspace-wide mimo normalization empties the bare `mimo` line (all six of its keys move onto the two existing versioned mimo lines); 416 -> 415: the cogito variant pin retires the phantom cogito gen-1 line by merging its sole occupant onto the repaired gen-2.1 line; 415 -> 410: the gpt tier re-key retires six lines and adds one — the three bare gpt-luna/gpt-sol/gpt-terra lines and the three versioned gpt-<tier>@5.6 lines all disappear as the tiers become variants of gpt, the tiers' undated keys join the EXISTING bare gpt line (adding no line), and the dated keys mint the one new gpt gen-5.6 line. -6 +1 = -5; 410 -> 411: the redundant leading-token strip retires NO line and adds exactly one, the agi gen-01 line, because every other key it re-dates lands on a generation line that already existed; 411 -> 409: the general bare-integer series-compound family recovery retires the two compound-family bare lines kimi-k2 and kimi-k3 outright (their occupants merge onto the kimi line, which already existed) and adds none — kimi/coder is a new RELEASE on the existing bare kimi line, not a new line. -2 +0 = -2; 409 -> 410: the kling variant-shape normalization empties the bare kling line and mints the kling gen-2.5 and gen-3.0 lines (gen-2.6 already existed). -1 +2 = +1 410 -> 420 with the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, model rows 5,765 -> 7,430). Measured line-for-line against the previous snapshot: 48 lines retire (17 versioned, 31 bare) and 58 appear (34 versioned, 24 bare), so -48 +58 = +10. This is upstream churn, not a rule change — whole product lines left (phi gen-3 and gen-3.5 as Microsoft retired Phi-3/3.5, codellama, gemini gen-1.5, the step-r1-v and skyfall-31b compounds) while new ones arrived (fish-audio gen-1/2/2.1 from the curated split of vercel's junk-bucket "o" rows, ornith gen-1.5, glm gen-5.3 and gen-6, grok gen-4.6, gemini gen-3.7, asure and apertus). Two of the retirements are the commit's own curation: the claude-fable compound line and its gen-5 sibling go away when the Claude Fable 5 tier is read as claude/fable like every other tier.
+		wantVersionLines  = 227 // lines with a non-empty generation (207 -> 211 at the 2026-07-23 refresh; 211 -> 209 as deepseek gen-1 / gen-2 retire in the v0.2.8 slice; UNCHANGED by the free demotion — every versioned line it touches keeps other entities; 209 -> 210 as the cogito decomposition mints the cogito gen-2.1 line; 210 -> 209 as the cogito variant pin then empties the phantom cogito gen-1 line by merging it onto that new line; 209 -> 207 as the gpt tier re-key retires the three gpt-<tier>@5.6 lines and mints the single gpt gen-5.6 line: -3 +1 = -2; 207 -> 208 as the leading-token strip mints the agi gen-01 line; UNMOVED by the series-compound recovery, which touches only bare lines — re-measured at 208; 208 -> 210 as the kling variant-shape normalization moves the eight video keys off the bare kling line onto generation lines, two of which (kling gen-2.5 and gen-3.0) are new while gen-2.6 already existed) 210 -> 227 at the 2026-08-28 refresh: 17 versioned lines retire and 34 appear, -17 +34 = +17.
+		wantBareLines     = 193 // lines whose entities carry no identity version (204 -> 208 at the 2026-07-23 refresh; UNCHANGED by the v0.2.8 slice; 208 -> 206 as the free demotion empties the deepseek-flash and minimax-m3 lines; 206 -> 208 as the ling/inkling/kling split adds the bare inkling and kling lines). 208 -> 207 as the mimo normalization empties the bare mimo line; 207 -> 206 as the cogito decomposition moves its sole bare occupant onto the new gen-2.1 line; UNCHANGED by the cogito variant pin, which moves only versioned lines. 206 -> 203 as the gpt tier re-key retires the three bare gpt-luna/gpt-sol/gpt-terra lines; their undated successors are variants of gpt and join the bare gpt line, which already existed, so nothing is added. UNCHANGED by the leading-token strip: the bare agi line keeps agi/mini and agi/pro after agi itself becomes agi@01, and no other bare line empties. 203 -> 201 as the series-compound recovery empties the two compound-family bare lines kimi-k2 and kimi-k3; the bare kimi line survives (it keeps its own occupants and gains kimi/coder), so nothing is added. 201 -> 200 as the kling variant-shape normalization empties the bare kling line: it held nothing but the eight video keys, and every one of them now carries a version. 210 + 200 = 410. 200 -> 193 at the 2026-08-28 refresh: 31 bare lines retire and 24 appear, -31 +24 = -7. The bare side SHRINKS while the versioned side grows because most of the churn replaces compound and undated family spellings with rows that state a version. 227 + 193 = 420.
 		minExpectedSeries = 300 // the ratified floor
 	)
 	all := bestiary.SeriesAll()
@@ -204,7 +205,7 @@ func TestSeriesAll_CensusExact(t *testing.T) {
 // 2.5. The six speech/tier distinctions are not lost; they moved out of the release name
 // and into the identity-modifier segment of the key. 8 - 2 = -6.
 func TestReleases_CensusExact(t *testing.T) {
-	const wantReleases = 645 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5; 655 -> 654: the cogito variant pin retires the phantom cogito gen-1 line, whose sole un-named release goes with it (the decomposition commit before it moves no release count — it replaces one bare-line release with one gen-2.1 release); 654 -> 648: the gpt tier re-key retires the twelve tier releases (each tier line carried an un-named release and a `pro` release on both its bare and its 5.6 generation) and adds six — the bare gpt line gains the named releases luna/sol/terra, and the new gpt gen-5.6 line carries the same three (the {pro} modifier is not a release name, so gpt/<tier>@5.6 and gpt/<tier>@5.6{pro} share one release). -12 +6 = -6; 648 -> 646: the leading-token strip retires three un-named/named releases whose sole occupants moved to a dated line (bare agi, gpt's bare `pro` release and mistral's bare `mini` release) and adds one, the un-named release of the new agi gen-01 line. -3 +1 = -2; 646 -> 645: the series-compound recovery retires the sole un-named release of each of the two compound-family lines (kimi-k2 and kimi-k3 — the {instruct} modifier is not a release name, so kimi-k2 and kimi-k2{instruct} share one) and adds one, the named release `coder` on the bare kimi line. -2 +1 = -1
+	const wantReleases = 670 // 659 -> 671: 2026-07-23 refresh (+12 releases on the new lines); 671 -> 669: v0.2.8 slice — the two phantom deepseek gen-1 / gen-2 lines retire their bare releases (command/a{translate} shares command/a's existing release; a modifier is not a distinct release name); 669 -> 652: the global free demotion retires 17 keys, each the sole occupant of its release name (−17); 652 -> 661: the ling/inkling/kling split adds 8 named kling shape releases plus the bare inkling and kling@2.6 releases and retires the sole kling-v2@6 release (+9); 661 -> 655: the mimo normalization empties the variant slot on every mimo key, collapsing mimo's eight named releases to the two un-named ones on gen 2 and gen 2.5; 655 -> 654: the cogito variant pin retires the phantom cogito gen-1 line, whose sole un-named release goes with it (the decomposition commit before it moves no release count — it replaces one bare-line release with one gen-2.1 release); 654 -> 648: the gpt tier re-key retires the twelve tier releases (each tier line carried an un-named release and a `pro` release on both its bare and its 5.6 generation) and adds six — the bare gpt line gains the named releases luna/sol/terra, and the new gpt gen-5.6 line carries the same three (the {pro} modifier is not a release name, so gpt/<tier>@5.6 and gpt/<tier>@5.6{pro} share one release). -12 +6 = -6; 648 -> 646: the leading-token strip retires three un-named/named releases whose sole occupants moved to a dated line (bare agi, gpt's bare `pro` release and mistral's bare `mini` release) and adds one, the un-named release of the new agi gen-01 line. -3 +1 = -2; 646 -> 645: the series-compound recovery retires the sole un-named release of each of the two compound-family lines (kimi-k2 and kimi-k3 — the {instruct} modifier is not a release name, so kimi-k2 and kimi-k2{instruct} share one) and adds one, the named release `coder` on the bare kimi line. -2 +1 = -1 645 -> 670 with the 2026-08-28 models.dev catalog refresh: +25, measured both ways (summing ReleasesOf over SeriesAll and counting distinct ReleaseOf over Entities, which agree). It outgrows the +10 on the Series count for the documented reason this literal exists: a release is one (line, variant-name) pair, so a refresh that adds NAMED members to lines that already existed moves this number without moving the Series number at all.
 
 	summed := 0
 	for _, s := range bestiary.SeriesAll() {
@@ -411,6 +412,17 @@ func set2slice(in map[bestiary.Series]bool) []bestiary.Series {
 	return out
 }
 
+// strayFamilyOf returns the family token of a curated stray fixture key — everything
+// before the first key punctuation. It exists so the absent-fixture arm of
+// TestSeries_CuratedStrays can name the family without an entity to read it off.
+func strayFamilyOf(key string) bestiary.Family {
+	i := strings.IndexAny(key, "/@#{[")
+	if i < 0 {
+		return bestiary.Family(key)
+	}
+	return bestiary.Family(key[:i])
+}
+
 func isDigits(s string) bool {
 	if s == "" {
 		return false
@@ -425,6 +437,19 @@ func isDigits(s string) bool {
 
 // TestSeries_CuratedStrays verifies the three curated stray rows re-home their
 // families onto the right line — and that re-homing never touched an entity key.
+//
+// At the 2026-08-28 models.dev catalog refresh all three stray fixtures lost their
+// upstream rows: no entity in the registry carries the family gemma4,
+// gemma-4-31b-larkspur or gemini-exp any more. The positive arm of each row is therefore
+// unexercisable — there is no entity left to re-home — so each row is checked in whichever
+// direction the catalog still supports: present -> the full re-homing assertion as
+// authored; absent -> the NEGATIVE half, that the stray family forms no Series line of
+// its own. The negative half is the part that would catch a curated row being dropped or
+// mis-targeted, and it is not vacuous: it fails if a row ever reappears unre-homed.
+//
+// The curated rows are deliberately NOT deleted from parse/data/series.json here — a
+// stray spelling that vanishes from one snapshot can come back in the next, and the row
+// costs nothing while its family is absent.
 func TestSeries_CuratedStrays(t *testing.T) {
 	gemma4 := bestiary.Series{Family: "gemma", Generation: "4"}
 	gemini := bestiary.Series{Family: "gemini", Generation: ""}
@@ -437,10 +462,29 @@ func TestSeries_CuratedStrays(t *testing.T) {
 		{"gemma-4-31b-larkspur/v0.5@4#31b", gemma4, "larkspur"},
 		{"gemini-exp", gemini, "exp"},
 	}
+	lines := seriesSet(bestiary.SeriesAll())
 	for _, tc := range cases {
 		e, ok := bestiary.EntityByKey(tc.entityKey)
 		if !ok {
-			t.Errorf("EntityByKey(%q) = false; the stray fixture is missing from the registry", tc.entityKey)
+			// Absent at this catalog. Assert the negative half instead: the stray
+			// family must not have re-appeared as a line of its own, and no entity may
+			// carry it unre-homed.
+			strayFamily := strayFamilyOf(tc.entityKey)
+			for _, ent := range bestiary.Entities() {
+				if ent.Ref.Family == strayFamily {
+					t.Errorf("stray fixture %q is absent, but family %q is carried by entity %q — "+
+						"the curated row is no longer reaching the entity it was written for",
+						tc.entityKey, strayFamily, ent.Ref.String())
+				}
+			}
+			for line := range lines {
+				if line.Family == strayFamily {
+					t.Errorf("stray family %q forms its own Series %+v even though no entity carries it",
+						strayFamily, line)
+				}
+			}
+			t.Logf("stray fixture %q is absent from this catalog snapshot; checked the negative half only "+
+				"(family %q forms no line and no entity carries it)", tc.entityKey, strayFamily)
 			continue
 		}
 		if got := bestiary.SeriesOf(e.Ref); got != tc.wantSeries {
@@ -459,8 +503,13 @@ func TestSeries_CuratedStrays(t *testing.T) {
 			t.Errorf("stray entity key changed: %q != %q", got, tc.entityKey)
 		}
 	}
-	// phi needs no curated row: its generations decompose correctly.
-	for _, g := range []string{"3", "3.5", "4"} {
+	// phi needs no curated row: its generations decompose correctly. Generations 3 and
+	// 3.5 left the pin at the 2026-08-28 catalog refresh — upstream retired the whole
+	// Phi-3 / Phi-3.5 line (the same retirement that orphaned ten harvested HuggingFace
+	// repos), so no entity carries those generations and demanding their lines would
+	// demand rows the catalog no longer has. Generation 4 is still served and still
+	// decomposes with no curated row, which is the claim this check makes.
+	for _, g := range []string{"4"} {
 		if !seriesSet(bestiary.SeriesAll())[bestiary.Series{Family: "phi", Generation: g}] {
 			t.Errorf("Series{phi, %q} missing: phi must compute without a curated stray row", g)
 		}

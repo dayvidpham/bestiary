@@ -580,10 +580,23 @@ func TestTurboPerFamilyDemotion_KimiMinimax(t *testing.T) {
 
 	// Merge arm: the {turbo} keys are GONE and their instances sit on the plain
 	// sibling, whose key never changed.
-	for _, tc := range []struct{ gone, survivor string }{
-		{"kimi/k@2{turbo}", "kimi/k@2"},
-		{"kimi/k@2.6{turbo}", "kimi/k@2.6"},
-		{"minimax/m@2.7{turbo}", "minimax/m@2.7"},
+	//
+	// wantTurboNomen says whether a turbo-SPELLED served id still exists for the
+	// survivor. It is false for exactly one row, kimi/k@2.6, and that is a premise change
+	// from the 2026-08-28 models.dev catalog refresh rather than a relaxed check: the only
+	// turbo-spelled K2.6 id in the catalog was fireworks' router
+	// "accounts/fireworks/routers/kimi-k2p6-turbo", and fireworks retired it. With no such
+	// id served, there is no spelling for the merge to preserve, so demanding one would
+	// assert that a withdrawn upstream row must still exist. The check is INVERTED for
+	// that row instead of dropped — no turbo nomen may appear on it — so if upstream ever
+	// serves a K2.6 turbo id again this fails and the row goes back to true.
+	for _, tc := range []struct {
+		gone, survivor string
+		wantTurboNomen bool
+	}{
+		{"kimi/k@2{turbo}", "kimi/k@2", true},
+		{"kimi/k@2.6{turbo}", "kimi/k@2.6", false},
+		{"minimax/m@2.7{turbo}", "minimax/m@2.7", true},
 	} {
 		// The retired key must be absent from the registry's own key set. EntityByKey is
 		// deliberately NOT used for this: it applies the identity-class projection to its
@@ -617,9 +630,14 @@ func TestTurboPerFamilyDemotion_KimiMinimax(t *testing.T) {
 				t.Errorf("turbo nomen %q on %q has status %v, want admitted", n.Value, tc.survivor, n.Status)
 			}
 		}
-		if !sawTurboNomen {
+		if tc.wantTurboNomen && !sawTurboNomen {
 			t.Errorf("entity %q carries no turbo-spelled provider-ID nomen; the merge must PRESERVE the "+
 				"spelling as an admitted naming, not discard it", tc.survivor)
+		}
+		if !tc.wantTurboNomen && sawTurboNomen {
+			t.Errorf("entity %q carries a turbo-spelled provider-ID nomen, but this row is pinned as "+
+				"having NO turbo-spelled served id (fireworks retired the only one at the 2026-08-28 "+
+				"refresh) — upstream serves one again, so set wantTurboNomen back to true", tc.survivor)
 		}
 	}
 

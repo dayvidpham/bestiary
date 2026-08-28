@@ -55,13 +55,21 @@ func TestReleasesOf_Llama4(t *testing.T) {
 }
 
 // TestReleasesOf_Llama4Maverick_InstanceCensus pins the maverick re-key at the
-// instance level: the two re-keyed entities carry exactly the 23 instance rows they
-// carried under their old bare-llama keys (8 + 15), and NO instance was gained or
-// lost by the re-key. It is the member-ize ruling's falsifiable evidence.
+// instance level: the two re-keyed entities carry exactly the instance rows they
+// carried under their old bare-llama keys (7 + 19 at this catalog), and NO instance was
+// gained or lost by the re-key. It is the member-ize ruling's falsifiable evidence.
 func TestReleasesOf_Llama4Maverick_InstanceCensus(t *testing.T) {
+	// 8 + 15 = 23 -> 7 + 19 = 26 with the 2026-08-28 models.dev catalog refresh, measured
+	// per entity. The claim the test makes is unchanged — the re-key MOVES instances and
+	// never gains or loses one — so these literals track the catalog, and every unit of
+	// the move is accounted for:
+	//   base     8 -> 7:  cortecs retired its bare "llama-4-maverick" row.
+	//   instruct 15 -> 19: the whole github-models provider left the catalog (-1), and
+	//                     five rows arrived — hyper, watsonx and three from the new
+	//                     llmgateway-providers (aws-bedrock/, novita/, scx-ai/). -1 +5 = +4.
 	const (
-		wantBase     = 8
-		wantInstruct = 15
+		wantBase     = 7
+		wantInstruct = 19
 	)
 	rel := bestiary.Release{Series: bestiary.Series{Family: "llama", Generation: "4"}, Name: "maverick"}
 	got := map[string]int{}

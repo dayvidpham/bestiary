@@ -40,7 +40,15 @@ func TestRun_Series_ListTable(t *testing.T) {
 	// which moved 419 → 418 (o-series dual-identity) then 418 → 411 (dot-lost version
 	// repair + 1t param-size routing folding dotless/dash qwen lines and re-keying
 	// ling@1t/ring@1t to size-only #1t entities).
-	if want := "Series (410):"; /* 411 -> 419: 2026-07-23 refresh; 419 -> 417: v0.2.8 slice, deepseek gen-1/gen-2 lines retire via the dot-lost merges; 417 -> 415, the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417, the ling/inkling/kling collision split adds the bare inkling and kling lines while kling@2.6 replaces the phantom kling-v2@6 versioned line one-for-one; 417 -> 416, the keyspace-wide mimo normalization empties the bare mimo line as all six of its keys move onto the two existing versioned mimo lines; 416 -> 415, the cogito variant pin merges the phantom cogito gen-1 line onto the gen-2.1 line the decomposition minted (that decomposition itself moves no line count: it trades one bare line for one versioned line); 415 -> 410, the gpt tier re-key retires the three bare gpt-luna/gpt-sol/gpt-terra lines and their three gpt-<tier>@5.6 lines and mints one new gpt gen-5.6 line (the undated tier keys join the pre-existing bare gpt line); 410 -> 411, the redundant leading-token strip mints the agi gen-01 line and retires none; 411 -> 409, the general bare-integer series-compound family recovery retires the two compound-family bare lines kimi-k2 and kimi-k3 and adds none; 409 -> 410, the kling variant-shape normalization empties the bare kling line (its only occupants were the eight video keys, which now carry versions) and mints the kling gen-2.5 and gen-3.0 lines, gen-2.6 already existing */ !strings.Contains(out, want) {
+	// 410 -> 420 with the 2026-08-28 models.dev catalog refresh. This is the one literal in
+	// this file that is a pure CENSUS of the live catalog rather than a statement about a
+	// lever, so it moves whenever upstream publishes new generations; it is re-measured, not
+	// derived. The refresh grew the catalog from 170 providers / 5,765 provider model rows
+	// to 204 / 7,430, which added new generation lines across many families (gemini-3.7,
+	// glm-5.3, ling-3.0, claude-5, mistral-0.2, the fish-audio lines, …) and retired a few
+	// (gemini-1.5, mistral-0.1). The header only needs to agree with the library-side pin in
+	// TestSeriesAll_CensusExact; what each line IS remains asserted by the selector corpora.
+	if want := "Series (420):"; /* 411 -> 419: 2026-07-23 refresh; 419 -> 417: v0.2.8 slice, deepseek gen-1/gen-2 lines retire via the dot-lost merges; 417 -> 415, the global free demotion empties the deepseek-flash and minimax-m3 bare lines; 415 -> 417, the ling/inkling/kling collision split adds the bare inkling and kling lines while kling@2.6 replaces the phantom kling-v2@6 versioned line one-for-one; 417 -> 416, the keyspace-wide mimo normalization empties the bare mimo line as all six of its keys move onto the two existing versioned mimo lines; 416 -> 415, the cogito variant pin merges the phantom cogito gen-1 line onto the gen-2.1 line the decomposition minted (that decomposition itself moves no line count: it trades one bare line for one versioned line); 415 -> 410, the gpt tier re-key retires the three bare gpt-luna/gpt-sol/gpt-terra lines and their three gpt-<tier>@5.6 lines and mints one new gpt gen-5.6 line (the undated tier keys join the pre-existing bare gpt line); 410 -> 411, the redundant leading-token strip mints the agi gen-01 line and retires none; 411 -> 409, the general bare-integer series-compound family recovery retires the two compound-family bare lines kimi-k2 and kimi-k3 and adds none; 409 -> 410, the kling variant-shape normalization empties the bare kling line (its only occupants were the eight video keys, which now carry versions) and mints the kling gen-2.5 and gen-3.0 lines, gen-2.6 already existing; 410 -> 420 with the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, model rows 5,765 -> 7,430): 48 series lines retire as upstream drops whole product lines (Phi-3/3.5 and CodeLlama in full among them) and 58 appear with the new rows, net +10. The split is 227 versioned / 193 bare (227 + 193 = 420) across 670 releases, and it is a pure census of the live catalog rather than the yield of any one curation lever */ !strings.Contains(out, want) {
 		t.Errorf("listing missing the census header %q; got first line:\n%s", want, firstLine(out))
 	}
 	for _, want := range []string{"SERIES", "FAMILY", "GENERATION", "RELEASES", "ENTITIES"} {
@@ -218,7 +226,12 @@ func TestRun_Series_GeminiNormalizationVisible(t *testing.T) {
 	for _, d := range union {
 		got = append(got, d.Series)
 	}
-	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5", "gemini-3.6"}; !equalStringSlices(got, want) { // +3.6: new upstream line, 2026-07-23 refresh
+	// +3.7 with the 2026-08-28 models.dev catalog refresh: a new upstream Gemini 3.7 line.
+	// The claim under test is unchanged and is the one in the two blocks above — `gemini-3`
+	// is never a LINE (the N -> N.0 fold still applies) but IS a valid MAJOR selector that
+	// unions every 3.x line. A new 3.x line joining the union is that rule working; the
+	// membership literal is a census of the family and moves with it.
+	if want := []string{"gemini-3.0", "gemini-3.1", "gemini-3.5", "gemini-3.6", "gemini-3.7"}; !equalStringSlices(got, want) { // +3.6: new upstream line, 2026-07-23 refresh; +3.7: 2026-08-28 refresh
 		t.Errorf("series gemini-3 = %v, want the major union %v", got, want)
 	}
 }

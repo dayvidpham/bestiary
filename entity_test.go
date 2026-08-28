@@ -334,8 +334,20 @@ func TestEntityRef_NoMigrationDrift(t *testing.T) {
 	// etc.) into their dotted siblings (net −N sized catalog entities), while 1t routing
 	// adds a handful of #1t entities (ling#1t, ring#1t) — the merges dominate, net −13.
 	const (
-		wantSizedCatalog    = 310 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3. 318 -> 317: the cogito variant pin merges cogito@1#671b into the repaired dotted key (spelled cogito@2.1#671b at the tip, after the key rename that drops the version-prefix 'v' from the variant slot; the rename moves no count) — both are sized catalog entities, so the merge removes one from this count while the artifact keeps its '#671b' segment. 317 -> 310: the redundant leading-token strip re-dates eleven sized keys — gemma#4b, gemma#12b, gemma#26b-a4b, devstral#123b, ministral#3b{instruct}, ministral#8b{instruct}, mistral/large#675b{instruct}, mistral/mini#3b, mistral/small#24b, nemotron#120b, nemotron#30b-a3b — of which only four have no dated sibling to merge into and are re-minted as sized keys (devstral@2#123b, ministral@3#3b{instruct}, ministral@3#14b{instruct}, nemotron@3#120b). Every artifact keeps its size segment; the count falls only because seven of them join an existing sized entity. -11 +4 = -7
-		wantSizedStandalone = 4
+		wantSizedCatalog = 329 // 323 -> 319: 2026-07-23 refresh, four sized rows left upstream. 319 -> 318: the qwen3-coder-next suppress-pin, extended to the unprefixed spelling, drops the phantom '#1m' size segment, so qwen/coder@3#1m stops being a sized catalog entity and its instance rejoins the unsized qwen/coder@3. 318 -> 317: the cogito variant pin merges cogito@1#671b into the repaired dotted key (spelled cogito@2.1#671b at the tip, after the key rename that drops the version-prefix 'v' from the variant slot; the rename moves no count) — both are sized catalog entities, so the merge removes one from this count while the artifact keeps its '#671b' segment. 317 -> 310: the redundant leading-token strip re-dates eleven sized keys — gemma#4b, gemma#12b, gemma#26b-a4b, devstral#123b, ministral#3b{instruct}, ministral#8b{instruct}, mistral/large#675b{instruct}, mistral/mini#3b, mistral/small#24b, nemotron#120b, nemotron#30b-a3b — of which only four have no dated sibling to merge into and are re-minted as sized keys (devstral@2#123b, ministral@3#3b{instruct}, ministral@3#14b{instruct}, nemotron@3#120b). Every artifact keeps its size segment; the count falls only because seven of them join an existing sized entity. -11 +4 = -7 310 -> 329 with the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, model rows 5,765 -> 7,430): the refresh nets +19 '#'-bearing catalog entities. The keyspace as a whole moves 930 -> 989, so sized keys grow roughly in step with the registry; the curated levers in this commit that touch a sized key are the trendyol-asure-12b family pin, which retires gemma#12b and mints asure#12b (net 0 here), and the four Nemotron 3.5 Lightning spellings, which move nemotron#30b-a3b onto the dated nemotron@3.5#30b-a3b (also net 0 — both are sized).
+		// 4 -> 0 with the 2026-08-28 catalog refresh. This is a PREMISE change, not a
+		// weakened pin. The four were ornith@1.0#9b/#31b/#35b/#397b: metadata-only
+		// entities synthesized because the models view carried deepreinforce/ornith-1.0-*
+		// rows while the family "ornith" appeared nowhere in the serving catalog, so the
+		// presence gate had to stand one up per row. Upstream now serves ornith: the
+		// catalog holds inferx "Ornith-1.0-35B-FP8" plus seven ornith-1.5 rows at nano-gpt
+		// and runinfra. With the family present the gate no longer synthesizes — the 35b
+		// row links to the real catalog-backed entity, and the other three become
+		// join-disagreement rows in parse/data/modelsdev_unlinked.json (they are 3 of the
+		// 12 justified entries there). No metadata-only sized entity remains, so 0 is the
+		// honest measurement; if a future catalog again drops a whole sized family this
+		// literal must move back up rather than the check being deleted.
+		wantSizedStandalone = 0
 	)
 
 	// (b) Per-shape exemplar keys that must be present after the re-key.

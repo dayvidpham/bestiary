@@ -128,8 +128,13 @@ func TestRetiredKeys_FreeDemotion_PinnedSurvivorStaysLive(t *testing.T) {
 	if !ok {
 		t.Fatalf("EntityByKey(%q) does not resolve", sibling)
 	}
-	if got := len(sib.Instances); got != 4 {
-		t.Errorf("%s has %d instance(s), want 4 — the carved-out row must NOT have folded into it",
+	// 4 -> 2 with the 2026-08-28 models.dev catalog refresh: upstream deleted two of this
+	// key's four provider rows as inclusionAI published its Ling 3.0 line (they were removed,
+	// not re-keyed — the 3.0 rows all carry 3.0-spelled ids). The control this literal serves
+	// is unchanged and is what the message states: whatever the sibling's census is, the
+	// carved-out opencode row must not be one of its members.
+	if got := len(sib.Instances); got != 2 {
+		t.Errorf("%s has %d instance(s), want 2 — the carved-out row must NOT have folded into it",
 			sibling, got)
 	}
 

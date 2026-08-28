@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -281,28 +282,86 @@ type modelsdevUnlinkedFileJSON struct {
 	Unlinked []string `json:"unlinked"`
 }
 
-// TestModelsdevUnlinked_IsDrained is the drained-report gate: the committed
-// join-disagreement report must stay at zero rows.
+// unlinkedJustifiedExceptions is the CLOSED ledger of models.dev metadata ids that are
+// KNOWN to be unjoinable against this catalog snapshot, each with the reason it cannot
+// be aliased honestly. It is asserted by SET EQUALITY, not as a count: a row appearing
+// that is not listed here fails, and a listed row that JOINS again also fails, so the
+// ledger can neither absorb a new orphan silently nor outlive the condition it records.
 //
-// A row in that file is a models.dev metadata id whose decomposed family IS present in
-// the catalog but whose full identity tuple matched no entity — so the row's
-// description, license, benchmarks and links attach to NOTHING and silently vanish from
-// `bestiary show`. The report was drained to 0 and every remaining row was resolved with
-// a curated parse/data/modelsdev_aliases.json entry, but until now nothing HELD it
-// there: the file is codegen-emitted, so a curation change that re-orphans a row
-// regenerates a bigger report and the tree stays green.
+// This replaces a drained-to-zero gate. That gate was correct while every orphan had an
+// honest alias target; the 2026-08-28 catalog refresh produced twelve that do not. The
+// shape of the problem is the same in every row: models.dev's models VIEW is a LAB
+// catalogue — what a lab published — while the provider rows are a SERVING catalogue —
+// what someone will sell you today. A lab model no provider serves has no entity to
+// attach to, and the join reports it here because its FAMILY is served even though that
+// exact (variant, version, size) is not.
 //
-// A curation slice that re-keys an entity is exactly what breaks it, and it breaks it
-// silently in BOTH directions: re-keying an entity out from under an alias orphans that
-// alias's row, and splitting a family without retargeting its alias orphans the alias
-// itself. The collision split that added this guard is a live instance of the second —
-// measured, leaving the thinkingmachines/inkling alias pointed at "ling" while the
-// entity moves to "inkling" drives this file 0 -> 1.
+// Aliasing such a row anyway is the failure this ledger exists to prevent: it would
+// point a lab's description, license and benchmarks at a DIFFERENT artifact. The
+// modelsdev_aliases.json collision-hazard rule says the same thing from the other side.
+//
+// Each row is therefore a deliberate NON-alias, and the fix for most of them is upstream
+// of the join — a parse-level change that mints the finer entity key the serving rows
+// deserve (see the per-row notes). When that lands, the row joins mechanically and must
+// be deleted from this ledger.
+var unlinkedJustifiedExceptions = map[string]string{
+	// Lab publishes a size/version tier nobody serves.
+	"arcee-ai/trinity-nano-preview": "Arcee ships Trinity Nano; the catalog serves only trinity/large and trinity/mini. " +
+		"Aliasing onto either would attribute Nano's card to a different tier.",
+	"deepreinforce/ornith-1.0-31b": "DeepReinforce publishes Ornith 1.0 at 9B/31B/397B; the catalog serves Ornith 1.0 only " +
+		"at 35B (inferx) and Ornith 1.5 at 9B/397B. Before this refresh these three rows were metadata-only " +
+		"STANDALONES, because no catalog entity carried the ornith family at all; upstream now emits a bare " +
+		"ornith family and real serving rows, so the presence gate reclassifies them standalone -> unlinked " +
+		"without any of them becoming joinable.",
+	"deepreinforce/ornith-1.0-397b": "See deepreinforce/ornith-1.0-31b: Ornith 1.0 397B is published but not served " +
+		"(only ornith@1.5#397b is).",
+	"deepreinforce/ornith-1.0-9b": "See deepreinforce/ornith-1.0-31b: Ornith 1.0 9B is published but not served " +
+		"(only ornith@1.5#9b is).",
+	"swiss-ai/apertus-8b": "The lab row is the BASE Apertus 8B; the only served 8B is publicai/apertus-8b-instruct " +
+		"(apertus#8b{instruct}). Base and instruct are distinct identities on the modifier axis, so aliasing the " +
+		"base card onto the instruct entity would assert an identity the catalog does not.",
+	"minimax/image-01": "MiniMax publishes image-01; no provider serves it. The nearest key, minimax@01, is " +
+		"MiniMax-01 / minimax-text-01 — a TEXT model, a different artifact.",
+
+	// Served, but only under a COARSE key that already holds other lab models. The honest
+	// fix is a parse-level version/identity lift, not an alias onto the coarse bucket.
+	"bytedance-seed/seed-2.1-pro": "Doubao Seed 2.1 Pro IS served (volcengine, ofox, nano-gpt) but folds into the coarse " +
+		"seed/pro key, which also holds seedance-v1.0-pro, seedance-v1.5-pro, seedream-5.0-pro and doubao-seed-2.0-pro. " +
+		"Aliasing there would misattribute. Needs a parse-level lift minting seed/pro@2.1.",
+	"xai/grok-imagine-image-2.0": "Grok Imagine Image 2.0 IS served but folds into grok/image alongside grok-imagine-image " +
+		"and grok-imagine-image-quality — three distinct products on one key. Needs a version lift minting grok/image@2.0.",
+	"xai/grok-imagine-video-1.5": "Grok Imagine Video 1.5 is served but no grok video key exists at all; its rows fold into " +
+		"a coarse grok bucket. Needs a parse-level identity for the video line.",
+	"google/gemini-2.5-computer-use-preview-10-2025": "The Computer Use preview folds into the ordinary gemini/pro@2.5 " +
+		"entity, which is a different product. Needs a computer-use identity modifier.",
+	"google/gemini-robotics-er-1.6-preview": "Gemini Robotics-ER folds into the bare gemini catch-all. Needs a robotics " +
+		"identity before it can carry its own card.",
+	"google/deep-research-max-preview-04-2026": "The non-Max Deep Research preview is aliased onto gemini/deep-research " +
+		"(one instance, poe). MAX is a distinct tier with no serving row of its own, so pointing it at the same entity " +
+		"would collapse two tiers onto one card.",
+}
+
+// TestModelsdevUnlinked_MatchesJustifiedLedger is the join-disagreement gate.
+//
+// A row in the codegen-emitted report is a models.dev metadata id whose decomposed
+// family IS present in the catalog but whose full identity tuple matched no entity — so
+// the row's description, license, benchmarks and links attach to NOTHING and silently
+// vanish from `bestiary show`. Nothing else holds that: the file is codegen-emitted, so
+// a curation change that re-orphans a row just regenerates a bigger report.
+//
+// A curation slice that re-keys an entity breaks this in BOTH directions: re-keying an
+// entity out from under an alias orphans that alias's row, and splitting a family
+// without retargeting its alias orphans the alias itself.
+//
+// The assertion is SET EQUALITY against unlinkedJustifiedExceptions, which is strictly
+// stronger than the count it replaced: a NEW orphan fails (it is not in the ledger) and
+// so does a ledger row that started joining again (it is stale curation). Neither can
+// hide behind an unchanged total.
 //
 // Reading the count field AND the array length independently is deliberate: the count is
 // what a human skims and the array is what is true, and a hand-edit that disagrees with
 // itself is its own defect (the file is marked DO NOT EDIT for that reason).
-func TestModelsdevUnlinked_IsDrained(t *testing.T) {
+func TestModelsdevUnlinked_MatchesJustifiedLedger(t *testing.T) {
 	raw, err := os.ReadFile("parse/data/modelsdev_unlinked.json")
 	if err != nil {
 		t.Fatalf("read parse/data/modelsdev_unlinked.json: %v", err)
@@ -311,16 +370,47 @@ func TestModelsdevUnlinked_IsDrained(t *testing.T) {
 	if err := json.Unmarshal(raw, &f); err != nil {
 		t.Fatalf("parse parse/data/modelsdev_unlinked.json: %v", err)
 	}
-	if len(f.Unlinked) != 0 {
-		t.Errorf("parse/data/modelsdev_unlinked.json carries %d unlinked metadata id(s): %v\n"+
+
+	reported := make(map[string]bool, len(f.Unlinked))
+	for _, id := range f.Unlinked {
+		reported[id] = true
+	}
+
+	var unjustified []string
+	for id := range reported {
+		if _, ok := unlinkedJustifiedExceptions[id]; !ok {
+			unjustified = append(unjustified, id)
+		}
+	}
+	var stale []string
+	for id := range unlinkedJustifiedExceptions {
+		if !reported[id] {
+			stale = append(stale, id)
+		}
+	}
+	sort.Strings(unjustified)
+	sort.Strings(stale)
+
+	if len(unjustified) > 0 {
+		t.Errorf("parse/data/modelsdev_unlinked.json carries %d UNJUSTIFIED unlinked metadata id(s): %v\n"+
 			"  What: those models.dev rows decomposed to a family the catalog serves, but matched no entity,\n"+
 			"        so their description/license/benchmarks/links attach to nothing and disappear from `show`.\n"+
-			"  Why now: a curation re-key almost certainly moved an entity out from under a curated alias, or\n"+
-			"        split a family without retargeting the alias that pointed into it.\n"+
-			"  How to fix: retarget or add the parse/data/modelsdev_aliases.json entry for each id above and\n"+
-			"        re-run `go generate ./...` — verify the alias target is a DISTINCT entity first, per that\n"+
-			"        file's collision-hazard rule; do NOT hand-edit this report, it is codegen-emitted.",
-			len(f.Unlinked), f.Unlinked)
+			"  Why now: a curation re-key moved an entity out from under a curated alias, a family was split\n"+
+			"        without retargeting the alias that pointed into it, or a catalog refresh introduced a lab\n"+
+			"        row no provider serves.\n"+
+			"  How to fix: EITHER add a parse/data/modelsdev_aliases.json entry — verifying the target is a\n"+
+			"        DISTINCT entity first, per that file's collision-hazard rule — OR, if no honest target\n"+
+			"        exists, add the id to unlinkedJustifiedExceptions in this file WITH the reason it cannot\n"+
+			"        be aliased. Do NOT hand-edit the report; it is codegen-emitted.",
+			len(unjustified), unjustified)
+	}
+	if len(stale) > 0 {
+		t.Errorf("unlinkedJustifiedExceptions holds %d id(s) that are no longer unlinked: %v\n"+
+			"  What: the ledger claims these cannot be joined, but the report no longer lists them.\n"+
+			"  Why: a parse-level fix or a new alias made them joinable — which is the outcome each entry asks for.\n"+
+			"  How to fix: delete those entries from unlinkedJustifiedExceptions; a ledger that outlives its\n"+
+			"        condition is dead curation and would let a future re-orphan pass unnoticed.",
+			len(stale), stale)
 	}
 	if f.Count != len(f.Unlinked) {
 		t.Errorf("parse/data/modelsdev_unlinked.json count field = %d but the unlinked array holds %d entries; "+

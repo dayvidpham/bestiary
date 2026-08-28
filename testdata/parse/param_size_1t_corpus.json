@@ -28,7 +28,7 @@
       },
       "input": {
         "id": "inclusionai/ling-2.6-1t",
-        "provider": "kilo",
+        "provider": "novita-ai",
         "token": ""
       },
       "mutation": {
@@ -36,7 +36,7 @@
       },
       "name": "onet_inclusionai_ling_2_6_1t",
       "provenance": {
-        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ling-2.6-1t\" resolves to \"ling@2.6#1t\" (4 instance(s) share this identity)",
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ling-2.6-1t\" resolves to \"ling@2.6#1t\" (4 instance(s) share this identity) | 2026-08-28 models.dev catalog refresh: kilo dropped this id; novita-ai serves the IDENTICAL id spelling (requesty and, for ring, zenmux also do), so the pin is re-pointed to a surviving host of the same spelling rather than retired.",
         "source": "bug"
       }
     },
@@ -68,7 +68,7 @@
       },
       "input": {
         "id": "inclusionai/ring-2.6-1t",
-        "provider": "kilo",
+        "provider": "novita-ai",
         "token": ""
       },
       "mutation": {
@@ -76,7 +76,7 @@
       },
       "name": "onet_inclusionai_ring_2_6_1t",
       "provenance": {
-        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ring-2.6-1t\" resolves to \"ring@2.6#1t\" (6 instance(s) share this identity)",
+        "ref": "Ling/Ring 1T is a 1-trillion-parameter model, so '1t' is a SIZE not a version; routed to the param-size axis, \"inclusionai/ring-2.6-1t\" resolves to \"ring@2.6#1t\" (6 instance(s) share this identity) | 2026-08-28 models.dev catalog refresh: kilo dropped this id; novita-ai serves the IDENTICAL id spelling (requesty and, for ring, zenmux also do), so the pin is re-pointed to a surviving host of the same spelling rather than retired.",
         "source": "bug"
       }
     },

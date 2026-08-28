@@ -530,8 +530,17 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// C=1 (poolside/laguna-s-2.1: the lab says "laguna", its resellers say "laguna-s",
 	// a hyphen-prefix pair) and D=1 (sakana/fugu-ultra: vercel says "aura" where pioneer
 	// and openrouter say "fugu" — the genuine mislabel).
+	//
+	// 4 -> 12 with the 2026-08-28 catalog refresh and its declared corpus re-capture
+	// (5,765 -> 7,430 records). Nine ids joined and one left: sakana/fugu-ultra CONVERGED,
+	// because vercel corrected its "aura" mislabel to "fugu" upstream. The nine additions
+	// are three disagreements, not nine: the ByteDance Seed line published under three
+	// raw-family spellings (seed / doubao-seed / doubao, 5 ids), two glued-tier
+	// member-variant reads (glm-4.7-flashx, solar-pro4), and two genuine mislabels
+	// (qvq filed as qwen, gpt-latest filed as the sol tier). All twelve are enumerated
+	// with per-row justifications in crossProviderJustifiedResidual (main_test.go).
 	const (
-		divergenceExact = 4
+		divergenceExact = 12
 		// Secondary sanity band — guards against a wholesale snapshot/pipeline
 		// breakage that happens to coincidentally land on a different exact value.
 		divergenceLow  = 0
@@ -582,11 +591,18 @@ func TestSnapshotAnalysis_CrossProviderDivergences(t *testing.T) {
 	// The corpus refresh (5,765 records) surfaced 4 real upstream divergences: CatB 0→2,
 	// CatC 0→1, CatD 0→1. CatA stays 0. See the divergenceExact note above and the
 	// per-row justifications in crossProviderJustifiedResidual (main_test.go).
+	// 2026-08-28 catalog refresh + declared corpus re-capture: CatA stays 0, CatB stays 2
+	// (the text-embedding pair is untouched), CatC 1 -> 4 (the laguna pair keeps its row and
+	// is joined by the two glued-tier reads glm-4.7-flashx and solar-pro4, plus one Seed-line
+	// id that classifies as member-variant), and CatD 1 -> 6 (fugu-ultra CONVERGED and is
+	// gone; the six are four Seed-line spelling splits plus qvq-as-qwen and
+	// gpt-latest-as-sol). The genuine-mislabel pairs the analysis reports are
+	// doubao-seed<->seed (4), doubao<->seed (1) and qvq<->qwen (1).
 	const (
 		catAExact = 0 // vendor-prefix/case (case-fold resolved all)
 		catBExact = 2 // bare-gen-split — text-embedding vs text-embedding-3 (×2 ids)
-		catCExact = 1 // member-variant/version — laguna vs laguna-s hyphen-prefix pair
-		catDExact = 1 // genuine family mislabel — vercel's aura vs fugu on sakana/fugu-ultra
+		catCExact = 4 // member-variant/version — laguna-s pair + glm flashx + solar pro4 + a Seed tier
+		catDExact = 6 // genuine family mislabel — the Seed-line spelling splits + qvq/qwen + gpt-latest/sol
 	)
 	checkCat := func(name string, got, want int) {
 		if got != want {

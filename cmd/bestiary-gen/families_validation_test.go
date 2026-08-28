@@ -102,6 +102,20 @@ func TestFamiliesJSON_MembersReachableInSnapshot(t *testing.T) {
 		// naming changed, only which ids xAI currently serves, and a future bare beta tier
 		// would re-ground it immediately.
 		"grok": {"beta": "bare grok-<n>-beta ids are absent from the refreshed corpus; the surviving beta ids carry the token mid-id beside a dated version, so it reads as an attribute, never the variant"},
+		// The 2026-08-28 catalog refresh RETIRED Microsoft's entire Phi-3/3.5 line
+		// upstream: the corpus now carries zero phi-3 rows, and the only Phi family it
+		// serves is Phi-4, which ships a "mini" tier but no "small" or "medium". Both
+		// members were genuinely grounded before this refresh (phi/small@3{instruct},
+		// phi/medium@3{instruct} were live entity keys at the release baseline and are in
+		// this refresh's retired set), so they are neither typos nor speculative — they
+		// are real tiers whose models upstream stopped serving. RETAINED rather than
+		// deleted for exactly that reason: deleting them would discard correct curation
+		// and silently mis-decompose the tier if Microsoft ships it again, which the
+		// mini/small/medium naming makes likely.
+		"phi": {
+			"small":  "upstream retired the Phi-3/3.5 line in the 2026-08-28 refresh; only Phi-4 survives and it ships no 'small' tier",
+			"medium": "upstream retired the Phi-3/3.5 line in the 2026-08-28 refresh; only Phi-4 survives and it ships no 'medium' tier",
+		},
 	}
 
 	members := loadFamiliesJSONMembers(t)

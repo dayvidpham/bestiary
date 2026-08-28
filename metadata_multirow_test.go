@@ -267,10 +267,10 @@ func TestJoin_NoMatch_PreservesOriginalMetadata(t *testing.T) {
 // UNIT: metadata rows. AXIS: the whole baked registry (Entities()). CONFIGURATION:
 // the committed parse/data/modelsdev/catalog.json snapshot, offline, no store overlay.
 //
-// The expected total is COMPUTED from the vendored view (bakedMetadataRowCount), not
-// copied from a plan: a snapshot refresh moves both sides together and this guard
-// keeps measuring "every row is reachable" rather than a stale literal. The
-// pre-repair single-pointer join reached 224 of them.
+// The expected total is COMPUTED from the vendored view minus the justified-unlinked
+// ledger (bakedMetadataRowCount), not copied from a plan: a snapshot refresh moves both
+// sides together and this guard keeps measuring "every attachable row is reachable"
+// rather than a stale literal. The pre-repair single-pointer join reached 224 of them.
 func TestMetadataAll_TotalRows_MatchesVendoredModelsView(t *testing.T) {
 	want := bakedMetadataRowCount(t)
 
@@ -289,7 +289,8 @@ func TestMetadataAll_TotalRows_MatchesVendoredModelsView(t *testing.T) {
 	}
 	if got != want {
 		t.Errorf("MetadataAll rows reachable over the registry = %d, want %d"+
-			" (every row of the vendored models.dev models view, none dropped);"+
+			" (every ATTACHABLE row of the vendored models.dev models view — the whole view minus the"+
+			" justified-unlinked ledger — none dropped);"+
 			" distinct entities carrying metadata = %d", got, want, countEntitiesWithMetadata(ents))
 	}
 }
@@ -406,10 +407,26 @@ func multiRowEntityFromRegistry(t *testing.T) bestiary.Entity {
 
 // bakedMetadataRowCount computes the expected metadata-row total DIRECTLY from the
 // vendored codegen input — the "models" view of parse/data/modelsdev/catalog.json,
-// the same committed snapshot cmd/bestiary-gen bakes models_metadata_gen.go from.
+// the same committed snapshot cmd/bestiary-gen bakes models_metadata_gen.go from —
+// MINUS the rows that provably cannot attach.
 // Deriving it here (rather than hard-coding a literal) is what makes the corpus
 // identity guard survive a snapshot refresh: both sides move together, and the guard
-// keeps asserting "every vendored row is reachable" instead of a frozen number.
+// keeps asserting "every attachable vendored row is reachable" instead of a frozen number.
+//
+// The subtrahend is a PREMISE change from the 2026-08-28 catalog refresh, not a fudge
+// factor. Until that refresh the join drained the disagreement report to zero, so "every
+// row of the view attaches" was simply true and the raw view size was the right expected
+// value. The refresh produced twelve rows that cannot be aliased honestly — a lab model
+// whose family is served but whose exact (variant, version, size) is not — and each one
+// is enumerated, with its reason, in unlinkedJustifiedExceptions in metadata_join_test.go.
+// Those rows attach to nothing by design.
+//
+// Subtracting the LEDGER rather than a literal 12 is what keeps this honest: the ledger is
+// asserted by SET EQUALITY against the codegen-emitted parse/data/modelsdev_unlinked.json
+// in TestModelsdevUnlinked_MatchesJustifiedLedger, so a NEW orphan cannot hide inside this
+// subtraction — it fails there first, and until it is justified in the ledger it is still
+// counted as attachable here. When a parse-level fix makes one of the twelve joinable, its
+// ledger row is deleted and this number rises on its own.
 func bakedMetadataRowCount(t *testing.T) int {
 	t.Helper()
 	path := filepath.Join("parse", "data", "modelsdev", "catalog.json")
@@ -429,7 +446,11 @@ func bakedMetadataRowCount(t *testing.T) int {
 		t.Fatalf("the vendored models.dev catalog at %s has an empty \"models\" view;"+
 			" the corpus identity guard would be vacuous", path)
 	}
-	return len(catalog.Models)
+	if n := len(unlinkedJustifiedExceptions); n >= len(catalog.Models) {
+		t.Fatalf("the justified-unlinked ledger holds %d ids but the vendored models view has only %d rows;"+
+			" the expected attach count would be meaningless", n, len(catalog.Models))
+	}
+	return len(catalog.Models) - len(unlinkedJustifiedExceptions)
 }
 
 // --------------------------------------------------------------------------

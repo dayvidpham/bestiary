@@ -6,7 +6,8 @@
       "input": "nemotron#49b",
       "expected": {
         "instances": [
-          "nano-gpt|nvidia/Llama-3.3-Nemotron-Super-49B-v1"
+          "nano-gpt|nvidia/Llama-3.3-Nemotron-Super-49B-v1",
+          "nvidia|nvidia/llama-3.3-nemotron-super-49b-v1"
         ]
       },
       "classification": "must-pass",
@@ -15,7 +16,7 @@
         "ref": "the bare 49B key must SURVIVE the re-home holding only Super-49B v1. Describing this lever as a split would be wrong: the key is not retired, and a test that only asserted the arrival on the v1.5 key could not tell a re-home from a retirement."
       },
       "mutation": {
-        "description": "before the pin this key held TWO instances — the v1 row and nano-gpt's underscore-spelled v1.5 row, two distinct artifacts sharing one key. After the pin it holds the v1 row alone"
+        "description": "before the pin this key held TWO instances — the v1 row and nano-gpt's underscore-spelled v1.5 row, two distinct artifacts sharing one key. After the pin it holds the v1 row alone. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): NVIDIA's own endpoint ADDED `nvidia|nvidia/llama-3.3-nemotron-super-49b-v1`, a second dotted spelling of the SAME v1 artifact, so this key now holds two rows. The lever's statement is unchanged — the v1.5 artifact is still not here — and the added row is a first-party rehost of the v1 row already pinned, not a row the lever moved"
       }
     },
     {
@@ -24,17 +25,16 @@
       "expected": {
         "instances": [
           "deepinfra|nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
-          "kilo|nvidia/llama-3.3-nemotron-super-49b-v1.5",
-          "nano-gpt|nvidia/Llama-3_3-Nemotron-Super-49B-v1_5"
+          "nvidia|nvidia/llama-3.3-nemotron-super-49b-v1.5"
         ]
       },
       "classification": "must-pass",
       "provenance": {
         "source": "requirement",
-        "ref": "the v1.5 artifact is served from ONE key. This key already existed before the pin with the deepinfra and kilo rows; the pin adds the third spelling rather than minting anything."
+        "ref": "the v1.5 artifact is served from ONE key. This key already existed before the pin with the deepinfra and kilo rows; the pin adds the third spelling rather than minting anything. Re-measured at the 2026-08-28 refresh: the key now holds deepinfra's and nvidia's dotted rows; kilo's dotted row and nano-gpt's underscore row were both deleted upstream."
       },
       "mutation": {
-        "description": "before the pin this key held TWO instances (deepinfra + kilo, both dotted spellings). After the pin it holds THREE — nano-gpt's underscore spelling joins its siblings"
+        "description": "before the pin this key held TWO instances (deepinfra + kilo, both dotted spellings). After the pin it holds THREE — nano-gpt's underscore spelling joins its siblings. RE-MEASURED at the 2026-08-28 models.dev catalog refresh (providers 170 -> 204, provider model rows 5,765 -> 7,430): two of the three pinned rows were DELETED upstream and one was ADDED. kilo dropped `nvidia/llama-3.3-nemotron-super-49b-v1.5`, and nano-gpt dropped `nvidia/Llama-3_3-Nemotron-Super-49B-v1_5` — the UNDERSCORE spelling that is the very row this lever moves. No provider publishes an underscore-spelled Super-49B id any more, so the exact-ID pin still stands but currently has no row to act on; it is left in place because the spelling has returned before and the pin is what keeps it off the bare key. NVIDIA's own endpoint added `nvidia|nvidia/llama-3.3-nemotron-super-49b-v1.5`, a dotted sibling that keys here by the ordinary path"
       }
     }
   ]
