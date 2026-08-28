@@ -1076,7 +1076,7 @@
       "id": "klingai/kling-v2.5-turbo-i2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v2.5-turbo-i2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"i2v\",version=\"2.5\",modifier=\"turbo\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1085,7 +1085,7 @@
       "id": "klingai/kling-v2.5-turbo-t2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v2.5-turbo-t2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"t2v\",version=\"2.5\",modifier=\"turbo\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1094,7 +1094,7 @@
       "id": "klingai/kling-v2.6-i2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v2.6-i2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"i2v\",version=\"2.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1103,7 +1103,7 @@
       "id": "klingai/kling-v2.6-motion-control",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v2.6-motion-control\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"motion-control\",version=\"2.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1112,7 +1112,7 @@
       "id": "klingai/kling-v2.6-t2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v2.6-t2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"t2v\",version=\"2.6\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1121,7 +1121,7 @@
       "id": "klingai/kling-v3.0-i2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v3.0-i2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"i2v\",version=\"3.0\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1130,7 +1130,7 @@
       "id": "klingai/kling-v3.0-motion-control",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v3.0-motion-control\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"motion-control\",version=\"3.0\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },
@@ -1139,7 +1139,7 @@
       "id": "klingai/kling-v3.0-t2v",
       "raw_family": "ling",
       "before": "(family=\"ling\",variant=\"\",version=\"\",modifier=\"\")",
-      "after": "(family=\"kling\",variant=\"v3.0-t2v\",version=\"\",modifier=\"\")",
+      "after": "(family=\"kling\",variant=\"t2v\",version=\"3.0\",modifier=\"\")",
       "category": "b:improvement",
       "reason": "canonical-winner enforce: ID-derived distinct family won over a parent/org mislabel (family_enforce.json ledger)"
     },

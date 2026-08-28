@@ -428,14 +428,14 @@ const (
 	Entity__Kimi__K__Version_2_7__Size_1100b__Code                        = "kimi/k@2.7#1100b{code}"
 	Entity__Kimi__K__Version_2__Instruct                                  = "kimi/k@2{instruct}"
 	Entity__Kimi__K__Version_3                                            = "kimi/k@3"
-	Entity__Kling__V2_5_turbo_i2v                                         = "kling/v2.5-turbo-i2v"
-	Entity__Kling__V2_5_turbo_t2v                                         = "kling/v2.5-turbo-t2v"
-	Entity__Kling__V2_6_i2v                                               = "kling/v2.6-i2v"
-	Entity__Kling__V2_6_motion_control                                    = "kling/v2.6-motion-control"
-	Entity__Kling__V2_6_t2v                                               = "kling/v2.6-t2v"
-	Entity__Kling__V3_0_i2v                                               = "kling/v3.0-i2v"
-	Entity__Kling__V3_0_motion_control                                    = "kling/v3.0-motion-control"
-	Entity__Kling__V3_0_t2v                                               = "kling/v3.0-t2v"
+	Entity__Kling__I2v__Version_2_5__Turbo                                = "kling/i2v@2.5{turbo}"
+	Entity__Kling__I2v__Version_2_6                                       = "kling/i2v@2.6"
+	Entity__Kling__I2v__Version_3_0                                       = "kling/i2v@3.0"
+	Entity__Kling__Motion_control__Version_2_6                            = "kling/motion-control@2.6"
+	Entity__Kling__Motion_control__Version_3_0                            = "kling/motion-control@3.0"
+	Entity__Kling__T2v__Version_2_5__Turbo                                = "kling/t2v@2.5{turbo}"
+	Entity__Kling__T2v__Version_2_6                                       = "kling/t2v@2.6"
+	Entity__Kling__T2v__Version_3_0                                       = "kling/t2v@3.0"
 	Entity__Kling__Version_2_6                                            = "kling@2.6"
 	Entity__L31_70b_euryale__V2_2__Size_70b                               = "l31-70b-euryale/v2.2#70b"
 	Entity__L3_70b_euryale__V2_1__Size_70b                                = "l3-70b-euryale/v2.1#70b"
@@ -1363,14 +1363,14 @@ var allEntityConstants = [...]string{
 	Entity__Kimi__K__Version_2_7__Size_1100b__Code,
 	Entity__Kimi__K__Version_2__Instruct,
 	Entity__Kimi__K__Version_3,
-	Entity__Kling__V2_5_turbo_i2v,
-	Entity__Kling__V2_5_turbo_t2v,
-	Entity__Kling__V2_6_i2v,
-	Entity__Kling__V2_6_motion_control,
-	Entity__Kling__V2_6_t2v,
-	Entity__Kling__V3_0_i2v,
-	Entity__Kling__V3_0_motion_control,
-	Entity__Kling__V3_0_t2v,
+	Entity__Kling__I2v__Version_2_5__Turbo,
+	Entity__Kling__I2v__Version_2_6,
+	Entity__Kling__I2v__Version_3_0,
+	Entity__Kling__Motion_control__Version_2_6,
+	Entity__Kling__Motion_control__Version_3_0,
+	Entity__Kling__T2v__Version_2_5__Turbo,
+	Entity__Kling__T2v__Version_2_6,
+	Entity__Kling__T2v__Version_3_0,
 	Entity__Kling__Version_2_6,
 	Entity__L31_70b_euryale__V2_2__Size_70b,
 	Entity__L3_70b_euryale__V2_1__Size_70b,
