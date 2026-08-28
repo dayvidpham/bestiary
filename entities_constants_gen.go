@@ -75,7 +75,6 @@ const (
 	Entity__Claude__Haiku__Version_3_5                                     = "claude/haiku@3.5"
 	Entity__Claude__Haiku__Version_4_5                                     = "claude/haiku@4.5"
 	Entity__Claude__Opus                                                   = "claude/opus"
-	Entity__Claude__Opus__Size_31b                                         = "claude/opus#31b"
 	Entity__Claude__Opus__Version_3                                        = "claude/opus@3"
 	Entity__Claude__Opus__Version_4_0                                      = "claude/opus@4.0"
 	Entity__Claude__Opus__Version_4_1                                      = "claude/opus@4.1"
@@ -447,7 +446,6 @@ const (
 	Entity__Inflection__Version_3                                          = "inflection@3"
 	Entity__Inkling                                                        = "inkling"
 	Entity__Inkling__Small                                                 = "inkling/small"
-	Entity__Inkling__Version_256k                                          = "inkling@256k"
 	Entity__Intellect__Version_3                                           = "intellect@3"
 	Entity__Interfaze                                                      = "interfaze"
 	Entity__Jamba__Large                                                   = "jamba/large"
@@ -1069,7 +1067,6 @@ var allEntityConstants = [...]string{
 	Entity__Claude__Haiku__Version_3_5,
 	Entity__Claude__Haiku__Version_4_5,
 	Entity__Claude__Opus,
-	Entity__Claude__Opus__Size_31b,
 	Entity__Claude__Opus__Version_3,
 	Entity__Claude__Opus__Version_4_0,
 	Entity__Claude__Opus__Version_4_1,
@@ -1441,7 +1438,6 @@ var allEntityConstants = [...]string{
 	Entity__Inflection__Version_3,
 	Entity__Inkling,
 	Entity__Inkling__Small,
-	Entity__Inkling__Version_256k,
 	Entity__Intellect__Version_3,
 	Entity__Interfaze,
 	Entity__Jamba__Large,
