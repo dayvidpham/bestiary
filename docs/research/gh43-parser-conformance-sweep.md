@@ -52,9 +52,11 @@ beside the record count, because the cited issue reported rows; and the
 class 6 doubled-dash figure is a SUBSET of a key's records.
 
 Every per-key record count stated below is PINNED in
-`TestGH43Sweep_TokenCensus`, together with the 7,791 / 6,666 / 3,105
-figures and the class 5 table. A moved count fails the test and names the
-key, so no figure here is unguarded prose.
+`TestGH43Sweep_TokenCensus`, together with the 7,430 / 361 view split, the
+7,791 / 6,666 / 3,105 figures, the class 5 table, the class 6 doubled-dash
+and `duo-chat` subsets, and the boundary-rule exclusion table in both units.
+A moved count fails the test and names the key, so no figure here is
+unguarded prose.
 
 ### Boundary rule
 
@@ -66,23 +68,37 @@ is routinely glued to a digit — `tencent/hy3`, `gpt-5`, `stepfun-ai/step3`,
 `glm-4.6`. A word-character rule would miss all of them.
 
 What the rule actually excludes was MEASURED, not imagined. Against this
-snapshot, 18 distinct (view, id) records that a plain substring rule would
-attribute are dropped by the letter rule, and NO record changes lab:
+snapshot, 17 distinct (view, id) records that a plain substring rule would
+attribute are dropped by the letter rule, and NO record changes lab. The
+same drop set is 18 catalog ROWS, and both units are printed because they
+differ on one row:
 
-| Excluded spelling | Token | Why | Records |
-|---|---|---|---|
-| `nanogpt/coding-router` and `fastgpt` | `gpt` | `gpt` is preceded by a letter | 6 |
-| `mixtral`, `pixtral`, `voxtral` | `mistral` | `mistral` is preceded by a letter | 5 |
-| `paligemma`, `medgemma`, `diffusiongemma` | `gemma` | `gemma` is preceded by a letter | 3 |
-| `autoglm-phone` ids | `glm` | `glm` is preceded by a letter | 2 |
-| `deepclaude` | `claude` | `claude` is preceded by a letter | 1 |
-| `stepfun-ai/gelab-zero-4b-preview` | `step` | `step` is followed by the letter `f` | 1 |
+| Excluded spelling | Token | Why | Records | Rows |
+|---|---|---|---|---|
+| the 5 `nanogpt/coding-router` ids and `fastgpt` | `gpt` | `gpt` is preceded by a letter | 6 | 6 |
+| the `mistralai/` namespace: 2 `mixtral` ids, `Pixtral-12B-2409`, `Voxtral-Small-24B-2507` | `mistral` | `mistral` sits at index 0 and is FOLLOWED by the `a` of `mistralai` | 4 | 5 |
+| `google-paligemma`, `medgemma-4b`, `diffusiongemma` | `gemma` | `gemma` is preceded by a letter | 3 | 3 |
+| the 2 `autoglm-phone` ids | `glm` | `glm` is preceded by a letter | 2 | 2 |
+| `deepclaude` | `claude` | `claude` is preceded by a letter | 1 | 1 |
+| `stepfun-ai/gelab-zero-4b-preview` | `step` | `step` is followed by the letter `f` | 1 | 1 |
+
+The one row where the units disagree is `mistral`. The catalog serves
+`mistralai/mixtral-8x22b-instruct` three times: twice with the raw upstream
+family `mistral`, which the letter rule matches, and once with an EMPTY raw
+family. The record is therefore attributed, and only that third row is
+dropped. A reader who counts rows gets 18 and must not print it under a
+`Records` heading.
+
+Note that the blocked spellings are not the ones an earlier draft named:
+`mixtral`, `pixtral` and `voxtral` do not contain the substring `mistral`
+at all, so they cannot block that token. The Mistral drops are the
+`mistralai/` NAMESPACE, and the blocking letter is on the RIGHT.
 
 Read that table as a declared COST, not as a validation. Several of those
-rows are real products of the lab whose token was blocked: `mixtral` is
-Mistral's, `medgemma` and `paligemma` are Google's, `autoglm` is Zhipu's.
-The rule under-counts those labs, consistently and visibly, and it buys a
-rule that never has to guess at a stem boundary. The last row is the sharp
+rows are real products of the lab whose token was blocked: the four
+`mistralai/` ids are Mistral's own, `medgemma` and `paligemma` are Google's,
+`autoglm` is Zhipu's. The rule under-counts those labs, consistently and
+visibly, and it buys a rule that never has to guess at a stem boundary. The last row is the sharp
 edge: the `stepfun` NAMESPACE is itself excluded, so a StepFun row is
 counted only when its own id or raw family carries a delimited `step`.
 
@@ -337,7 +353,7 @@ counting rule above now applies here too, and the figures are 19 and 13.
 | Artifact | What it does |
 |---|---|
 | `testdata/parse/gh43_conformance_corpus.json` | 42 authored cases: every cited string, the measured witnesses, and the conforming controls |
-| `gh43_conformance_internal_test.go` | `TestGH43Conformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestGH43Sweep_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash subset, and the class 5 destination table in both units) |
+| `gh43_conformance_internal_test.go` | `TestGH43Conformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestGH43Sweep_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash and `duo-chat` subsets, the class 5 destination table in both units, and the boundary-rule exclusion table in both units) |
 | `fixtures_gh43_test.go` | the `//go:embed` of the corpus into the test binary only |
 | `TESTING.md` | corpus table: `testdata/parse/` 49 -> 50, total 127 -> 128 |
 

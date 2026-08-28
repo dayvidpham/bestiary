@@ -492,6 +492,17 @@ var gh43DoubledDashCounts = []gh43KeyRecords{
 	{Key: "claude/sonnet", Want: 6, Where: "class 6 prose; issue #53"},
 }
 
+// gh43DuoChat is the vendor spelling whose records an earlier draft of class 6
+// silently dropped, which is why that draft stated 14 and 10 instead of 19 and 13.
+// The report names the size of that omission, so the size is pinned here as well.
+const gh43DuoChat = "duo-chat"
+
+// gh43DuoChatCounts pins the duo-chat subset of the same two class-6 keys.
+var gh43DuoChatCounts = []gh43KeyRecords{
+	{Key: "claude/opus", Want: 5, Where: "class 6 prose; issue #53"},
+	{Key: "claude/sonnet", Want: 3, Where: "class 6 prose; issue #53"},
+}
+
 // gh43Class5Label is the upstream family label class 5 is about. Class 5 counts a
 // DIFFERENT population from the census: every row carrying this label, not the
 // seed-token matches. Its figures are therefore pinned separately, and the report
@@ -540,6 +551,17 @@ const gh43MatchedRows = 6666
 // gh43UniverseRows is the whole vendored catalog: provider rows plus models rows.
 const gh43UniverseRows = 7791
 
+// The two views the universe is made of. The report states the SPLIT, not only
+// the sum, and the two views reach the parser by two different code paths, so a
+// change that moves both views while preserving the sum is a real change and must
+// go red.
+const (
+	// gh43ProviderViewRows is the provider (served) view: cat.Models.
+	gh43ProviderViewRows = 7430
+	// gh43LabViewRows is the models (lab) view: cat.Metadata.
+	gh43LabViewRows = 361
+)
+
 // gh43IsLetter reports whether b is an ASCII letter. The census boundary rule is
 // stated in terms of LETTERS, not word characters, deliberately: a lab token is
 // routinely glued to a digit ("hy3", "gpt-5", "step3", "glm-4.6"), so a digit must
@@ -584,6 +606,165 @@ func gh43AttributeLab(id string, rawFamily Family) (int, bool) {
 	return 0, false
 }
 
+// ---------------------------------------------------------------------------
+// The boundary rule's declared COST: what the letter rule drops
+// ---------------------------------------------------------------------------
+
+// gh43PlainLab attributes by a BARE SUBSTRING search, with no delimiter test at
+// all. It is the naive rule the boundary rule replaces, and it exists only to
+// measure the gap between the two rules. That gap is the report's exclusion
+// table, which the report bills as a declared cost that was MEASURED.
+func gh43PlainLab(id string, rawFamily Family) (int, bool) {
+	low, fam := strings.ToLower(id), strings.ToLower(string(rawFamily))
+	for i, lab := range gh43SeedTokens {
+		for _, tok := range lab.Tokens {
+			if strings.Contains(low, tok) || strings.Contains(fam, tok) {
+				return i, true
+			}
+		}
+	}
+	return 0, false
+}
+
+// gh43Exclusion pins ONE row of the exclusion table, in BOTH units, for the same
+// reason the class 5 table is pinned in both: the two units differ here, and a
+// row figure printed under a record heading is exactly the error this pin exists
+// to stop. A record is dropped when the plain rule attributes at least one of its
+// rows and the letter rule attributes none of them.
+type gh43Exclusion struct {
+	// Lab is the seed lab the plain rule would have attributed the record to.
+	Lab string
+	// Records is the count under the counting rule: distinct raw id per view.
+	Records int
+	// Rows is the same population with no de-duplication.
+	Rows int
+	// Where names the prose that carries the figure.
+	Where string
+}
+
+// gh43BoundaryExclusions is the pinned exclusion table. The one row where the two
+// units disagree is mistral: "mistralai/mixtral-8x22b-instruct" is served three
+// times, twice with the raw family "mistral" (which the letter rule matches, so
+// the RECORD is attributed) and once with an empty raw family (that ROW is
+// dropped). One record, two units, two numbers.
+var gh43BoundaryExclusions = []gh43Exclusion{
+	{Lab: "gpt", Records: 6, Rows: 6, Where: "boundary rule table"},
+	{Lab: "mistral", Records: 4, Rows: 5, Where: "boundary rule table"},
+	{Lab: "gemma", Records: 3, Rows: 3, Where: "boundary rule table"},
+	{Lab: "glm", Records: 2, Rows: 2, Where: "boundary rule table"},
+	{Lab: "claude", Records: 1, Rows: 1, Where: "boundary rule table"},
+	{Lab: "step", Records: 1, Rows: 1, Where: "boundary rule table"},
+}
+
+const (
+	// gh43ExcludedRecords is the exclusion table's total in the report's own unit.
+	gh43ExcludedRecords = 17
+	// gh43ExcludedRows is the same drop set with no de-duplication.
+	gh43ExcludedRows = 18
+)
+
+// gh43CheckBoundaryExclusions pins the exclusion table and the "NO record changes
+// lab" half of the sentence that carries it. Without this the table is the one
+// measured figure in the report that can rot green: renaming a dropped id within
+// its own blocked stem moves no other pin.
+func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
+	t.Helper()
+	type record struct {
+		plainLab, letterLab int
+		plain, letter       bool
+	}
+	recs := make(map[string]*record)
+	order := make([]string, 0, gh43UniverseRows)
+	dropRows := make(map[string]int)
+	visit := func(view, id string, fam Family) {
+		key := view + "|" + id
+		r, ok := recs[key]
+		if !ok {
+			r = &record{}
+			recs[key] = r
+			order = append(order, key)
+		}
+		plainLab, plainOK := gh43PlainLab(id, fam)
+		letterLab, letterOK := gh43AttributeLab(id, fam)
+		if plainOK && !r.plain {
+			r.plain, r.plainLab = true, plainLab
+		}
+		if letterOK && !r.letter {
+			r.letter, r.letterLab = true, letterLab
+		}
+		if plainOK && !letterOK {
+			dropRows[gh43SeedTokens[plainLab].Name]++
+		}
+	}
+	for _, m := range cat.Models {
+		visit("serving", string(m.ID), m.Family)
+	}
+	for _, md := range cat.Metadata {
+		visit("lab", string(md.MetadataID), md.RawFamily)
+	}
+
+	dropRecords := make(map[string]int)
+	labChanged := 0
+	for _, key := range order {
+		r := recs[key]
+		switch {
+		case r.plain && !r.letter:
+			dropRecords[gh43SeedTokens[r.plainLab].Name]++
+		case r.plain && r.letter && r.plainLab != r.letterLab:
+			labChanged++
+		}
+	}
+
+	fix := "re-measure, then correct this pin and the boundary rule table in " + gh43ReportPath
+	records, rows := 0, 0
+	for _, ex := range gh43BoundaryExclusions {
+		records += ex.Records
+		rows += ex.Rows
+		if got := dropRecords[ex.Lab]; got != ex.Records {
+			t.Errorf("the letter rule drops %d %s RECORDS, the pinned exclusion table says %d\n"+
+				"  What: the boundary rule's declared COST moved for this lab. A dropped record"+
+				" is one the plain substring rule attributes and the letter rule does not\n"+
+				"  Why it matters: the %s is billed as measured, and it under-counts real"+
+				" products of the lab whose token was blocked, so its size is the price of the"+
+				" rule\n"+
+				"  How to fix: %s", got, ex.Lab, ex.Records, ex.Where, fix)
+		}
+		if got := dropRows[ex.Lab]; got != ex.Rows {
+			t.Errorf("the letter rule drops %d %s ROWS, the pinned exclusion table says %d\n"+
+				"  What: the ROW unit of the same drop set moved. It is NOT the record figure:"+
+				" one id served by several providers is one record and several rows\n"+
+				"  How to fix: %s", got, ex.Lab, ex.Rows, fix)
+		}
+	}
+	if records != gh43ExcludedRecords {
+		t.Errorf("the pinned exclusion rows sum to %d records, gh43ExcludedRecords says %d;"+
+			" the table and its total must state the same fact", records, gh43ExcludedRecords)
+	}
+	if rows != gh43ExcludedRows {
+		t.Errorf("the pinned exclusion rows sum to %d rows, gh43ExcludedRows says %d;"+
+			" the table and its total must state the same fact", rows, gh43ExcludedRows)
+	}
+	measuredRecords, measuredRows := 0, 0
+	for _, n := range dropRecords {
+		measuredRecords += n
+	}
+	for _, n := range dropRows {
+		measuredRows += n
+	}
+	if measuredRecords != gh43ExcludedRecords || measuredRows != gh43ExcludedRows {
+		t.Errorf("the letter rule drops %d records / %d rows in total, the report states %d / %d\n"+
+			"  What: a lab OUTSIDE the pinned table now loses records to the boundary rule,"+
+			" or the totals moved\n"+
+			"  How to fix: %s", measuredRecords, measuredRows, gh43ExcludedRecords, gh43ExcludedRows, fix)
+	}
+	if labChanged != 0 {
+		t.Errorf("%d records change lab under the letter rule, the report states NONE\n"+
+			"  What: the boundary rule now RE-ATTRIBUTES a record instead of only dropping"+
+			" it, so the rule's cost is no longer a pure under-count\n"+
+			"  How to fix: %s", labChanged, fix)
+	}
+}
+
 func TestGH43Sweep_TokenCensus(t *testing.T) {
 	// Arithmetic mirror: the per-lab table and the total are two statements of
 	// one fact, so they are checked against each other before any measurement.
@@ -607,6 +788,7 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 	// above: one distinct case-sensitive raw id per view, among the census matches.
 	keyRecords := make(map[string]int)
 	doubledDash := make(map[string]int)
+	duoChat := make(map[string]int)
 	// Provider view: every SERVED catalog row. ParseCatalogJSON puts the upstream
 	// family string in ModelInfo.Family (the codegen pipeline reads it from there
 	// as the RAW family), so that is the field the census greps beside the id.
@@ -631,6 +813,9 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		if strings.Contains(string(m.ID), gh43DoubledDash) {
 			doubledDash[key]++
 		}
+		if strings.Contains(strings.ToLower(string(m.ID)), gh43DuoChat) {
+			duoChat[key]++
+		}
 	}
 	// Models view: every LAB (metadata) row.
 	for _, md := range cat.Metadata {
@@ -652,6 +837,9 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		keyRecords[key]++
 		if strings.Contains(string(md.MetadataID), gh43DoubledDash) {
 			doubledDash[key]++
+		}
+		if strings.Contains(strings.ToLower(string(md.MetadataID)), gh43DuoChat) {
+			duoChat[key]++
 		}
 	}
 
@@ -687,6 +875,20 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 	// The two units the report prints must both hold. The gap between them is the
 	// de-duplication step, and stating only one of them is what makes the census
 	// look wrong to a reader who re-derives it.
+	if len(cat.Models) != gh43ProviderViewRows || len(cat.Metadata) != gh43LabViewRows {
+		t.Errorf("the catalog snapshot holds %d provider rows and %d lab rows, the report"+
+			" states %d and %d\n"+
+			"  What: the VIEW SPLIT moved. The sum alone is not enough: the two views reach"+
+			" the parser by two different code paths, so a change that moves both while"+
+			" preserving the sum is still a change the sweep must be re-measured against\n"+
+			"  How to fix: re-measure and correct the Method section of %s",
+			len(cat.Models), len(cat.Metadata), gh43ProviderViewRows, gh43LabViewRows, gh43ReportPath)
+	}
+	if gh43ProviderViewRows+gh43LabViewRows != gh43UniverseRows {
+		t.Errorf("the pinned view split sums to %d, gh43UniverseRows says %d; the split and"+
+			" the total must state the same fact",
+			gh43ProviderViewRows+gh43LabViewRows, gh43UniverseRows)
+	}
 	if universe := len(cat.Models) + len(cat.Metadata); universe != gh43UniverseRows {
 		t.Errorf("the catalog snapshot holds %d rows, the report states %d\n"+
 			"  How to fix: re-measure and correct the Method section of %s",
@@ -729,6 +931,17 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		}
 	}
 
+	for _, kr := range gh43DuoChatCounts {
+		if got := duoChat[kr.Key]; got != kr.Want {
+			t.Errorf("key %q holds %d records whose raw id carries %q, the pinned table says %d\n"+
+				"  What: the size of the omission that made an earlier draft state 14 and 10"+
+				" for these two keys has moved. It is a SUBSET of the key's record count\n"+
+				"  How to fix: re-measure, then correct this pin, %s and %s",
+				kr.Key, got, gh43DuoChat, kr.Want, gh43ReportPath, kr.Where)
+		}
+	}
+
+	gh43CheckBoundaryExclusions(t, cat)
 	gh43CheckClass5(t, cat, idx)
 
 	if testing.Verbose() {
