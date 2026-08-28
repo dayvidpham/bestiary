@@ -155,7 +155,9 @@ would be a category error:
   audits, `TestHostSplit_EntityParity`, `TestVersionPresenceConsistency_ClassA`,
   `TestResolve_CanonicalProviderPreference_CatalogSweep`);
 - **codegen determinism machinery** (`TestCodegen_Reproducible_ByteIdentical`,
-  `TestCodegen_UpToDate`, the golden-excerpt fences, `TestDecompositionSnapshot`);
+  `TestCodegen_UpToDate`, the golden-excerpt fences, `TestDecompositionSnapshot`,
+  and the upstream field-shape guards `TestModelsdevFieldCensus_NoDrift` /
+  `_UpToDate` / `_EnvelopeContract`, whose rows are the catalog's own field paths);
 - **store migration fixtures** (`store_migration_test.go`, `store_v5/v6/v7_test.go`) —
   the rows are *seed database state* for a migration, not `{input, expected}` cases;
 - **graceful-degrade loader tables** (`TestSafe*_Degrades*`, `TestParse*_Rejects`) —

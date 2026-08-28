@@ -353,6 +353,14 @@ workflow above). To pull a newer upstream deploy:
    just-vendored catalog). Review the diff like any curated-data change; the emitted
    `parse/data/modelsdev_unlinked.json` report lists join-disagreement metadata ids to triage
    into `parse/data/modelsdev_aliases.json`.
+
+   **Read the field-shape census first.** `parse/data/modelsdev_field_census.json` records
+   every field path the snapshot publishes with its fill count, and
+   `TestModelsdevFieldCensus_NoDrift` fails naming the paths upstream ADDED or REMOVED.
+   Row and provider totals are obvious in a diff; a field appearing or disappearing is not,
+   and a removed field leaves its consumer reading a zero value forever. Decide each named
+   path deliberately — wire an added one into `wire.go`/`parse.go` or accept it as unused,
+   and find the consumers of a removed one — before moving on to the key diff.
 4. **Commit as a separate `chore(gen):` commit.** Land the regenerated `*_gen.go` files (and
    the vendored `catalog.json` / `SNAPSHOT.json`) in their own commit, after the feature
    commit, per the codegen-determinism regen workflow below. `TestCodegen_Reproducible_ByteIdentical`
@@ -426,6 +434,7 @@ further versions shipped. Both were repaired retroactively, after the tags were 
 | `models_metadata_gen.go` | `cmd/bestiary-gen` | Never edit by hand. Baked models.dev metadata; regenerate with `go generate ./...` |
 | `parse/data/modelsdev/catalog.json` + `SNAPSHOT.json` | `cmd/bestiary-gen` (fetch mode) | Vendored codegen input. Never edit by hand; refresh via "models.dev snapshot refresh" |
 | `parse/data/modelsdev_unlinked.json` | `cmd/bestiary-gen` | Codegen-emitted join-disagreement report. Never edit by hand |
+| `parse/data/modelsdev_field_census.json` | `cmd/bestiary-gen` | Codegen-emitted UPSTREAM FIELD-SHAPE census (every catalog field path + fill count). Never edit by hand; `TestModelsdevFieldCensus_NoDrift` names the added/removed paths when upstream changes shape |
 | `bestiary.schema.json` | Manual | Must stay in sync with Go types. Verified by `TestJSONOutput_ConformsToSchema` |
 | `version.go` | Manual | Update on public type changes or upstream schema updates; `ReleaseVersion` bumps on the release branch — see "Releases" |
 | `CHANGELOG.md` | Manual | Entries written as slices land; stanza cut + link refs updated on the release branch — see "Releases" |

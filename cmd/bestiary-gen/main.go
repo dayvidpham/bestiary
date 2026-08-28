@@ -706,6 +706,17 @@ func run(args []string) error {
 		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", modelsdevUnlinkedFile, err)
 	}
 
+	// Emit modelsdev_field_census.json — the upstream FIELD-SHAPE census. It is built
+	// from the SAME rawJSON the decomposition consumed (never a re-read), so the census
+	// can never describe a different snapshot than the one that was baked. A write
+	// failure is non-fatal, on the same diagnostic footing as the unlinked report.
+	censusData, censusErr := buildModelsdevFieldCensus(rawJSON)
+	if censusErr != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not build %s: %v\n", modelsdevFieldCensusFile, censusErr)
+	} else if err := os.WriteFile(modelsdevFieldCensusFile, censusData, 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "bestiary-gen: warning: could not write %s: %v\n", modelsdevFieldCensusFile, err)
+	}
+
 	// Emit the two creator-dimension reports. Both are diagnostic aids on the same
 	// non-fatal footing as the unlinked report: a write failure never blocks the
 	// generated .go files. The curation they describe was already fenced loudly above
@@ -2822,4 +2833,164 @@ func writeCreatorsLabDisagreements(meta []bestiary.EntityMetadata) error {
 		)
 	}
 	return nil
+}
+
+// modelsdevFieldCensusFile is the committed UPSTREAM FIELD-SHAPE census: every field
+// path the vendored models.dev catalog publishes, with the number of records that fill
+// it. It is the drift sentinel for the one property a snapshot refresh cannot be
+// reviewed without — whether upstream ADDED or REMOVED a field. Row counts and provider
+// counts are visible in any diff; a new nested subkey on 7,430 model rows is not.
+const modelsdevFieldCensusFile = "parse/data/modelsdev_field_census.json"
+
+// FieldCensusRow is one measured field path of the vendored catalog. Path is
+// self-describing and names the scope it was measured in:
+//
+//	providers[].<field>                  provider-level
+//	providers[].<field>.<subfield>       provider-level, one nesting level
+//	providers[].models[].<field>         model-level (the per-provider model rows)
+//	providers[].models[].<field>.<sub>   model-level, one nesting level
+//	models[].<field>                     the models VIEW (the lab rows)
+//	models[].<field>.<subfield>          the models view, one nesting level
+//
+// Fill is the number of records in that scope carrying the path with a non-null value.
+// A path present but JSON-null everywhere would have Fill 0 and is therefore recorded
+// as a live path with no data, which is exactly the distinction a curator needs.
+type FieldCensusRow struct {
+	Path string `json:"path"`
+	Fill int    `json:"fill"`
+}
+
+// ModelsdevFieldCensusEnvelope is the committed shape of
+// parse/data/modelsdev_field_census.json. Like the unlinked and creator reports it
+// carries NO wall-clock timestamp, so a clean regen over an unchanged catalog is
+// byte-identical.
+type ModelsdevFieldCensusEnvelope struct {
+	Comment       string           `json:"_comment"`
+	SchemaVersion int              `json:"schema_version"`
+	Count         int              `json:"count"`
+	Fields        []FieldCensusRow `json:"fields"`
+}
+
+// jsonIsNull reports whether a raw JSON value is the literal null. Absent keys never
+// reach this — only keys the object actually carries.
+func jsonIsNull(raw json.RawMessage) bool {
+	return string(bytes.TrimSpace(raw)) == "null"
+}
+
+// jsonObjectKeys decodes raw as a JSON OBJECT and returns its keys, or ok=false when
+// raw is any other JSON kind. Arrays are deliberately NOT descended into: an array
+// element has no stable path under a one-level census, and a heterogeneous array would
+// make the path set depend on element order.
+func jsonObjectKeys(raw json.RawMessage) (map[string]json.RawMessage, bool) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return nil, false
+	}
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(trimmed, &obj); err != nil {
+		return nil, false
+	}
+	return obj, true
+}
+
+// censusCountRecord folds ONE record into fill: every non-null key at the top level,
+// plus every non-null key of an object-valued field, one level deep. skipDescend names
+// a field whose object value is a COLLECTION keyed by id rather than a struct (the
+// provider `models` map), so descending it would mint one bogus path per model id.
+func censusCountRecord(fill map[string]int, raw json.RawMessage, prefix, skipDescend string) {
+	obj, ok := jsonObjectKeys(raw)
+	if !ok {
+		return
+	}
+	for k, v := range obj {
+		if jsonIsNull(v) {
+			continue
+		}
+		fill[prefix+"."+k]++
+		if k == skipDescend {
+			continue
+		}
+		sub, isObj := jsonObjectKeys(v)
+		if !isObj {
+			continue
+		}
+		for sk, sv := range sub {
+			if jsonIsNull(sv) {
+				continue
+			}
+			fill[prefix+"."+k+"."+sk]++
+		}
+	}
+}
+
+// buildModelsdevFieldCensus is the PURE builder behind modelsdevFieldCensusFile: it
+// takes the raw vendored catalog bytes and returns the emission bytes, so the byte
+// identity of the emission is testable without touching the filesystem (the
+// buildCreatorProvidersUnserved precedent). Output order is an explicit sort on Path,
+// never Go map order.
+func buildModelsdevFieldCensus(rawJSON []byte) ([]byte, error) {
+	var doc struct {
+		Providers map[string]json.RawMessage `json:"providers"`
+		Models    map[string]json.RawMessage `json:"models"`
+	}
+	if err := json.Unmarshal(rawJSON, &doc); err != nil {
+		return nil, fmt.Errorf(
+			"buildModelsdevFieldCensus: unmarshal the vendored catalog: %w\n"+
+				"  What: the models.dev catalog JSON could not be decoded into {providers, models}\n"+
+				"  Where: %s (the committed codegen input)\n"+
+				"  When: building the upstream field-shape census, after the catalog was read\n"+
+				"  What it means for the caller: the census cannot be emitted and the bake stops\n"+
+				"  How to fix: re-run the vendoring step (`go run ./cmd/bestiary-gen`) to replace a "+
+				"truncated or corrupt snapshot",
+			err, vendoredCatalogPath,
+		)
+	}
+
+	fill := make(map[string]int)
+	for _, p := range doc.Providers {
+		censusCountRecord(fill, p, "providers[]", "models")
+		var pv struct {
+			Models map[string]json.RawMessage `json:"models"`
+		}
+		if err := json.Unmarshal(p, &pv); err != nil {
+			continue
+		}
+		for _, m := range pv.Models {
+			censusCountRecord(fill, m, "providers[].models[]", "")
+		}
+	}
+	for _, m := range doc.Models {
+		censusCountRecord(fill, m, "models[]", "")
+	}
+
+	rows := make([]FieldCensusRow, 0, len(fill))
+	for path, n := range fill {
+		rows = append(rows, FieldCensusRow{Path: path, Fill: n})
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i].Path < rows[j].Path })
+
+	envelope := ModelsdevFieldCensusEnvelope{
+		Comment: "Codegen-emitted UPSTREAM FIELD-SHAPE census of the vendored models.dev catalog " +
+			"(DO NOT EDIT). One row per field path the snapshot publishes, with the number of records " +
+			"filling it with a non-null value. Paths are self-describing: providers[].<f> is " +
+			"provider-level, providers[].models[].<f> is a per-provider model row, models[].<f> is the " +
+			"models VIEW (lab rows), and a second dotted segment is one level of object nesting. " +
+			"Arrays are not descended into. This exists because a snapshot refresh is otherwise " +
+			"reviewed on counts alone: row and provider totals are obvious in a diff, but a field " +
+			"ADDED or REMOVED upstream is invisible until something downstream silently stops being " +
+			"populated. TestModelsdevFieldCensus_NoDrift recomputes this from the vendored catalog and " +
+			"names the added and removed paths. Regenerated by `go generate ./...`; sorted and " +
+			"timestamp-free for byte-stability.",
+		SchemaVersion: 1,
+		Count:         len(rows),
+		Fields:        rows,
+	}
+	if envelope.Fields == nil {
+		envelope.Fields = []FieldCensusRow{}
+	}
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("buildModelsdevFieldCensus: marshal JSON: %w", err)
+	}
+	return append(data, '\n'), nil
 }
