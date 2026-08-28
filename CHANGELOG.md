@@ -1130,20 +1130,33 @@ for its **Go module tags** (`vX.Y.Z`).
   `deepcogito/cogito-v2-1-671b` lost its dot, so only the orphaned trailing integer was read
   as the version, minting a phantom "Cogito v1" line for a release that does not exist.
 
-  Both are repaired to the shape this line always matched — the glued release letter is the
-  variant, the dotted point release is the version — so all three serving instances (kilo,
-  openrouter, togetherai) now key `cogito/v@2.1#671b`, the only live cogito key. It lands in
-  **two** steps, in that order: the decomposition first, then the merge. Merging into the
-  malformed key first would have moved the togetherai instance onto a key that then had to be
-  renamed underneath it.
+  Both are repaired to the same shape — an EMPTY variant and the dotted point release as the
+  version — so all three serving instances (kilo, openrouter, togetherai) now key
+  `cogito@2.1#671b`, the only live cogito key. **The `v` is a version PREFIX, not a variant:**
+  it introduces the number it is glued to and names no sibling line this release is
+  distinguished from, which is the reading the mimo normalization already applies to its
+  series letter. The v-carrying spellings survive as provider-id nomina
+  (`deepcogito/cogito-v2.1-671b`, `deepcogito/cogito-v2-1-671b`), so
+  `bestiary show deepcogito/cogito-v2.1-671b --format=raw` still finds the entity. It lands in **two** steps, in that order: the
+  decomposition first, then the merge. Merging into the malformed key first would have moved
+  the togetherai instance onto a key that then had to be renamed underneath it.
 
   No alias is minted, no redirect is added and no successor is listed at the tool: this table
   is the migration record, and the pointer a user gets.
 
   | retired cogito key | instances re-home to |
   |---|---|
-  | `cogito/v2.1-671b#671b` | `cogito/v@2.1#671b` |
-  | `cogito@1#671b` | `cogito/v@2.1#671b` |
+  | `cogito/v2.1-671b#671b` | `cogito@2.1#671b` |
+  | `cogito@1#671b` | `cogito@2.1#671b` |
+
+  **Correction, recorded rather than silently rewritten.** An earlier draft of this stanza
+  read the glued `v` as the VARIANT and published `cogito/v@2.1#671b` as the successor. That
+  spelling **never shipped** — it existed only in-tree between two commits of this same
+  unreleased stanza — and it contradicted the mimo ruling this release already applied. The
+  successor column above is the corrected one; there is nothing for a released consumer to
+  migrate from, because no release ever carried `cogito/v@2.1#671b`. The release's cumulative
+  retired set is therefore **unchanged at 62** and its added set unchanged at 35: measured
+  against the release baseline, `cogito/v@2.1#671b` is absent from BOTH sides of the diff.
 
   Every row is re-derived from the instances the retired key actually held, checked against
   the live registry on each run, and cross-checked against this table
@@ -1161,7 +1174,7 @@ for its **Go module tags** (`vX.Y.Z`).
 
   removed — `Entity__Cogito__V2_1_671b__Size_671b`, `Entity__Cogito__Version_1__Size_671b`;
 
-  added — `Entity__Cogito__V__Version_2_1__Size_671b`.
+  added — `Entity__Cogito__Version_2_1__Size_671b`.
 
   Census effect, measured per commit on its own run (unit: entity keys; axis: the constant
   set in `entities_constants_gen.go`; configuration: each lever alone, chained on the

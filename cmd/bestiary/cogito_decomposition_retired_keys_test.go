@@ -47,7 +47,7 @@ func TestRetiredKeys_CogitoDecomposition_MeasuredSplit(t *testing.T) {
 	// Both retired keys must name the SAME successor: they were two keys for one artifact,
 	// and collapsing them onto one key is the entire point of the lever. Asserting it here
 	// means a corpus edit cannot quietly re-target one of them.
-	const target = "cogito/v@2.1#671b"
+	const target = "cogito@2.1#671b"
 	for i := range corpus.Cases {
 		if got := corpus.Cases[i].Expected.Successors; !slices.Equal(got, []string{target}) {
 			t.Errorf("retired key %q records successors %v, want exactly [%s] — both spellings name "+
@@ -206,7 +206,7 @@ func TestRetiredKeys_CogitoDecomposition_ChangelogTableMatchesCorpus(t *testing.
 // single key holding all three instances. The size segment is asserted to appear once —
 // that doubling is the defect the decomposition exists to remove.
 func TestCogitoKeyspace_IsExactlyTheOneSurvivingKey(t *testing.T) {
-	want := []string{"cogito/v@2.1#671b"}
+	want := []string{"cogito@2.1#671b"}
 
 	var got []string
 	instances := 0

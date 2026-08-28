@@ -4519,29 +4519,36 @@ var idFamilyOverrides = map[string]idFamilyOverrideEntry{
 	// remainder "v2.1-671b" as one variant token and leaves the version empty. The 671b
 	// parameter size is ALSO recovered mechanically into the #size segment, so the
 	// artifact keyed cogito/v2.1-671b#671b — the same 671b stated twice, once as an
-	// identity token and once as the size. Pinned to the glm-v shape
-	// (canonicalizeGlmV above): the glued release letter is the VARIANT "v" and the
-	// dotted point release is the VERSION "2.1", so the key renders cogito/v@2.1#671b
-	// and the size is carried exactly once. Family is already "cogito"
-	// (FamilyCogito ∈ allFamilies) on every serving row, so this entry corrects only the
-	// variant/version pair. Keyed to the exact (lowercase) ID; both providers that serve
-	// this dotted spelling (kilo raw="", openrouter raw="cogito") converge on the one
-	// tuple because the map is consulted provider-agnostically.
-	"deepcogito/cogito-v2.1-671b": {family: "cogito", variant: "v", version: "2.1"},
+	// identity token and once as the size.
+	//
+	// The `v` is a VERSION PREFIX, not a variant. Upstream spells the release
+	// "cogito-v2.1-671b" / "deepcogito/cogito-v2-1-671b": the letter introduces the
+	// number it is glued to, and there is no sibling line it distinguishes this release
+	// from. So the variant slot is left EMPTY and the dotted point release is the
+	// VERSION "2.1" — the key renders cogito@2.1#671b, and the size is carried exactly
+	// once. This follows the mimo precedent, where the series letter likewise leaves the
+	// key (mimo@2.5{pro}) and survives as a nomen: the v-carrying spellings remain
+	// attested provider-id names, so `bestiary show deepcogito/cogito-v2.1-671b
+	// --format=raw` still finds this entity.
+	//
+	// Family is already "cogito" (FamilyCogito ∈ allFamilies) on every serving row, so
+	// this entry corrects only the variant/version pair. Keyed to the exact (lowercase)
+	// ID; both providers that serve this dotted spelling (kilo raw="", openrouter
+	// raw="cogito") converge on the one tuple because the map is consulted
+	// provider-agnostically.
+	"deepcogito/cogito-v2.1-671b": {family: "cogito", variant: "", version: "2.1"},
 
 	// togetherai serves the SAME Cogito v2.1 671B artifact with the dot lost to a dash
 	// (deepcogito/cogito-v2-1-671b), so the leading-token pipeline read only the trailing
 	// integer as the version and produced (cogito, "", "1") — a phantom "Cogito v1" line
 	// holding one instance while the two dotted rows sit on the repaired key. The repair is
-	// variant-targeted for the same reason the deepseek dash-glued rows above are: MEASURED,
-	// a version-only dotLostVersionOverrides entry yields (cogito, "", "2.1") and keys
-	// cogito@2.1#671b, which is a THIRD key rather than a merge — the dotted rows carry the
-	// release letter in the variant slot, so the dash-glued row must be pinned to the same
-	// (variant, version) pair to join them. Pinned here, it lands on cogito/v@2.1#671b
-	// alongside its siblings. Evidence: both spellings render the same DisplayName
-	// ("Cogito v2.1 671B"), the same 671b size and the same 1.25/1.25 price, and the id's own
+	// pinned to the SAME (variant, version) pair as its dotted siblings above, because a
+	// row landing on a different pair is a THIRD key rather than a merge. With the
+	// variant slot now empty on both, that pair is ("", "2.1") and all three rows land on
+	// cogito@2.1#671b. Evidence: every spelling renders the same DisplayName ("Cogito
+	// v2.1 671B"), the same 671b size and the same 1.25/1.25 price, and the id's own
 	// "v2-1" spelling names which dot was lost.
-	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "v", version: "2.1"},
+	"deepcogito/cogito-v2-1-671b": {family: "cogito", variant: "", version: "2.1"},
 
 	// gpt 5.6 tier pins. The curated family_overrides rows map upstream family
 	// gpt-<tier> to (family gpt, variant <tier>), which puts the tier token in the
