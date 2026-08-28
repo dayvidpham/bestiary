@@ -371,7 +371,19 @@ func TestEntityRekey_CensusAccounted(t *testing.T) {
 	// legitimately live again because upstream minted a real occupant for each: `gpt/pro`
 	// (edenai openai/gpt-pro-latest) and `ministral#8b{instruct}` (pioneer
 	// mistralai/Ministral-8B-Instruct-2410).
-	const wantEntities = 989
+	//
+	// 989 -> 987 with the two round-2 review pins that land after the refresh. requesty's
+	// "inkling-256k" is pinned to the bare `inkling` family: a served context length is a serving
+	// fact, never a release — the requesty row carries the same 262144 window at the same 1.8700 /
+	// 4.6800 price as llmtr's bare thinkingmachines/inkling — so inkling@256k, the keyspace's only
+	// context-length-shaped version, is never minted. nano-gpt's "Gemma-4-31B-Claude-4.6-Opus-
+	// Reasoning-Distilled" is pinned to (gemma, 4): the 2026-08-28 catalog newly stamps raw_family
+	// "claude" on a Google Gemma 4 31B distill, which credited Anthropic with it on the flagship
+	// Opus line, so the row rejoins gemma@4#31b and claude/opus#31b is never minted. Both keys
+	// were among the 146 the refresh minted and neither existed at the 930-key baseline, so the
+	// refresh link is restated as 930 - 87 + 144 = 987. No key retires that did not already
+	// retire.
+	const wantEntities = 987
 	if got := len(bestiary.Entities()); got != wantEntities {
 		t.Errorf("registry census = %d entities, want %d — this literal is the running total of "+
 			"every curated key retirement (see the arithmetic above it); update it in the same "+

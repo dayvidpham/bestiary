@@ -205,7 +205,7 @@ func TestRetiredKeys_CollisionSplit_SplitTargetsAreLive(t *testing.T) {
 	// is asserted by SET in the companion re-homing test, which is the check that can
 	// actually falsify it; these counts are a census.
 	want := map[string]int{
-		"inkling":                  28,
+		"inkling":                  29,
 		"kling@2.6":                1,
 		"kling/i2v@2.5{turbo}":     1,
 		"kling/t2v@2.5{turbo}":     1,
@@ -234,15 +234,19 @@ func TestRetiredKeys_CollisionSplit_SplitTargetsAreLive(t *testing.T) {
 	// rows to 28 with rows that were never part of the lever's population, so 15 is now a
 	// count of a historical population rather than of these keys.
 	//
-	// 15 -> 37 (28 on `inkling` + 1 on each of the nine kling keys). Read it as a census,
+	// 15 -> 37 (28 on `inkling` + 1 on each of the nine kling keys). 37 -> 38 at the round-2
+	// review pin on requesty's "inkling-256k": that row had minted the phantom inkling@256k out
+	// of a SERVED CONTEXT LENGTH, and pinning it to the bare family moves its one instance onto
+	// `inkling`, 28 -> 29. It is an ADDITION to this census, not a re-split — the nine kling
+	// keys are untouched. Read it as a census,
 	// not as conservation: the conservation claim survives intact in
 	// TestRetiredKeys_CollisionSplit_SuccessorSetsMatchMeasuredRehoming, which re-derives
 	// each retired key's rows against the live registry by SET and would fail if one had
 	// been dropped or duplicated.
-	if total != 37 {
-		t.Errorf("the split's successor keys hold %d instances in total, want 37 — 28 on `inkling` "+
-			"after the 2026-08-28 refresh plus one on each of the nine kling keys; a kling key "+
-			"holding more or fewer than one row is a mis-split", total)
+	if total != 38 {
+		t.Errorf("the split's successor keys hold %d instances in total, want 38 — 29 on `inkling` "+
+			"after the 2026-08-28 refresh and the inkling-256k pin, plus one on each of the nine "+
+			"kling keys; a kling key holding more or fewer than one row is a mis-split", total)
 	}
 }
 

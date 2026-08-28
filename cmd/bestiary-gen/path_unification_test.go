@@ -280,7 +280,7 @@ func loadBaseline() ([]decompRecord, error) {
 //	BESTIARY_CAPTURE_BASELINE=1 go test ./cmd/bestiary-gen -run TestCaptureDecompositionBaseline
 //
 // Run it only at a declared capture point, and commit the result in the commit that
-// declares it. There have been two such points.
+// declares it. There have been three such points.
 //
 //   - The ORIGINAL capture, pre-refactor, on the then-HEAD: the BEFORE side of the
 //     path-unification diff.
@@ -291,6 +291,16 @@ func loadBaseline() ([]decompRecord, error) {
 //     levers are measured against, not a state a lever had already moved. Refresh and
 //     re-capture landed in the SAME commit, with the resulting all-zero diff report
 //     committed and all 38 now-unmatchable justifiedExceptions entries deleted.
+//   - The 2026-08-28 CATALOG-REFRESH re-capture: the fixture was reground on the re-vendored
+//     catalog, taking the corpus from 5,765 to 7,430 records. Taken on the same terms as the
+//     precedent above — at the branch HEAD, with the gate ALREADY GREEN, and BEFORE any of
+//     this refresh's curation levers landed — so the levers are measured against the
+//     refreshed state rather than being absorbed into it. Refresh and re-capture landed in
+//     the SAME commit, and the 39 entries the previous baseline made unmatchable were
+//     deleted. What this re-capture CANNOT see is a decomposition change introduced by the
+//     refresh itself, which is frozen into the new baseline by construction; that gap is
+//     covered separately by the bake-identity gate (bake_identity_test.go in the root
+//     package), which compares the PREVIOUS release's baked tuples against this one.
 //
 // Anything else is the failure mode the honesty contract at the top of this file names:
 // re-capturing to turn a red gate green.
@@ -1247,17 +1257,11 @@ var justifiedExceptions = map[exceptionKey]string{
 	// explain, and a row that can never match again is dead curation that would only mask
 	// a future re-orphan.
 	//
-	// The eight rows below are the curation that landed AFTER the re-capture, which is why
-	// they appear as a diff at all. Every one is the same transition: vercel publishes
-	// Fish Audio's speech models under raw_family "o" — the OpenAI o-series bucket — and
-	// the classifier sees a populated family change value and flags category-(c). It is an
-	// improvement, not a regression: the BEFORE family is not a family at all but another
-	// lab's bucket, and the keys it produced (`o` and `o/pro`) held these eight rows and
-	// NOTHING else while creators.json maps family "o" to OpenAI, so the catalog credited
-	// OpenAI with Fish Audio's models. After the pin no field is emptied, the version and
-	// variant slots go from EMPTY to populated, and the modifier is preserved except where
-	// "free" is deliberately demoted per the free-demotion ruling (an access tier, never an
-	// identity), which is why the paid and free spellings converge on one tuple.
+	// The ELEVEN rows below are the curation that landed AFTER the re-capture, which is why
+	// they appear as a diff at all. They fall into three groups, in the order they appear:
+	// one dot-lost version repair, eight Fish Audio family restorations, and two
+	// serving-fact removals. Each group is documented immediately above its rows.
+	//
 	// The dot-lost repair on inferx's new "mimo-v25" spelling. The classifier flags a
 	// populated version changing value, which is the exact shape a real regression takes —
 	// but here the BEFORE value is a version the vendor never published. "25" is the dot
@@ -1266,6 +1270,16 @@ var justifiedExceptions = map[exceptionKey]string{
 	// the same digits are re-read with the separator restored.
 	{ID: "mimo-v25", Before: `(family="mimo",variant="",version="25",modifier="")`, After: `(family="mimo",variant="",version="2.5",modifier="")`}: "dot-lost repair: \"25\" is \"2.5\" with the separator lost, a version MiMo never published. The row joins the ~40 rows already on mimo@2.5 instead of holding a one-instance phantom line.",
 
+	// The eight Fish Audio rows. Every one is the same transition: vercel publishes Fish
+	// Audio's speech models under raw_family "o" — the OpenAI o-series bucket — and the
+	// classifier sees a populated family change value and flags category-(c). It is an
+	// improvement, not a regression: the BEFORE family is not a family at all but another
+	// lab's bucket, and the keys it produced (`o` and `o/pro`) held these eight rows and
+	// NOTHING else while creators.json maps family "o" to OpenAI, so the catalog credited
+	// OpenAI with Fish Audio's models. After the pin no field is emptied, the version and
+	// variant slots go from EMPTY to populated, and the modifier is preserved except where
+	// "free" is deliberately demoted per the free-demotion ruling (an access tier, never an
+	// identity), which is why the paid and free spellings converge on one tuple.
 	{ID: "fish-audio/s1", Before: `(family="o",variant="",version="",modifier="")`, After: `(family="fish-audio",variant="s",version="1",modifier="")`}: "vercel files Fish Audio S1 under OpenAI's o-series family bucket; the pin restores the lab's own identity. Family becomes real, variant and version go from EMPTY to populated, nothing is dropped.",
 
 	{ID: "fish-audio/s1-free", Before: `(family="o",variant="",version="",modifier="free")`, After: `(family="fish-audio",variant="s",version="1",modifier="")`}: "as fish-audio/s1, and additionally the \"free\" modifier is demoted: free is an access tier, not an identity, so the free spelling converges on the same entity as the paid one rather than splitting the artifact in two.",
@@ -1281,6 +1295,30 @@ var justifiedExceptions = map[exceptionKey]string{
 	{ID: "fish-audio/transcribe-1", Before: `(family="o",variant="",version="",modifier="")`, After: `(family="fish-audio",variant="transcribe",version="1",modifier="")`}: "Fish Audio Transcribe-1 is a speech-to-text product, filed by vercel under OpenAI's o-series bucket. The pin gives it the lab's family and its own product line as the variant, populating two previously EMPTY fields.",
 
 	{ID: "fish-audio/transcribe-1-free", Before: `(family="o",variant="",version="",modifier="free")`, After: `(family="fish-audio",variant="transcribe",version="1",modifier="")`}: "as fish-audio/transcribe-1, with the \"free\" access tier demoted so the free spelling converges on the paid entity.",
+
+	// The two SERVING-FACT removals. Both empty a populated field, which is the exact shape
+	// a real regression takes, so both need human review rather than a code rule — and in
+	// both the emptied value was never identity in the first place.
+	//
+	// requesty's "inkling-256k" put the SERVED CONTEXT LENGTH in the version slot, minting
+	// inkling@256k: a release Thinking Machines never published, and the only
+	// context-length-shaped version anywhere in the keyspace. The requesty row and llmtr's
+	// bare thinkingmachines/inkling carry an identical 262144 window at an identical
+	// 1.8700 / 4.6800 price, so they are the same artifact. This is the same ruling the
+	// ":peft:262144" pin in the same lever already applies: a context length is a serving
+	// fact. The version is not lost, it was never a version.
+	{ID: "inkling-256k", Before: `(family="inkling",variant="",version="256k",modifier="")`, After: `(family="inkling",variant="",version="",modifier="")`}: "serving-fact removal: \"256k\" is the served context length, not a release. Same fact as the :peft:262144 config pinned in the same lever, and the row joins the bare inkling entity its siblings occupy instead of holding the keyspace's only context-length-shaped version.",
+
+	// nano-gpt's Gemma 4 31B distill. The 2026-08-28 catalog NEWLY stamps raw_family
+	// "claude" on a Google Gemma 4 31B model distilled FROM Claude Opus 4.6; at the
+	// v0.2.10 baseline the same row carried family=null. The classifier flags family and
+	// variant changing value, but the BEFORE tuple is upstream's mislabel: it credited
+	// Anthropic with a Gemma derivative on the flagship Opus line, at a 31B size Anthropic
+	// has never published. This is the SAME transition the eight fish-audio rows above
+	// document and the trendyol-asure-12b pin applies. The distillation TEACHER is not the
+	// artifact's family; that relationship belongs in lineage.json. The version slot also
+	// goes from EMPTY to populated, recovering the "4" the label had hidden.
+	{ID: "Gemma-4-31B-Claude-4.6-Opus-Reasoning-Distilled", Before: `(family="claude",variant="opus",version="",modifier="")`, After: `(family="gemma",variant="",version="4",modifier="")`}: "upstream misattribution repair: nano-gpt's new raw_family \"claude\" credited Anthropic with a Google Gemma 4 31B distill on the Opus line. Family becomes the artifact's own, the EMPTY version slot is populated with the 4 the label hid, and claude/opus#31b retires — it never held an Anthropic artifact.",
 }
 
 func TestPathUnification_ZeroUnexpectedRegression(t *testing.T) {
