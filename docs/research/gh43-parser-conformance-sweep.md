@@ -46,10 +46,13 @@ Three parts of that sentence are load-bearing, and each was measured:
   though the registry's serving index is case-INsensitive and both reach
   one entity. Casing variants of one id therefore inflate a count slightly.
 
-Two figures in this report deliberately use a DIFFERENT unit, and both say
-so where they appear: the class 5 destination table prints provider ROWS
-beside the record count, because the cited issue reported rows; and the
-class 6 doubled-dash figure is a SUBSET of a key's records.
+Four figures in this report deliberately use a DIFFERENT unit or a SUBSET,
+and each says so where it appears: the class 5 destination table prints
+provider ROWS beside the record count, because the cited issue reported
+rows; the boundary-rule exclusion table prints a Rows column beside its
+Records column, because one dropped row belongs to a record that is not
+dropped; and the class 6 doubled-dash and `duo-chat` figures are SUBSETS
+of a key's records.
 
 Every per-key record count stated below is PINNED in
 `TestGH43Sweep_TokenCensus`, together with the 7,430 / 361 view split, the
