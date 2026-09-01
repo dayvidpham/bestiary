@@ -293,6 +293,33 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ### Added
 
+- **Parser-conformance sweep for the top-traffic labs** ([#43](https://github.com/dayvidpham/bestiary/issues/43), closed by this sweep). Every
+  catalog record carrying one of the **19** seed lab tokens was driven through the
+  production parser and its entity key asserted. UNIT: records (one distinct raw id string,
+  per catalog view, case-sensitive); AXIS: entity-key conformance per defect class;
+  CONFIGURATION: the committed `parse/data/modelsdev/catalog.json` (**7,430** provider rows
+  + **361** lab rows = **7,791**; **6,666** matched rows; **3,105** records; **0** unkeyed).
+  - `testdata/parse/gh43_conformance_corpus.json`: **42** cases pinning the evidence for the
+    six defect classes; **6** cases carry `EXPECTED_TBD` where the destination is a curation
+    ruling, not a mechanical fact ([#51](https://github.com/dayvidpham/bestiary/issues/51), [#52](https://github.com/dayvidpham/bestiary/issues/52), and the nemotron dual-path pair in [#49](https://github.com/dayvidpham/bestiary/issues/49)).
+  - `TestGH43Sweep_TokenCensus` pins the counting rule end to end: all **19** per-lab
+    counts, **21** per-key record counts, the class 5 destination table in both units, the
+    class 6 doubled-dash and `duo-chat` subsets, the view split, and the boundary-rule
+    exclusion table in both units (**17** records / **18** rows). Premise guards on all
+    three id kinds keep a refutation from silently going stale.
+  - Verdicts: class 1 CONFIRMED, the leading `v` misplaces or destroys the version ([#48](https://github.com/dayvidpham/bestiary/issues/48));
+    class 2 PARTLY REFUTED, two compound families remain and the two ingest paths disagree
+    about one model ([#49](https://github.com/dayvidpham/bestiary/issues/49)); class 3 CONFIRMED, the dash-glued `z-ai` namespace is read as
+    model content and collides with GLM-Z1 ([#50](https://github.com/dayvidpham/bestiary/issues/50)); class 4 CONFIRMED as observed,
+    destination is a ruling ([#51](https://github.com/dayvidpham/bestiary/issues/51)); class 5 VERIFIED, the `deepseek-thinking` label is
+    correctly discarded and the rows mostly re-expose class 1 ([#52](https://github.com/dayvidpham/bestiary/issues/52)); class 6 REFUTED as a
+    parser defect, the cited spellings decompose correctly and fail at resolution, while a
+    doubled vendor dash in the catalog does destroy the version ([#53](https://github.com/dayvidpham/bestiary/issues/53)).
+  - The sweep only reports: **no** entity key changes, `entities_constants_gen.go` is
+    byte-identical, and a `--no-fetch` regen leaves a zero diff. Each fix lands in its own
+    issue, priced by regen-and-diff. Full method and figures:
+    `docs/research/gh43-parser-conformance-sweep.md`.
+
 - **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
   shape, with a loud drift guard.** Every field path the vendored catalog publishes, with
   the number of records filling it: provider level, per-provider model rows, the models
