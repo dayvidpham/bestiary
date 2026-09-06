@@ -1,0 +1,1097 @@
+{
+  "_comment": "GH#43 parser-conformance sweep. Each case pins a CITED or MEASURED string from the sweep of the vendored models.dev catalog against the production parser, and the entity key the production path produces for it TODAY. 'key' is the MEASURED key, so the corpus is a witness of current behaviour and goes red when any of these keys moves. 'conformance' says whether that key is right: 'conforming' (the key is correct, the cited defect is refuted at this tip), 'defect' (the key is wrong and 'want_key' states the correct destination), or 'undecided' (the destination is a curation ruling this sweep must not invent, and 'want_key' is the EXPECTED_TBD marker). The sweep CHANGES NO KEY: it only records.",
+  "cases": [
+    {
+      "name": "class1_lab_deepseek_v31",
+      "input": {
+        "raw": "deepseek/deepseek-v3.1",
+        "kind": "lab-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.1",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.1: the catalog id 'deepseek/deepseek-v3.1' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_lab_deepseek_v32",
+      "input": {
+        "raw": "deepseek/deepseek-v3.2",
+        "kind": "lab-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.2",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.2: the catalog id 'deepseek/deepseek-v3.2' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v32_exp",
+      "input": {
+        "raw": "deepseek-ai/deepseek-v3.2-exp",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.2-exp",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2{exp}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.2-exp: the catalog id 'deepseek-ai/deepseek-v3.2-exp' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v32_dated",
+      "input": {
+        "raw": "deepseek/deepseek-v3.2-251201",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.2-251201",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.2-251201: the catalog id 'deepseek/deepseek-v3.2-251201' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v31_terminus",
+      "input": {
+        "raw": "deepseek/deepseek-v3.1-terminus",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.1-terminus",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek/terminus@3.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.1-terminus: the catalog id 'deepseek/deepseek-v3.1-terminus' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v31_maas",
+      "input": {
+        "raw": "deepseek-ai/deepseek-v3.1-maas",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.1-maas",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.1-maas: the catalog id 'deepseek-ai/deepseek-v3.1-maas' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v32_maas",
+      "input": {
+        "raw": "deepseek-ai/deepseek-v3.2-maas",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.2-maas",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.2-maas: the catalog id 'deepseek-ai/deepseek-v3.2-maas' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_serving_deepseek_v32_speciale",
+      "input": {
+        "raw": "deepseek-v3.2-speciale",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.2-speciale",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek/speciale@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.2-speciale: the catalog id 'deepseek-v3.2-speciale' puts the dotted version in the variant slot instead of the @version slot."
+      },
+      "mutation": {
+        "description": "the raw id carries a leading v<major>.<minor> token; the parser keeps 'v3.x...' verbatim as the variant rather than decoding it as @version"
+      }
+    },
+    {
+      "name": "class1_offcatalog_deepseek_v31_nex_n1",
+      "input": {
+        "raw": "deepseek-v3.1-nex-n1",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "deepseek/v3.1-nex-n1",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek/nex-n1@3.1"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, cited key deepseek/v3.1-nex-n1: the spelling no longer appears in the vendored catalog, but the parser still produces the cited wrong key for it."
+      },
+      "mutation": {
+        "description": "the cited spelling is driven through the parser off-catalog to show the defect survives the upstream row's removal"
+      }
+    },
+    {
+      "name": "class1_control_deepseek_dotted_no_v",
+      "input": {
+        "raw": "deepseek-3.2",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek@3.2",
+        "conformance": "conforming",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1 control: the same version WITHOUT the leading 'v' token keys correctly, so the defect is the 'v' token, not the dotted version."
+      },
+      "mutation": {
+        "description": "drops the leading 'v' from the version token; the version then reaches the @version slot"
+      }
+    },
+    {
+      "name": "class1b_deepseek_v4_pro_version_lost",
+      "input": {
+        "raw": "deepseek/deepseek-v4-pro",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/pro",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek/pro@4"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, measured extension: a BARE v<major> token is not moved to @version, it is destroyed. deepseek-v4-pro keys with no version at all."
+      },
+      "mutation": {
+        "description": "the version token is bare (v4, no minor part); the parser drops it instead of keying @4"
+      }
+    },
+    {
+      "name": "class1b_deepseek_v4_flash_version_lost",
+      "input": {
+        "raw": "deepseek-ai/deepseek-v4-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/flash",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek/flash@4"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, measured extension: the deepseek-flash line loses its bare v4 token the same way the deepseek-thinking line does."
+      },
+      "mutation": {
+        "description": "same bare v<major> token on a different upstream family label, showing the loss is not label-specific"
+      }
+    },
+    {
+      "name": "class1b_deepseek_v3_2_dashed_misread",
+      "input": {
+        "raw": "deepseek-v3-2",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek@2",
+        "conformance": "defect",
+        "defect_class": 1,
+        "want_key": "deepseek@3.2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1, measured extension: the dash-glued dot-lost spelling keys @2, reading only the trailing segment of the version."
+      },
+      "mutation": {
+        "description": "replaces the dot in v3.2 with a dash; the parser then reads '2' as the whole version"
+      }
+    },
+    {
+      "name": "class1b_control_deepseek_4_flash",
+      "input": {
+        "raw": "deepseek-4-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/flash@4",
+        "conformance": "conforming",
+        "defect_class": 1,
+        "want_key": "deepseek/flash@4"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 1 control: the SAME shape without the 'v' prefix keys the version correctly, isolating the 'v' token as the cause."
+      },
+      "mutation": {
+        "description": "drops the leading 'v' from the bare major token; the version then reaches the @version slot"
+      }
+    },
+    {
+      "name": "class2_deepseek_ocr_compound",
+      "input": {
+        "raw": "deepseek/deepseek-ocr-2",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek-ocr@2",
+        "conformance": "defect",
+        "defect_class": 2,
+        "want_key": "deepseek/ocr@2"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, cited key deepseek-ocr@2: the compound family token is kept whole instead of reducing to family deepseek + variant ocr."
+      },
+      "mutation": {
+        "description": "the id names a compound family; the parser keeps 'deepseek-ocr' as the family"
+      }
+    },
+    {
+      "name": "class2_deepseek_ocr_split_sibling",
+      "input": {
+        "raw": "deepseek-ai/DeepSeek-OCR",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek",
+        "conformance": "defect",
+        "defect_class": 2,
+        "want_key": "deepseek/ocr"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, measured: the SAME artifact under a different spelling keys plain 'deepseek', so the compound defect also SPLITS the OCR line across two keys."
+      },
+      "mutation": {
+        "description": "the same product without the trailing version token; the ocr token is dropped entirely rather than becoming the variant"
+      }
+    },
+    {
+      "name": "class2_claude_mythos_compound",
+      "input": {
+        "raw": "anthropic/claude-mythos-5",
+        "kind": "lab-id"
+      },
+      "expected": {
+        "key": "claude-mythos@5",
+        "conformance": "defect",
+        "defect_class": 2,
+        "want_key": "claude/mythos@5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, measured at this tip: a NEW anthropic tier repeats the claude-fable defect that PR #40 fixed."
+      },
+      "mutation": {
+        "description": "a claude tier name absent from the curated variant table; the compound family is not reduced"
+      }
+    },
+    {
+      "name": "class2_nemotron_lab_id_whole_id_family",
+      "input": {
+        "raw": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "kind": "lab-id"
+      },
+      "expected": {
+        "key": "llama-3.3-nemotron-super-49b/v1.5@3.3#49b",
+        "conformance": "undecided",
+        "defect_class": 2,
+        "want_key": "EXPECTED_TBD"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, measured at this tip: the lab-side (metadata) decomposition of this id makes the WHOLE id the family. It DISAGREES with the serving-side key nemotron/v1.5@3.3#49b for the identical id, and the served sibling case pins that other key, so the disagreement itself is the falsifiable fact. Which key both paths must agree ON is a curation ruling the sweep does not invent: the served key states the version v1.5 in the variant slot, which is the class 1 defect, so it is not automatically the right destination either."
+      },
+      "mutation": {
+        "description": "the lab-id path has no upstream raw family to lean on; the id-only decomposition then takes the entire id as the family"
+      }
+    },
+    {
+      "name": "class2_nemotron_serving_id_disagrees_with_lab",
+      "input": {
+        "raw": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "nemotron/v1.5@3.3#49b",
+        "conformance": "undecided",
+        "defect_class": 2,
+        "want_key": "EXPECTED_TBD"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, measured at this tip: the SERVED side of the identical id keys nemotron/v1.5@3.3#49b, while the lab side keys llama-3.3-nemotron-super-49b/v1.5@3.3#49b. This case is the second half of the disagreement pair: with both keys pinned, the disagreement is falsifiable, and it goes green only when the two paths agree. The destination is a curation ruling, so the case carries EXPECTED_TBD, as classes 4 and 5 do."
+      },
+      "mutation": {
+        "description": "the served path reads the upstream raw family beside the id, so it reduces the compound name where the id-only lab path cannot"
+      }
+    },
+    {
+      "name": "class2_control_claude_fable_fixed",
+      "input": {
+        "raw": "anthropic/claude-fable-5",
+        "kind": "lab-id"
+      },
+      "expected": {
+        "key": "claude/fable@5",
+        "conformance": "conforming",
+        "defect_class": 2,
+        "want_key": "claude/fable@5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 2, cited keys claude-fable and claude-fable@5: REFUTED at this tip. PR #40 added the curated fable variant, so the compound now reduces."
+      },
+      "mutation": {
+        "description": "the cited claude-fable spelling re-measured after PR #40; it now reduces to family claude + variant fable"
+      }
+    },
+    {
+      "name": "class8_glm_41v_thinking_flash_variant",
+      "input": {
+        "raw": "glm-4.1v-thinking-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.1{flash}",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flash@4.1{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): 'flash' is a distinct-weight VARIANT, and the trailing 'v' on GLM is the VISION modality. The id keys glm/v@4.1{flash} today: 'v' is read as the variant and 'flash' as an identity modifier, the exact inversion of the ruling, and the 'thinking' token is dropped. The correct destination is glm/flash@4.1{vision}."
+      },
+      "mutation": {
+        "description": "the flash variant and the vision 'v' both land in the wrong slot: 'v' becomes the variant and 'flash' a modifier, and 'thinking' is dropped"
+      }
+    },
+    {
+      "name": "class3_glm_z_from_zai_prefix",
+      "input": {
+        "raw": "z-ai-glm-5-3",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/z",
+        "conformance": "defect",
+        "defect_class": 3,
+        "want_key": "glm@5.3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 3, cited key glm/z: the serving-namespace prefix 'z-ai' is read as the variant 'z' and the version 5.3 is destroyed."
+      },
+      "mutation": {
+        "description": "the id carries a dash-glued 'z-ai' provider namespace; the parser takes 'z' as the variant"
+      }
+    },
+    {
+      "name": "class3_glm_v5_z_modifier",
+      "input": {
+        "raw": "z-ai-glm-5v-turbo",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@5{z}",
+        "conformance": "defect",
+        "defect_class": 3,
+        "want_key": "glm@5{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 3, cited key glm/v@5{z}: the SAME 'z-ai' prefix becomes an identity modifier {z} here, so one prefix produces two different encodings. The fully-correct final key also drops the {z} prefix artifact, reads the vision 'v' as the {vision} modifier (UAT vision ruling), and leaves turbo off the key: glm@5{vision}."
+      },
+      "mutation": {
+        "description": "the same z-ai prefix on a glm-5v id; the leftover 'z' lands in the modifier slot, and the vision 'v' is read as the variant, so the final correct key must fix both"
+      }
+    },
+    {
+      "name": "class3_glm_z1_genuine",
+      "input": {
+        "raw": "THUDM/GLM-Z1-9B-0414",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/z#9b",
+        "conformance": "defect",
+        "defect_class": 3,
+        "want_key": "glm/z1#9b"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 3, cited key glm/z#32b (measured as glm/z#9b at this tip): the GENUINE GLM-Z1 line keys glm/z, colliding with the z-ai prefix misparse above."
+      },
+      "mutation": {
+        "description": "a real Zhipu Z1 model; its series digit is dropped, so its key collides with the z-ai prefix artifact"
+      }
+    },
+    {
+      "name": "class3_control_zai_slash_prefix",
+      "input": {
+        "raw": "zai/glm-5.3",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm@5.3",
+        "conformance": "conforming",
+        "defect_class": 3,
+        "want_key": "glm@5.3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 3 control: a NON-VISION GLM id under a SLASH-separated zai namespace keys glm@5.3 correctly, prefix stripped and version intact. Contrast the dash-glued z-ai prefix, which is read as model content and destroys the version (z-ai-glm-5-3 keys glm/z above). This isolates the dash-glued prefix as the cause WITHOUT dragging in the vision 'v' defect, so the control's key is genuinely, fully correct and the verdict is honestly conforming."
+      },
+      "mutation": {
+        "description": "the slash-separated zai namespace on a non-vision, non-dot-lost GLM id; the prefix is stripped and the version survives, unlike the dash-glued z-ai spelling"
+      }
+    },
+    {
+      "name": "class3_glm_dot_lost_4_6v",
+      "input": {
+        "raw": "glm-4-6v-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@6{flash}",
+        "conformance": "defect",
+        "defect_class": 3,
+        "want_key": "glm/flash@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 3, measured at this tip: the dash-glued dot-lost spelling of glm-4.6v keys @6, splitting it off the glm/v@4.6 line. The dot loss is the class-3 defect; the fully-correct final key also restores the dot, reads the vision 'v' as the {vision} modifier and 'flash' as the variant (UAT vision + flash rulings): glm/flash@4.6{vision}."
+      },
+      "mutation": {
+        "description": "replaces the dot in 4.6 with a dash so the parser reads '6' as the version; the final correct key restores the dot and moves 'v' to {vision} and 'flash' to the variant slot"
+      }
+    },
+    {
+      "name": "class4_deepseek_r1_turbo",
+      "input": {
+        "raw": "deepseek/deepseek-r1-turbo",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek{turbo}",
+        "conformance": "defect",
+        "defect_class": 4,
+        "want_key": "deepseek"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: turbo is a serving-speed ATTRIBUTE (off the key), evidenced by Novita's 64k-context turbo endpoint on the same base weights, not an identity modifier. The id keys deepseek{turbo} today, holding turbo on the key and destroying the r1 line marker; bare 'deepseek-r1' keys 'deepseek', so that is the correct destination with turbo off the key."
+      },
+      "mutation": {
+        "description": "a serving-speed token on a deepseek r1 id; turbo must leave the key (attribute-class), and the case collides with the v3 turbo id below"
+      }
+    },
+    {
+      "name": "class4_deepseek_v3_turbo_collision",
+      "input": {
+        "raw": "deepseek/deepseek-v3-turbo",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek{turbo}",
+        "conformance": "defect",
+        "defect_class": 4,
+        "want_key": "deepseek@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: a DIFFERENT model (v3, not r1) lands on the IDENTICAL key deepseek{turbo}, so turbo-as-identity also HIDES a two-model collision. With turbo off the key (attribute-class), the v3 id must restore its version and key deepseek@3, splitting it from the r1 sibling above."
+      },
+      "mutation": {
+        "description": "the same turbo token on a v3 id; with turbo off the key the collision splits by the real base and the v3 version is restored"
+      }
+    },
+    {
+      "name": "class4_claude_code",
+      "input": {
+        "raw": "poetools/claude-code",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "claude{code}",
+        "conformance": "excluded",
+        "defect_class": 4,
+        "want_key": "EXCLUDED"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: Claude Code is a harness/agent, not model weights (Poe passthrough, 0 context / 0 cost), so it does not belong in the keyspace at all. The id keys claude{code} today, reading the product name as an identity modifier on the claude family; the ruling EXCLUDES it. The pinned key is the witness that today's parser still produces a key, so the exclusion goes red if that stops being true."
+      },
+      "mutation": {
+        "description": "a product/harness name on a claude id; the ruling removes it from the keyspace rather than assigning it a want-key"
+      }
+    },
+    {
+      "name": "class5_deepseek_thinking_to_pro",
+      "input": {
+        "raw": "deepseek/deepseek-v4-pro-0813",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek/pro",
+        "conformance": "defect",
+        "defect_class": 5,
+        "want_key": "deepseek/pro@4"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 5, upstream family deepseek-thinking: the dominant destination. The upstream label is correctly discarded, but the id-driven decomposition loses the v4 version (class 1)."
+      },
+      "mutation": {
+        "description": "an upstream deepseek-thinking row whose id carries a bare v4 token; the destination key states no version"
+      }
+    },
+    {
+      "name": "class5_deepseek_thinking_to_bare",
+      "input": {
+        "raw": "deepseek/deepseek-reasoner",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek",
+        "conformance": "conforming",
+        "defect_class": 5,
+        "want_key": "deepseek"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 5, upstream family deepseek-thinking: the second destination. deepseek-reasoner is an alias endpoint with no version token, so a bare deepseek key is correct."
+      },
+      "mutation": {
+        "description": "an upstream deepseek-thinking row whose id carries no version or variant token"
+      }
+    },
+    {
+      "name": "class5_deepseek_thinking_to_sized",
+      "input": {
+        "raw": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "deepseek#32b",
+        "conformance": "undecided",
+        "defect_class": 5,
+        "want_key": "EXPECTED_TBD"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 5, upstream family deepseek-thinking: the third destination. A deepseek R1 distill of a qwen base keys deepseek#32b, so the size survives but the R1 line marker does not, and the key states neither the deepseek line nor the qwen base. The correct destination is a curation ruling."
+      },
+      "mutation": {
+        "description": "an upstream deepseek-thinking row that is a distill of another lab's base model; the R1 line marker is dropped and only the size reaches the key"
+      }
+    },
+    {
+      "name": "class6_offcatalog_claude_46_sonnet",
+      "input": {
+        "raw": "anthropic/claude-4.6-sonnet",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "claude/sonnet@4.6",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/sonnet@4.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'anthropic/claude-4.6-sonnet': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_claude_48_opus",
+      "input": {
+        "raw": "claude-4.8-opus",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "claude/opus@4.8",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/opus@4.8"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'claude-4.8-opus': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_claude_47_opus",
+      "input": {
+        "raw": "claude-4.7-opus",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "claude/opus@4.7",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/opus@4.7"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'claude-4.7-opus': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_claude_5_fable",
+      "input": {
+        "raw": "claude-5-fable",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "claude/fable@5",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/fable@5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'claude-5-fable': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_claude_46_opus",
+      "input": {
+        "raw": "claude-4.6-opus",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "claude/opus@4.6",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/opus@4.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'claude-4.6-opus': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_gpt_5_mini_dated",
+      "input": {
+        "raw": "openai/gpt-5-mini-2025-08-07",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "gpt/mini@5",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "gpt/mini@5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'openai/gpt-5-mini-2025-08-07': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_offcatalog_kimi_k25_dated",
+      "input": {
+        "raw": "moonshotai/kimi-k2.5-0127",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "kimi/k@2.5",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "kimi/k@2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, cited spelling 'moonshotai/kimi-k2.5-0127': REFUTED as a PARSER defect. The tier-before-version spelling decomposes to the canonical key; it is not a catalog id, so only Resolve refuses it."
+      },
+      "mutation": {
+        "description": "the cited usage-side spelling driven through the parser; the key it produces is the canonical one"
+      }
+    },
+    {
+      "name": "class6_double_dash_sonnet_version_lost",
+      "input": {
+        "raw": "anthropic--claude-4.6-sonnet",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "claude/sonnet",
+        "conformance": "defect",
+        "defect_class": 6,
+        "want_key": "claude/sonnet@4.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, measured at this tip: the DOUBLE-DASH vendor prefix destroys the version. This is the real class-6 defect the cited spellings pointed at."
+      },
+      "mutation": {
+        "description": "doubles the dash after the vendor prefix; the version token is then dropped instead of keyed"
+      }
+    },
+    {
+      "name": "class6_double_dash_opus_version_lost",
+      "input": {
+        "raw": "anthropic--claude-4.8-opus",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "claude/opus",
+        "conformance": "defect",
+        "defect_class": 6,
+        "want_key": "claude/opus@4.8"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6, measured at this tip: the same double-dash version loss on the opus tier, so the defect is not tier-specific."
+      },
+      "mutation": {
+        "description": "the same doubled dash on a different claude tier; the version is dropped again"
+      }
+    },
+    {
+      "name": "class6_control_single_dash_sonnet",
+      "input": {
+        "raw": "anthropic-claude-4.6-sonnet",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "claude/sonnet@4.6",
+        "conformance": "conforming",
+        "defect_class": 6,
+        "want_key": "claude/sonnet@4.6"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "GH#43 defect class 6 control: the SINGLE-dash spelling of the same model keys the version correctly, isolating the doubled dash as the cause."
+      },
+      "mutation": {
+        "description": "removes one dash from the vendor prefix; the version then reaches the @version slot"
+      }
+    },
+    {
+      "name": "class7_glm_45v_vision_suffix",
+      "input": {
+        "raw": "glm-4.5v",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.5",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@4.5{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the trailing 'v' on a GLM version is the VISION modality, not a variant. The id keys glm/v@4.5 today, reading 'v' as the variant; the correct destination is glm@4.5{vision}, with vision as a modifier."
+      },
+      "mutation": {
+        "description": "the version-glued vision 'v' is read as the variant slot instead of a {vision} modifier"
+      }
+    },
+    {
+      "name": "class7_glm_46v_vision_suffix",
+      "input": {
+        "raw": "glm-4.6v",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the same vision 'v' on the 4.6 generation keys glm/v@4.6, so the defect is not generation-specific; the correct destination is glm@4.6{vision}."
+      },
+      "mutation": {
+        "description": "the same vision 'v' on a different GLM generation lands in the variant slot instead of a {vision} modifier"
+      }
+    },
+    {
+      "name": "class7_glm_5v_turbo_vision_suffix",
+      "input": {
+        "raw": "glm-5v-turbo",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@5",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@5{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the bare-major vision id keys glm/v@5, reading 'v' as the variant. The 'turbo' serving-speed token is already off the key here (it is dropped, not kept as a modifier), so the sole remaining defect is the vision 'v'; the correct destination is glm@5{vision}."
+      },
+      "mutation": {
+        "description": "the vision 'v' on a bare-major GLM id is read as the variant; turbo is already dropped, isolating the vision defect"
+      }
+    },
+    {
+      "name": "class8_gemini_25_flash_control",
+      "input": {
+        "raw": "gemini-2.5-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "gemini/flash@2.5",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "gemini/flash@2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: 'flash' is a distinct-weight VARIANT, and Gemini already keys it correctly as the variant. This conforming control shows the ruling's target shape and isolates the GLM and qwen defects as the deviations, not flash itself."
+      },
+      "mutation": {
+        "description": "the reference-correct flash variant: 'flash' reaches the variant slot as the ruling requires"
+      }
+    },
+    {
+      "name": "class8_step_35_flash_control",
+      "input": {
+        "raw": "step-3.5-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "step/flash@3.5",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "step/flash@3.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: StepFun's flash also keys correctly as the variant, a second lab confirming the ruling's target shape is already met where the id is well formed."
+      },
+      "mutation": {
+        "description": "a second reference-correct flash variant on a different lab; flash reaches the variant slot"
+      }
+    },
+    {
+      "name": "class8_qwen3_coder_control",
+      "input": {
+        "raw": "qwen3-coder",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "qwen/coder@3",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "qwen/coder@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: the collision base. qwen3-coder keys qwen/coder@3 correctly, and the qwen3-coder-flash sibling below collapses onto this SAME key because flash is dropped, so the two form the collision the ruling must split with a compound variant."
+      },
+      "mutation": {
+        "description": "the well-formed base of the qwen coder collision; its key is correct and the flash sibling wrongly shares it"
+      }
+    },
+    {
+      "name": "class8_qwen3_coder_flash_dropped",
+      "input": {
+        "raw": "qwen3-coder-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "qwen/coder@3",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "qwen/coder-flash@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): flash is DROPPED here, so qwen3-coder-flash collapses onto qwen/coder@3 and collides with the qwen3-coder control above. flash must survive as part of a COMPOUND variant; the correct destination is qwen/coder-flash@3."
+      },
+      "mutation": {
+        "description": "the flash specializer is dropped and the id collides with its coder base; the ruling keeps it as the compound variant coder-flash"
+      }
+    },
+    {
+      "name": "class8_glm_41v_thinking_flashx_variant",
+      "input": {
+        "raw": "glm-4.1v-thinking-flashx",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.1",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flashx@4.1{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): the flashx variant is DROPPED entirely and the vision 'v' is read as the variant, so the id keys glm/v@4.1. The correct destination is glm/flashx@4.1{vision}: flashx the variant, vision the modifier."
+      },
+      "mutation": {
+        "description": "flashx is dropped and the vision 'v' takes the variant slot; both the flash-family variant and the vision modifier are lost"
+      }
+    },
+    {
+      "name": "class8_glm_46v_flash_vision",
+      "input": {
+        "raw": "glm-4.6v-flash",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6{flash}",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flash@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): an off-catalog GLM vision-flash spelling. The id-only decomposition keys glm/v@4.6{flash}, inverting both slots ('v' as variant, flash as modifier); the correct destination is glm/flash@4.6{vision}."
+      },
+      "mutation": {
+        "description": "the off-catalog vision-flash spelling inverts both slots: flash becomes a modifier and the vision 'v' the variant"
+      }
+    },
+    {
+      "name": "class8_glm_46v_flashx_variant",
+      "input": {
+        "raw": "glm-4.6v-flashx",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flashx@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): the flashx variant is DROPPED and the vision 'v' is read as the variant, so the id keys glm/v@4.6, colliding with the plain glm-4.6v vision case. The correct destination is glm/flashx@4.6{vision}."
+      },
+      "mutation": {
+        "description": "flashx dropped and the vision 'v' taken as the variant, collapsing the flashx id onto the plain 4.6v vision key"
+      }
+    }
+  ]
+}
