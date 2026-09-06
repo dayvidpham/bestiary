@@ -506,24 +506,24 @@
       }
     },
     {
-      "name": "class3_zai_slash_prefix_vision_residual",
+      "name": "class3_control_zai_slash_prefix",
       "input": {
-        "raw": "zai/glm-5v-turbo",
+        "raw": "zai/glm-5.3",
         "kind": "serving-id"
       },
       "expected": {
-        "key": "glm/v@5",
-        "conformance": "defect",
+        "key": "glm@5.3",
+        "conformance": "conforming",
         "defect_class": 3,
-        "want_key": "glm@5{vision}"
+        "want_key": "glm@5.3"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 3: the SAME model under a SLASH-separated namespace strips the prefix correctly, so no {z} modifier leaks (contrast the dash-glued z-ai case above, which keys glm/v@5{z}). But even with the prefix stripped the vision 'v' is still read as the variant, so the key glm/v@5 remains a defect under the UAT vision ruling; the fully-correct final key is glm@5{vision}. This isolates the prefix cause AND shows the residual vision defect survives correct stripping."
+        "ref": "GH#43 defect class 3 control: a NON-VISION GLM id under a SLASH-separated zai namespace keys glm@5.3 correctly, prefix stripped and version intact. Contrast the dash-glued z-ai prefix, which is read as model content and destroys the version (z-ai-glm-5-3 keys glm/z above). This isolates the dash-glued prefix as the cause WITHOUT dragging in the vision 'v' defect, so the control's key is genuinely, fully correct and the verdict is honestly conforming."
       },
       "mutation": {
-        "description": "replaces the dash-glued z-ai prefix with a slash-separated zai namespace; the prefix is stripped correctly, but the vision 'v' defect remains"
+        "description": "the slash-separated zai namespace on a non-vision, non-dot-lost GLM id; the prefix is stripped and the version survives, unlike the dash-glued z-ai spelling"
       }
     },
     {
