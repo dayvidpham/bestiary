@@ -1,24 +1,30 @@
 package bestiary_test
 
 import (
+	_ "embed"
+	"encoding/json"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
 )
 
-func TestHarness_IsKnown(t *testing.T) {
-	known := []bestiary.Harness{
-		bestiary.HarnessClaudeCode,
-		bestiary.HarnessGeminiCLI,
-		bestiary.HarnessCodex,
-		bestiary.HarnessOpenCode,
-		bestiary.HarnessCursor,
-		bestiary.HarnessAntigravity,
-		bestiary.HarnessStrike,
+//go:embed testdata/enum/harness_required_names.json
+var harnessRequiredNamesJSON []byte
+
+var harnessRequiredNames = func() []string {
+	var names []string
+	if err := json.Unmarshal(harnessRequiredNamesJSON, &names); err != nil {
+		panic(err)
 	}
-	for _, h := range known {
-		if !h.IsKnown() {
-			t.Errorf("Harness(%q).IsKnown() = false, want true", h)
+	return names
+}()
+
+func TestHarness_IsKnown(t *testing.T) {
+	corpus := loadHarnessCorpus(t)
+	requireHarnessNames(t, corpus)
+	for _, c := range corpus.Cases {
+		if !bestiary.Harness(c.Input).IsKnown() {
+			t.Errorf("Harness(%q).IsKnown() = false, want true", c.Input)
 		}
 	}
 
@@ -34,16 +40,31 @@ func TestHarness_IsKnown(t *testing.T) {
 	}
 }
 
+func TestNewHarness(t *testing.T) {
+	corpus := loadHarnessCorpus(t)
+	requireHarnessNames(t, corpus)
+	for _, c := range corpus.Cases {
+		got, err := bestiary.NewHarness(c.Input)
+		if err != nil {
+			t.Errorf("NewHarness(%q) error = %v", c.Input, err)
+			continue
+		}
+		if got.String() != c.Expected {
+			t.Errorf("NewHarness(%q) = %q, want %q", c.Input, got, c.Expected)
+		}
+	}
+
+	if _, err := bestiary.NewHarness("Pi"); err == nil {
+		t.Fatal("NewHarness(Pi) error = nil, want unknown harness rejection")
+	}
+}
+
 // TestHarness_String drives Harness.String() over every well-known constant, loaded
 // from testdata/enum/harness_string_corpus.json. requireHarnessKnown additionally
 // pins that each corpus token is still a recognized Harness.
 func TestHarness_String(t *testing.T) {
-	corpus := loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, 7)
-	requireInputCoverage(t, corpus, map[string]string{
-		string(bestiary.HarnessClaudeCode):  "claude-code",
-		string(bestiary.HarnessAntigravity): "antigravity",
-		string(bestiary.HarnessStrike):      "strike",
-	})
+	corpus := loadHarnessCorpus(t)
+	requireHarnessNames(t, corpus)
 	requireHarnessKnown(t, corpus)
 	runEnumStringCorpus(t, corpus, func(_ *testing.T, in string) string {
 		return bestiary.Harness(in).String()
@@ -51,16 +72,10 @@ func TestHarness_String(t *testing.T) {
 }
 
 func TestHarness_MarshalUnmarshalText(t *testing.T) {
-	harnesses := []bestiary.Harness{
-		bestiary.HarnessClaudeCode,
-		bestiary.HarnessGeminiCLI,
-		bestiary.HarnessCodex,
-		bestiary.HarnessOpenCode,
-		bestiary.HarnessCursor,
-		bestiary.HarnessAntigravity,
-		bestiary.HarnessStrike,
-	}
-	for _, h := range harnesses {
+	corpus := loadHarnessCorpus(t)
+	requireHarnessNames(t, corpus)
+	for _, c := range corpus.Cases {
+		h := bestiary.Harness(c.Input)
 		b, err := h.MarshalText()
 		if err != nil {
 			t.Errorf("Harness(%q).MarshalText() error = %v", h, err)
@@ -96,16 +111,29 @@ func TestHarness_UnmarshalText_NilReceiver(t *testing.T) {
 }
 
 func TestHarnesses_AllKnown(t *testing.T) {
-	for _, h := range bestiary.Harnesses() {
+	corpus := loadHarnessCorpus(t)
+	requireHarnessNames(t, corpus)
+	want := make(map[bestiary.Harness]bool, len(corpus.Cases))
+	for _, c := range corpus.Cases {
+		want[bestiary.Harness(c.Input)] = true
+	}
+	got := bestiary.Harnesses()
+	seen := make(map[bestiary.Harness]bool, len(got))
+	for _, h := range got {
+		if seen[h] {
+			t.Errorf("Harnesses() returned duplicate %q", h)
+		}
+		seen[h] = true
 		if !h.IsKnown() {
 			t.Errorf("Harnesses() returned %q which IsKnown() = false", h)
 		}
+		if !want[h] {
+			t.Errorf("Harnesses() returned unexpected %q", h)
+		}
+		delete(want, h)
 	}
-}
-
-func TestHarnesses_Count(t *testing.T) {
-	if got := len(bestiary.Harnesses()); got != 7 {
-		t.Errorf("len(Harnesses()) = %d, want 7", got)
+	for missing := range want {
+		t.Errorf("Harnesses() omitted %q", missing)
 	}
 }
 

@@ -14,6 +14,7 @@ const (
 	HarnessCursor      Harness = "cursor"
 	HarnessAntigravity Harness = "antigravity"
 	HarnessStrike      Harness = "strike"
+	HarnessPi          Harness = "pi"
 )
 
 // knownHarnesses is the authoritative set of recognized Harness values.
@@ -25,6 +26,16 @@ var knownHarnesses = [...]Harness{
 	HarnessCursor,
 	HarnessAntigravity,
 	HarnessStrike,
+	HarnessPi,
+}
+
+// NewHarness validates a wire value and returns its canonical Harness.
+func NewHarness(value string) (Harness, error) {
+	h := Harness(value)
+	if !h.IsKnown() {
+		return "", fmt.Errorf("bestiary: NewHarness: harness %q is not recognized; use one of %v", value, Harnesses())
+	}
+	return h, nil
 }
 
 // Harnesses returns all known Harness values. The returned slice is a
@@ -35,7 +46,7 @@ func Harnesses() []Harness {
 	return out
 }
 
-// IsKnown reports whether h is one of the seven declared Harness constants.
+// IsKnown reports whether h is one of the declared Harness constants.
 func (h Harness) IsKnown() bool {
 	for _, known := range knownHarnesses {
 		if h == known {

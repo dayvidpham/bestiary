@@ -91,6 +91,19 @@
       "mutation": {
         "description": "renders the strike harness constant"
       }
+    },
+    {
+      "name": "pi",
+      "input": "pi",
+      "expected": "pi",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant pi"
+      },
+      "mutation": {
+        "description": "renders the pi harness constant"
+      }
     }
   ]
 }

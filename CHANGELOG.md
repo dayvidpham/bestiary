@@ -14,6 +14,15 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+The v0.2.11 release record below preserves the catalog-refresh corrections for
+`laguna-s/free@2.1`, `gpt/pro`, and `ministral#8b{instruct}`. The first now re-homes to
+`laguna`; the latter two are live again. Their v0.2.10 migration rows remain historically
+correct for users of that release.
+
+## [0.2.11] — 2026-09-06
+
+**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
+
 ### Changed
 
 - **First Wayback snapshot capture for the harvested HuggingFace nomina.** One live
@@ -391,6 +400,10 @@ for its **Go module tags** (`vX.Y.Z`).
   passing run, so a dropped pin that left `(c)` at zero silently updated the committed
   evidence in the working tree beside a red test elsewhere. Refreshing it is now the same
   declared, env-gated act as re-capturing the baseline, and an ordinary run COMPARES.
+
+### Added
+
+- **Pi Coding Agent harness identity.** `HarnessPi` names the canonical `pi` wire token, `NewHarness` validates harness strings at input boundaries, and the authoritative harness inventory includes Pi while preserving every existing identifier. Named fixtures pin constructor, text, and exact unique inventory behavior. This identifies the coding agent and is unrelated to the Inflection Pi model catalog.
 
 ### Known defects (observed during the HuggingFace Wayback capture; not fixed here)
 
@@ -2915,7 +2928,8 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.11...HEAD
+[0.2.11]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/dayvidpham/bestiary/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/dayvidpham/bestiary/compare/v0.2.7...v0.2.8
