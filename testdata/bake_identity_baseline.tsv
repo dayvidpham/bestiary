@@ -1,4 +1,5 @@
 # BAKE IDENTITY BASELINE — the v0.2.11 release bake, tag v0.2.11 pending.
+# Captured from production Models() at commit 7c85400 during release preparation.
 #
 # One row per baked model, TAB-separated:
 #
@@ -22,7 +23,7 @@
 # tell one generation from another, and a user who pinned a dated key at the previous
 # release finds it retired with its instances scattered onto undated successors.
 #
-# REGENERATE ONLY WHEN A RELEASE IS TAGGED, in the commit that declares it, and re-cut
+# REGENERATE ONLY WHEN PREPARING A RELEASE PR, in the commit that declares it, and re-cut
 # the ledger in bake_identity_test.go in the same commit. Regenerating this file to
 # turn a red gate green defeats the entire point of it.
 #

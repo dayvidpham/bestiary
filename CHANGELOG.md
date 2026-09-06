@@ -227,7 +227,7 @@ correct for users of that release.
     still live and still spelled the same way; upstream changed what it stamps on that row,
     so it now decomposes onto the bare `laguna` key. `laguna-s@2.1` is still a live key — it
     simply no longer holds this instance. That relabel also cost the row its version, which
-    is recorded with its reasoning in the bake-identity ledger below.
+    is recorded with its reasoning in the historical bake-identity record below.
 
 - **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
   ledger.** This deviates from the slice brief, which asked for a drained-to-zero report,
@@ -295,10 +295,20 @@ correct for users of that release.
   `doubao-seed`→`seed` rows, `learnlm`→`gemini`, and the two poolside `laguna-s`→`laguna`
   rows. The ByteDance fold stays DEFERRED to its own curation slice because it moves entity
   keys across three families — but the deferral note described the cost as coexisting
-  sibling keys, and the measured cost is larger. Each row now carries its own reason in the
-  bake-identity ledger, including which are correct readings of a relabel (`learnlm`, whose
+  sibling keys, and the measured cost is larger. Each row retains its reason in the
+  historical loss record beside `bakeIdentityVersionLosses` in `bake_identity_test.go`,
+  including which are correct readings of a relabel (`learnlm`, whose
   1.5 was LearnLM's release line and not Gemini's) and which are OPEN (`laguna`, which needs
   the series-letter reading the mimo lever established but has no sibling evidence).
+
+- **Release-only bake-identity baseline capture, not a curation fix.** The v0.2.11
+  baseline was captured from production `Models()` at commit `7c85400` as required by
+  the release checklist. The active `bakeIdentityVersionLosses` map is empty because
+  this baseline already contains the refresh's losses and agrees with the live bake.
+  Its dead-row gate forbids carrying old-baseline waivers forward. All nine historical
+  row identities and rationales remain visible beside the map; the six ByteDance losses
+  stay DEFERRED, LearnLM stays a correct loss, and both Laguna losses stay OPEN. The
+  capture changes no model identities and does not resolve those curation questions.
 
 ### Added
 
@@ -382,7 +392,8 @@ correct for users of that release.
     path-unification baseline is re-captured on every refresh, so a decomposition change
     introduced BY the refresh is frozen into it before the gate measures anything, and
     `(c)REGRESSION=0` cannot mean what it appears to. `testdata/bake_identity_baseline.tsv`
-    is deliberately NOT re-captured on a refresh — it moves only when a release is tagged.
+    is deliberately NOT re-captured on a refresh — it moves only during release PR
+    preparation, as described in the release-only capture record above.
   - `refresh_2026_08_28_rekey_retired_keys_corpus.json` records the migration for the **19**
     retired keys whose ARTIFACTS SURVIVED under a different key, discriminated by measuring
     each retired key's v0.2.10 instance ids against the refreshed catalog's id set (19
