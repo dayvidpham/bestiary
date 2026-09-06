@@ -299,10 +299,10 @@ for its **Go module tags** (`vX.Y.Z`).
   per catalog view, case-sensitive); AXIS: entity-key conformance per defect class;
   CONFIGURATION: the committed `parse/data/modelsdev/catalog.json` (**7,430** provider rows
   + **361** lab rows = **7,791**; **6,666** matched rows; **3,105** records; **0** unkeyed).
-  - `testdata/parse/gh43_conformance_corpus.json`: **42** cases pinning the evidence for the
+  - `testdata/parse/parser_conformance_corpus.json`: **42** cases pinning the evidence for the
     six defect classes; **6** cases carry `EXPECTED_TBD` where the destination is a curation
     ruling, not a mechanical fact ([#51](https://github.com/dayvidpham/bestiary/issues/51), [#52](https://github.com/dayvidpham/bestiary/issues/52), and the nemotron dual-path pair in [#49](https://github.com/dayvidpham/bestiary/issues/49)).
-  - `TestGH43Sweep_TokenCensus` pins the counting rule end to end: all **19** per-lab
+  - `TestParserConformance_TokenCensus` pins the counting rule end to end: all **19** per-lab
     counts, **21** per-key record counts, the class 5 destination table in both units, the
     class 6 doubled-dash and `duo-chat` subsets, the view split, and the boundary-rule
     exclusion table in both units (**17** records / **18** rows). Premise guards on all
@@ -318,7 +318,7 @@ for its **Go module tags** (`vX.Y.Z`).
   - The sweep only reports: **no** entity key changes, `entities_constants_gen.go` is
     byte-identical, and a `--no-fetch` regen leaves a zero diff. Each fix lands in its own
     issue, priced by regen-and-diff. Full method and figures:
-    `docs/research/gh43-parser-conformance-sweep.md`.
+    `docs/research/parser-conformance-sweep.md`.
 
 - **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
   shape, with a loud drift guard.** Every field path the vendored catalog publishes, with

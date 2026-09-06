@@ -13,8 +13,8 @@ curation decision.
 A **record**, here and in the sweep report, is one DISTINCT raw id string
 within one catalog view, compared case-sensitively, among the rows the
 seed-token census matched. The counting rule is stated once in
-`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
-pinned in `TestGH43Sweep_TokenCensus`.
+`docs/research/parser-conformance-sweep.md`, and every count below is
+pinned in `TestParserConformance_TokenCensus`.
 
 | Key | Records | Ids |
 |---|---|---|
@@ -83,6 +83,6 @@ Blocks: nothing measured.
 ## Related
 
 #43, which measured this. The sweep report is
-`docs/research/gh43-parser-conformance-sweep.md`. Prior art for the
+`docs/research/parser-conformance-sweep.md`. Prior art for the
 evidence standard: the kimi and minimax `turbo` demotions in
 `parse/data/modifier_class.json`.

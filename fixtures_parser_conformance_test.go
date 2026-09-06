@@ -6,5 +6,5 @@ import _ "embed"
 // the rule in TESTING.md: a corpus is test input and must never bloat the shipped
 // package.
 
-//go:embed testdata/parse/gh43_conformance_corpus.json
-var gh43ConformanceCorpusJSON []byte
+//go:embed testdata/parse/parser_conformance_corpus.json
+var conformanceCorpusJSON []byte

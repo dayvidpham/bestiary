@@ -55,7 +55,7 @@ dropped; and the class 6 doubled-dash and `duo-chat` figures are SUBSETS
 of a key's records.
 
 Every per-key record count stated below is PINNED in
-`TestGH43Sweep_TokenCensus`, together with the 7,430 / 361 view split, the
+`TestParserConformance_TokenCensus`, together with the 7,430 / 361 view split, the
 7,791 / 6,666 / 3,105 figures, the class 5 table, the class 6 doubled-dash
 and `duo-chat` subsets, and the boundary-rule exclusion table in both units.
 A moved count fails the test and names the key, so no figure here is
@@ -160,7 +160,7 @@ driven over; 6,666 is the number of catalog rows those ids account for.
 No match is skipped: every matched served row reaches an entity key (0
 unkeyed), and every matched lab row is driven through the decomposition.
 
-These numbers are pinned in `TestGH43Sweep_TokenCensus`. They are
+These numbers are pinned in `TestParserConformance_TokenCensus`. They are
 SNAPSHOT-RELATIVE: a re-vendored catalog moves them, and the test then goes
 red so the sweep is re-measured instead of quietly going stale.
 
@@ -344,7 +344,7 @@ other records lose the version for OTHER reasons, and this issue does not
 repair them: `anthropic/claude-opus-latest`, the
 `anthropic/claude-opus-4.6:thinking*` suffixed spellings, and the
 `duo-chat-opus-*` ids. Both rows of the table are pinned in
-`TestGH43Sweep_TokenCensus`.
+`TestParserConformance_TokenCensus`.
 
 An earlier draft of this section stated 14 and 10. Those figures counted
 the same keys while silently dropping the family-matched `duo-chat-*` ids
@@ -355,9 +355,9 @@ counting rule above now applies here too, and the figures are 19 and 13.
 
 | Artifact | What it does |
 |---|---|
-| `testdata/parse/gh43_conformance_corpus.json` | 42 authored cases: every cited string, the measured witnesses, and the conforming controls |
-| `gh43_conformance_internal_test.go` | `TestGH43Conformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestGH43Sweep_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash and `duo-chat` subsets, the class 5 destination table in both units, and the boundary-rule exclusion table in both units) |
-| `fixtures_gh43_test.go` | the `//go:embed` of the corpus into the test binary only |
+| `testdata/parse/parser_conformance_corpus.json` | 42 authored cases: every cited string, the measured witnesses, and the conforming controls |
+| `parser_conformance_internal_test.go` | `TestParserConformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestParserConformance_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash and `duo-chat` subsets, the class 5 destination table in both units, and the boundary-rule exclusion table in both units) |
+| `fixtures_parser_conformance_test.go` | the `//go:embed` of the corpus into the test binary only |
 | `TESTING.md` | corpus table: `testdata/parse/` 49 -> 50, total 127 -> 128 |
 
 ## What this sweep deliberately did NOT do

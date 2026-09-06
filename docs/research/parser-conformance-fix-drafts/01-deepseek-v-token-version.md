@@ -12,8 +12,8 @@ shapes of one cause.
 A **record**, here and in the sweep report, is one DISTINCT raw id string
 within one catalog view, compared case-sensitively, among the rows the
 seed-token census matched. The counting rule is stated once in
-`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
-pinned in `TestGH43Sweep_TokenCensus`.
+`docs/research/parser-conformance-sweep.md`, and every count below is
+pinned in `TestParserConformance_TokenCensus`.
 
 Shape A - the version goes to the VARIANT slot. Eight keys, 31 records:
 
@@ -107,5 +107,5 @@ one carries its own version again.
 ## Related
 
 #43, which measured this. The sweep report is
-`docs/research/gh43-parser-conformance-sweep.md`. The witnesses are in
-`testdata/parse/gh43_conformance_corpus.json`.
+`docs/research/parser-conformance-sweep.md`. The witnesses are in
+`testdata/parse/parser_conformance_corpus.json`.

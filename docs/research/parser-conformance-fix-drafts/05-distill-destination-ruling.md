@@ -14,7 +14,7 @@ carrying the label, not the seed-token matches. So it is printed in BOTH
 units. The label carries 158 provider ROWS, which are 63 distinct served
 ids by the sweep's counting rule (one distinct raw id per catalog view,
 compared case-sensitively), plus 6 lab ids. Both columns are pinned in
-`TestGH43Sweep_TokenCensus`, and the table is total in both units.
+`TestParserConformance_TokenCensus`, and the table is total in both units.
 
 | Destination key | Records (distinct ids) | Provider rows |
 |---|---|---|
@@ -101,4 +101,4 @@ Blocks: nothing measured.
 ## Related
 
 #43, which measured this. The sweep report is
-`docs/research/gh43-parser-conformance-sweep.md`.
+`docs/research/parser-conformance-sweep.md`.

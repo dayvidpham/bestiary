@@ -53,7 +53,7 @@ The other records lose the version for other reasons and this issue does
 not repair them: `anthropic/claude-opus-latest`, the
 `anthropic/claude-opus-4.6:thinking*` suffixed spellings, and the
 `duo-chat-opus-*` ids. Both rows of the table are pinned in
-`TestGH43Sweep_TokenCensus`.
+`TestParserConformance_TokenCensus`.
 
 ## Scope
 
@@ -117,5 +117,5 @@ Blocks: nothing measured.
 ## Related
 
 #43, which measured this. The sweep report is
-`docs/research/gh43-parser-conformance-sweep.md`. The usage measurement
+`docs/research/parser-conformance-sweep.md`. The usage measurement
 that priced the gap at 2.5% of all tokens is the OpenRouter usage work.

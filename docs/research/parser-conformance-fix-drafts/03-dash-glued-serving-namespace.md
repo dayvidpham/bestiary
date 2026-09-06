@@ -13,8 +13,8 @@ depending on what follows it.
 A **record**, here and in the sweep report, is one DISTINCT raw id string
 within one catalog view, compared case-sensitively, among the rows the
 seed-token census matched. The counting rule is stated once in
-`docs/research/gh43-parser-conformance-sweep.md`, and every count below is
-pinned in `TestGH43Sweep_TokenCensus`.
+`docs/research/parser-conformance-sweep.md`, and every count below is
+pinned in `TestParserConformance_TokenCensus`.
 
 The sweep for #43 measured the `z-ai` prefix on Zhipu ids:
 
@@ -89,4 +89,4 @@ Blocks: nothing measured.
 ## Related
 
 #43, which measured this. The sweep report is
-`docs/research/gh43-parser-conformance-sweep.md`.
+`docs/research/parser-conformance-sweep.md`.

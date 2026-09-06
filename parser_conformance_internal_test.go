@@ -15,13 +15,13 @@ import (
 //
 // This file carries TWO guards, and they are deliberately different in kind:
 //
-//  1. TestGH43Conformance_CitedStrings drives the AUTHORED corpus
-//     (testdata/parse/gh43_conformance_corpus.json): every string the issue cites,
+//  1. TestParserConformance_CitedStrings drives the AUTHORED corpus
+//     (testdata/parse/parser_conformance_corpus.json): every string the issue cites,
 //     plus the measured witnesses and the conforming CONTROLS that isolate each
 //     defect's cause, each pinned to the entity key the production path produces
 //     for it today. It is a fixed, hand-authored case list, so it is a corpus.
 //
-//  2. TestGH43Sweep_TokenCensus is the SWEEP itself: a computed census over the
+//  2. TestParserConformance_TokenCensus is the SWEEP itself: a computed census over the
 //     whole vendored catalog. Its rows are derived from live data, not authored,
 //     so by the rule at the top of TESTING.md it stays inline Go.
 //
@@ -37,106 +37,106 @@ import (
 // Closed sets
 // ---------------------------------------------------------------------------
 
-// gh43Kind is the closed set of how a corpus string reaches the production
+// conformanceKind is the closed set of how a corpus string reaches the production
 // parser. The three members take genuinely different code paths, so a case must
 // say which one it pins.
-type gh43Kind string
+type conformanceKind string
 
 const (
-	// gh43Serving is a models.dev PROVIDER-view id: a served row that the codegen
+	// conformanceServing is a models.dev PROVIDER-view id: a served row that the codegen
 	// pipeline turns into a ProviderInstance on an Entity. Its key is read back
 	// off the registry's entity index.
-	gh43Serving gh43Kind = "serving-id"
-	// gh43Lab is a models.dev MODELS-view (metadata) id, decomposed by the
+	conformanceServing conformanceKind = "serving-id"
+	// conformanceLab is a models.dev MODELS-view (metadata) id, decomposed by the
 	// metadata join's own id-driven path.
-	gh43Lab gh43Kind = "lab-id"
-	// gh43OffCatalog is a spelling that appears in USAGE data but is absent from
+	conformanceLab conformanceKind = "lab-id"
+	// conformanceOffCatalog is a spelling that appears in USAGE data but is absent from
 	// the vendored catalog. It has no entity of its own; it is driven through the
 	// same id-driven decomposition to record what key it would land on.
-	gh43OffCatalog gh43Kind = "off-catalog-id"
+	conformanceOffCatalog conformanceKind = "off-catalog-id"
 )
 
 // IsValid reports whether the kind is one of the known members.
-func (k gh43Kind) IsValid() bool {
+func (k conformanceKind) IsValid() bool {
 	switch k {
-	case gh43Serving, gh43Lab, gh43OffCatalog:
+	case conformanceServing, conformanceLab, conformanceOffCatalog:
 		return true
 	}
 	return false
 }
 
-// gh43Conformance is the closed set of verdicts the sweep may record for a
+// conformanceVerdict is the closed set of verdicts the sweep may record for a
 // measured key.
-type gh43Conformance string
+type conformanceVerdict string
 
 const (
-	// gh43Conforming: the measured key is CORRECT. Used both for a cited defect
+	// conformanceConforming: the measured key is CORRECT. Used both for a cited defect
 	// that is refuted at this tip and for a control whose only job is to isolate
 	// a neighbouring defect's cause.
-	gh43Conforming gh43Conformance = "conforming"
-	// gh43Defect: the measured key is WRONG, and WantKey states the correct
+	conformanceConforming conformanceVerdict = "conforming"
+	// conformanceDefect: the measured key is WRONG, and WantKey states the correct
 	// destination.
-	gh43Defect gh43Conformance = "defect"
-	// gh43Undecided: the measured key is wrong OR right, and the sweep must not
+	conformanceDefect conformanceVerdict = "defect"
+	// conformanceUndecided: the measured key is wrong OR right, and the sweep must not
 	// say which — the destination is a curation ruling. WantKey carries the
 	// EXPECTED_TBD marker and the fix issue frames the decision.
-	gh43Undecided gh43Conformance = "undecided"
+	conformanceUndecided conformanceVerdict = "undecided"
 )
 
 // IsValid reports whether the verdict is one of the known members.
-func (c gh43Conformance) IsValid() bool {
+func (c conformanceVerdict) IsValid() bool {
 	switch c {
-	case gh43Conforming, gh43Defect, gh43Undecided:
+	case conformanceConforming, conformanceDefect, conformanceUndecided:
 		return true
 	}
 	return false
 }
 
-// gh43ExpectedTBD is the marker an undecided case carries in WantKey. It is a
+// conformanceExpectedTBD is the marker an undecided case carries in WantKey. It is a
 // literal, not an empty string, so an undecided case can never be confused with a
 // case whose author forgot to fill the field in.
-const gh43ExpectedTBD = "EXPECTED_TBD"
+const conformanceExpectedTBD = "EXPECTED_TBD"
 
-// gh43CaseCount is the EXACT authored case count. An exact control (not a floor)
+// conformanceCaseCount is the EXACT authored case count. An exact control (not a floor)
 // catches a drop as well as a stray add.
-const gh43CaseCount = 42
+const conformanceCaseCount = 42
 
-// gh43CatalogPath is the vendored catalog snapshot every figure in this file and
-// in the report is measured against. gh43ReportPath is the prose those figures
+// conformanceCatalogPath is the vendored catalog snapshot every figure in this file and
+// in the report is measured against. conformanceReportPath is the prose those figures
 // live in: a red test sends the reader there, so the path must resolve.
 const (
-	gh43CatalogPath = "parse/data/modelsdev/catalog.json"
-	gh43ReportPath  = "docs/research/gh43-parser-conformance-sweep.md"
+	conformanceCatalogPath = "parse/data/modelsdev/catalog.json"
+	conformanceReportPath  = "docs/research/parser-conformance-sweep.md"
 )
 
-// gh43ClassCount is the number of defect classes GH#43 cites. Every one must be
+// conformanceClassCount is the number of defect classes GH#43 cites. Every one must be
 // covered by at least one case.
-const gh43ClassCount = 6
+const conformanceClassCount = 6
 
-type gh43Input struct {
-	Raw  string   `json:"raw"`
-	Kind gh43Kind `json:"kind"`
+type conformanceInput struct {
+	Raw  string          `json:"raw"`
+	Kind conformanceKind `json:"kind"`
 }
 
-type gh43Expected struct {
+type conformanceExpected struct {
 	// Key is the entity key the production path produces for Raw TODAY.
 	Key string `json:"key"`
 	// Conformance is the sweep's verdict on Key.
-	Conformance gh43Conformance `json:"conformance"`
+	Conformance conformanceVerdict `json:"conformance"`
 	// DefectClass is the GH#43 class (1..6) this case belongs to. A conforming
 	// control still names the class it controls.
 	DefectClass int `json:"defect_class"`
 	// WantKey is the CORRECT destination: equal to Key when conforming, the
-	// corrected key when a defect, gh43ExpectedTBD when undecided.
+	// corrected key when a defect, conformanceExpectedTBD when undecided.
 	WantKey string `json:"want_key"`
 }
 
-// gh43Index holds the three catalog-derived sets the corpus needs: the registry's
+// conformanceIndex holds the three catalog-derived sets the corpus needs: the registry's
 // own serving-id -> entity-key map, and the id sets of the two catalog views. The
 // id sets exist so a case's PREMISE is checked, not only its key: a case that says
 // "this is a lab row" or "this string is absent from the catalog" must go red when
 // that stops being true, or its verdict rots green.
-type gh43Index struct {
+type conformanceIndex struct {
 	// servingKeys maps a LOWERCASED served id to the key of the Entity that
 	// carries it. Lowercased because the registry's own instance index is
 	// case-insensitive.
@@ -147,11 +147,11 @@ type gh43Index struct {
 	labIDs    map[string]bool
 }
 
-// gh43LoadCatalog reads and parses the vendored catalog snapshot. Both tests in
+// conformanceLoadCatalog reads and parses the vendored catalog snapshot. Both tests in
 // this file measure against the SAME snapshot, so they load it the same way.
-func gh43LoadCatalog(t *testing.T) Catalog {
+func conformanceLoadCatalog(t *testing.T) Catalog {
 	t.Helper()
-	raw, err := os.ReadFile(gh43CatalogPath)
+	raw, err := os.ReadFile(conformanceCatalogPath)
 	if err != nil {
 		t.Fatalf("read the vendored catalog snapshot: %v", err)
 	}
@@ -162,11 +162,11 @@ func gh43LoadCatalog(t *testing.T) Catalog {
 	return cat
 }
 
-// gh43BuildIndex builds the serving-id -> entity-key map from the registry's OWN
+// conformanceBuildIndex builds the serving-id -> entity-key map from the registry's OWN
 // entities, so the key a case asserts is the key the entity actually carries, and
 // the two view id sets from the catalog snapshot.
-func gh43BuildIndex(cat Catalog) gh43Index {
-	idx := gh43Index{
+func conformanceBuildIndex(cat Catalog) conformanceIndex {
+	idx := conformanceIndex{
 		servingKeys: make(map[string]string),
 		servedIDs:   make(map[string]bool),
 		labIDs:      make(map[string]bool),
@@ -186,26 +186,26 @@ func gh43BuildIndex(cat Catalog) gh43Index {
 	return idx
 }
 
-// gh43ProductionKey drives one corpus string through the PRODUCTION path for its
+// conformanceProductionKey drives one corpus string through the PRODUCTION path for its
 // kind and returns the entity key. It never re-implements a decomposition.
 //
 // Every kind is premise-guarded. The three kinds make three DIFFERENT factual
 // claims about the catalog, and each claim is load-bearing for a verdict in the
 // report, so each one fatals with the same message shape when it stops holding.
-func gh43ProductionKey(t *testing.T, in gh43Input, idx gh43Index) string {
+func conformanceProductionKey(t *testing.T, in conformanceInput, idx conformanceIndex) string {
 	t.Helper()
 	low := strings.ToLower(in.Raw)
 	switch in.Kind {
-	case gh43Serving:
+	case conformanceServing:
 		key, ok := idx.servingKeys[low]
 		if !ok {
 			t.Fatalf("serving id %q holds no entity instance in the registry\n"+
 				"  What: the corpus claims this is a served catalog row, but no Entity carries it\n"+
 				"  How to fix: re-measure against %s; if the row"+
-				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, gh43CatalogPath)
+				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, conformanceCatalogPath)
 		}
 		return key
-	case gh43Lab:
+	case conformanceLab:
 		if !idx.labIDs[low] {
 			t.Fatalf("lab id %q is absent from the models (metadata) view\n"+
 				"  What: the corpus claims this is a lab row, but the catalog snapshot"+
@@ -213,10 +213,10 @@ func gh43ProductionKey(t *testing.T, in gh43Input, idx gh43Index) string {
 				"  Why it matters: metadataEntityRef answers for ANY string, so without this"+
 				" check the case would still produce a key and the premise would rot green\n"+
 				"  How to fix: re-measure against %s; if the row"+
-				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, gh43CatalogPath)
+				" is gone upstream, re-classify the case as off-catalog-id", in.Raw, conformanceCatalogPath)
 		}
 		return metadataEntityRef(MetadataID(in.Raw)).String()
-	case gh43OffCatalog:
+	case conformanceOffCatalog:
 		if idx.servedIDs[low] || idx.labIDs[low] {
 			view := "models (metadata)"
 			if idx.servedIDs[low] {
@@ -230,7 +230,7 @@ func gh43ProductionKey(t *testing.T, in gh43Input, idx gh43Index) string {
 				" id-only decomposition, or the sweep reports agreement it did not measure\n"+
 				"  How to fix: re-classify the case as serving-id or lab-id and re-measure the"+
 				" key, then re-check the class 6 verdict in %s",
-				in.Raw, view, gh43ReportPath)
+				in.Raw, view, conformanceReportPath)
 		}
 		return metadataEntityRef(MetadataID(in.Raw)).String()
 	default:
@@ -239,18 +239,18 @@ func gh43ProductionKey(t *testing.T, in gh43Input, idx gh43Index) string {
 	}
 }
 
-func TestGH43Conformance_CitedStrings(t *testing.T) {
-	corpus, err := testcase.LoadCorpus[gh43Input, gh43Expected](gh43ConformanceCorpusJSON)
+func TestParserConformance_CitedStrings(t *testing.T) {
+	corpus, err := testcase.LoadCorpus[conformanceInput, conformanceExpected](conformanceCorpusJSON)
 	if err != nil {
 		t.Fatalf("load GH#43 conformance corpus: %v", err)
 	}
-	if got := len(corpus.Cases); got != gh43CaseCount {
-		t.Fatalf("GH#43 conformance corpus has %d cases, want exactly %d", got, gh43CaseCount)
+	if got := len(corpus.Cases); got != conformanceCaseCount {
+		t.Fatalf("GH#43 conformance corpus has %d cases, want exactly %d", got, conformanceCaseCount)
 	}
 	// Non-vacuity: classification + provenance + mutation on every case.
 	assert.RequireValid(t, corpus)
 
-	idx := gh43BuildIndex(gh43LoadCatalog(t))
+	idx := conformanceBuildIndex(conformanceLoadCatalog(t))
 
 	classSeen := map[int]int{}
 	classDefects := map[int]int{}
@@ -264,9 +264,9 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 			t.Errorf("case %q: conformance %q is outside the closed set", c.Name, c.Expected.Conformance)
 			continue
 		}
-		if c.Expected.DefectClass < 1 || c.Expected.DefectClass > gh43ClassCount {
+		if c.Expected.DefectClass < 1 || c.Expected.DefectClass > conformanceClassCount {
 			t.Errorf("case %q: defect_class %d is not one of the %d cited classes",
-				c.Name, c.Expected.DefectClass, gh43ClassCount)
+				c.Name, c.Expected.DefectClass, conformanceClassCount)
 			continue
 		}
 		if rawSeen[string(c.Input.Kind)+"|"+c.Input.Raw] {
@@ -274,7 +274,7 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 		}
 		rawSeen[string(c.Input.Kind)+"|"+c.Input.Raw] = true
 		classSeen[c.Expected.DefectClass]++
-		if c.Expected.Conformance == gh43Defect {
+		if c.Expected.Conformance == conformanceDefect {
 			classDefects[c.Expected.DefectClass]++
 		}
 
@@ -282,32 +282,32 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 		// stops a case from being a decoration: a "defect" that wants the key it
 		// already has says nothing.
 		switch c.Expected.Conformance {
-		case gh43Conforming:
+		case conformanceConforming:
 			if c.Expected.WantKey != c.Expected.Key {
 				t.Errorf("case %q: conforming case wants %q but pins key %q; a conforming"+
 					" case must want the key it measures", c.Name, c.Expected.WantKey, c.Expected.Key)
 			}
-		case gh43Defect:
+		case conformanceDefect:
 			if c.Expected.WantKey == "" || c.Expected.WantKey == c.Expected.Key {
 				t.Errorf("case %q: defect case must state a want_key DIFFERENT from the"+
 					" measured key %q, got %q", c.Name, c.Expected.Key, c.Expected.WantKey)
 			}
-		case gh43Undecided:
-			if c.Expected.WantKey != gh43ExpectedTBD {
+		case conformanceUndecided:
+			if c.Expected.WantKey != conformanceExpectedTBD {
 				t.Errorf("case %q: undecided case must carry want_key %q, got %q",
-					c.Name, gh43ExpectedTBD, c.Expected.WantKey)
+					c.Name, conformanceExpectedTBD, c.Expected.WantKey)
 			}
 		}
 
 		t.Run(c.Name, func(t *testing.T) {
-			got := gh43ProductionKey(t, c.Input, idx)
+			got := conformanceProductionKey(t, c.Input, idx)
 			if got != c.Expected.Key {
 				t.Errorf("%s %q: production key = %q, corpus pins %q\n"+
 					"  What: the sweep's measured key for this string MOVED\n"+
 					"  Why it matters: this corpus is the GH#43 evidence record; a moved key"+
 					" means a defect was fixed, re-shaped, or newly introduced\n"+
 					"  How to fix: re-measure the string, then update BOTH the key and the"+
-					" conformance verdict in testdata/parse/gh43_conformance_corpus.json",
+					" conformance verdict in testdata/parse/parser_conformance_corpus.json",
 					c.Input.Kind, c.Input.Raw, got, c.Expected.Key)
 			}
 		})
@@ -316,7 +316,7 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 	// Coverage: every cited class carries at least one case, and every class that
 	// the sweep CONFIRMS carries at least one control or refutation beside it, so
 	// no class is represented by a lone unfalsifiable row.
-	for class := 1; class <= gh43ClassCount; class++ {
+	for class := 1; class <= conformanceClassCount; class++ {
 		if classSeen[class] == 0 {
 			t.Errorf("defect class %d has no case; every cited class must be confirmed or refuted", class)
 		}
@@ -369,10 +369,10 @@ func TestGH43Conformance_CitedStrings(t *testing.T) {
 // The sweep: the token census over the whole vendored catalog
 // ---------------------------------------------------------------------------
 
-// gh43LabToken is one seed lab's token group. A lab whose products carry several
+// conformanceLabToken is one seed lab's token group. A lab whose products carry several
 // unrelated stems (Mistral, Tencent) is ONE group, so the census counts labs, not
 // spellings.
-type gh43LabToken struct {
+type conformanceLabToken struct {
 	Name   string
 	Tokens []string
 	// Want is the MEASURED match count against the committed catalog snapshot at
@@ -381,11 +381,11 @@ type gh43LabToken struct {
 	Want int
 }
 
-// gh43SeedTokens is the GH#43 seed lab list, in the PRECEDENCE order the census
+// conformanceSeedTokens is the GH#43 seed lab list, in the PRECEDENCE order the census
 // uses to attribute a record to exactly ONE lab. Attribution is by first match in
 // this order, so the per-lab counts are disjoint and their sum is the distinct
 // matched-record total — the accounting the issue's acceptance clause requires.
-var gh43SeedTokens = []gh43LabToken{
+var conformanceSeedTokens = []conformanceLabToken{
 	{Name: "deepseek", Tokens: []string{"deepseek"}, Want: 211},
 	{Name: "kimi", Tokens: []string{"kimi"}, Want: 145},
 	{Name: "glm", Tokens: []string{"glm"}, Want: 277},
@@ -407,9 +407,9 @@ var gh43SeedTokens = []gh43LabToken{
 	{Name: "step", Tokens: []string{"step"}, Want: 31},
 }
 
-// gh43CensusTotal is the measured total of distinct matched catalog records. The
-// sum of every gh43LabToken.Want must equal it, and the census must match it.
-const gh43CensusTotal = 3105
+// conformanceCensusTotal is the measured total of distinct matched catalog records. The
+// sum of every conformanceLabToken.Want must equal it, and the census must match it.
+const conformanceCensusTotal = 3105
 
 // ---------------------------------------------------------------------------
 // The counting rule, and the per-key record counts the report states
@@ -436,10 +436,10 @@ const gh43CensusTotal = 3105
 // is 58 records under this rule and 148 provider instances under a row rule. So
 // the unit is named beside every figure, in the report and here.
 
-// gh43KeyRecords pins the record count for ONE entity key under the counting rule
+// conformanceKeyRecords pins the record count for ONE entity key under the counting rule
 // above. Every key whose count the report or a posted fix issue states appears in
 // this table, so a moved count fails HERE first, naming the key.
-type gh43KeyRecords struct {
+type conformanceKeyRecords struct {
 	Key  string
 	Want int
 	// Where names the prose the figure appears in, so a red row says what to
@@ -447,10 +447,10 @@ type gh43KeyRecords struct {
 	Where string
 }
 
-// gh43KeyRecordCounts is the pinned per-key table. It is SNAPSHOT-RELATIVE by
+// conformanceKeyRecordCounts is the pinned per-key table. It is SNAPSHOT-RELATIVE by
 // construction, exactly like the per-lab census: a re-vendored catalog moves these
 // counts, the test goes red, and the prose is re-measured instead of going stale.
-var gh43KeyRecordCounts = []gh43KeyRecords{
+var conformanceKeyRecordCounts = []conformanceKeyRecords{
 	// Class 1, shape A: the version in the variant slot. These eight sum to 31.
 	{Key: "deepseek/v3.2", Want: 12, Where: "class 1 table; issue #48"},
 	{Key: "deepseek/v3.2-exp", Want: 6, Where: "class 1 table; issue #48"},
@@ -480,56 +480,56 @@ var gh43KeyRecordCounts = []gh43KeyRecords{
 	{Key: "claude/sonnet", Want: 13, Where: "class 6 prose; issue #53"},
 }
 
-// gh43DoubledDash is the vendor-prefix spelling class 6 blames. The report states
+// conformanceDoubledDash is the vendor-prefix spelling class 6 blames. The report states
 // how many of the claude/opus and claude/sonnet records carry it, so that figure
 // is pinned too: it is the doubled dash's real blast radius, and it is much
 // smaller than the key totals above.
-const gh43DoubledDash = "--"
+const conformanceDoubledDash = "--"
 
-// gh43DoubledDashCounts pins the doubled-dash subset of two class-6 keys.
-var gh43DoubledDashCounts = []gh43KeyRecords{
+// conformanceDoubledDashCounts pins the doubled-dash subset of two class-6 keys.
+var conformanceDoubledDashCounts = []conformanceKeyRecords{
 	{Key: "claude/opus", Want: 6, Where: "class 6 prose; issue #53"},
 	{Key: "claude/sonnet", Want: 6, Where: "class 6 prose; issue #53"},
 }
 
-// gh43DuoChat is the vendor spelling whose records an earlier draft of class 6
+// conformanceDuoChat is the vendor spelling whose records an earlier draft of class 6
 // silently dropped, which is why that draft stated 14 and 10 instead of 19 and 13.
 // The report names the size of that omission, so the size is pinned here as well.
-const gh43DuoChat = "duo-chat"
+const conformanceDuoChat = "duo-chat"
 
-// gh43DuoChatCounts pins the duo-chat subset of the same two class-6 keys.
-var gh43DuoChatCounts = []gh43KeyRecords{
+// conformanceDuoChatCounts pins the duo-chat subset of the same two class-6 keys.
+var conformanceDuoChatCounts = []conformanceKeyRecords{
 	{Key: "claude/opus", Want: 5, Where: "class 6 prose; issue #53"},
 	{Key: "claude/sonnet", Want: 3, Where: "class 6 prose; issue #53"},
 }
 
-// gh43Class5Label is the upstream family label class 5 is about. Class 5 counts a
+// conformanceClass5Label is the upstream family label class 5 is about. Class 5 counts a
 // DIFFERENT population from the census: every row carrying this label, not the
 // seed-token matches. Its figures are therefore pinned separately, and the report
 // states both units side by side.
-const gh43Class5Label = "deepseek-thinking"
+const conformanceClass5Label = "deepseek-thinking"
 
 const (
-	// gh43Class5ServedRows is the ROW count: provider rows carrying the label.
+	// conformanceClass5ServedRows is the ROW count: provider rows carrying the label.
 	// The issue reported 96; this is the figure comparable with it.
-	gh43Class5ServedRows = 158
-	// gh43Class5ServedIDs is the same population under the counting rule above:
+	conformanceClass5ServedRows = 158
+	// conformanceClass5ServedIDs is the same population under the counting rule above:
 	// distinct case-sensitive served ids.
-	gh43Class5ServedIDs = 63
-	// gh43Class5LabIDs is the models-view side, distinct ids.
-	gh43Class5LabIDs = 6
+	conformanceClass5ServedIDs = 63
+	// conformanceClass5LabIDs is the models-view side, distinct ids.
+	conformanceClass5LabIDs = 6
 )
 
-// gh43Class5Dest pins one destination of the class-5 label in BOTH units, because
+// conformanceClass5Dest pins one destination of the class-5 label in BOTH units, because
 // the report prints both and a reader must be able to tell them apart.
-type gh43Class5Dest struct {
+type conformanceClass5Dest struct {
 	Key  string
 	IDs  int
 	Rows int
 }
 
-// gh43Class5Destinations is the class-5 destination table.
-var gh43Class5Destinations = []gh43Class5Dest{
+// conformanceClass5Destinations is the class-5 destination table.
+var conformanceClass5Destinations = []conformanceClass5Dest{
 	{Key: "deepseek/pro", IDs: 35, Rows: 106},
 	{Key: "deepseek", IDs: 19, Rows: 40},
 	{Key: "deepseek#70b", IDs: 3, Rows: 6},
@@ -540,40 +540,40 @@ var gh43Class5Destinations = []gh43Class5Dest{
 	{Key: "deepseek#14b", IDs: 1, Rows: 1},
 }
 
-// gh43MatchedRows is the ROW-level match count: catalog rows whose id or raw
+// conformanceMatchedRows is the ROW-level match count: catalog rows whose id or raw
 // family carries a seed token, with no de-duplication. It is pinned beside
-// gh43CensusTotal because the report prints both, and because the gap between
+// conformanceCensusTotal because the report prints both, and because the gap between
 // them (6,666 rows -> 3,105 distinct ids) IS the de-duplication step: a reader who
 // re-runs the census without it gets the larger number and concludes the report is
 // wrong.
-const gh43MatchedRows = 6666
+const conformanceMatchedRows = 6666
 
-// gh43UniverseRows is the whole vendored catalog: provider rows plus models rows.
-const gh43UniverseRows = 7791
+// conformanceUniverseRows is the whole vendored catalog: provider rows plus models rows.
+const conformanceUniverseRows = 7791
 
 // The two views the universe is made of. The report states the SPLIT, not only
 // the sum, and the two views reach the parser by two different code paths, so a
 // change that moves both views while preserving the sum is a real change and must
 // go red.
 const (
-	// gh43ProviderViewRows is the provider (served) view: cat.Models.
-	gh43ProviderViewRows = 7430
-	// gh43LabViewRows is the models (lab) view: cat.Metadata.
-	gh43LabViewRows = 361
+	// conformanceProviderViewRows is the provider (served) view: cat.Models.
+	conformanceProviderViewRows = 7430
+	// conformanceLabViewRows is the models (lab) view: cat.Metadata.
+	conformanceLabViewRows = 361
 )
 
-// gh43IsLetter reports whether b is an ASCII letter. The census boundary rule is
+// conformanceIsLetter reports whether b is an ASCII letter. The census boundary rule is
 // stated in terms of LETTERS, not word characters, deliberately: a lab token is
 // routinely glued to a digit ("hy3", "gpt-5", "step3", "glm-4.6"), so a digit must
 // be an allowed boundary, while a letter must not ("midjourney-steps" is not a
 // StepFun model, "codellama" is not attributed to llama by this rule).
-func gh43IsLetter(b byte) bool {
+func conformanceIsLetter(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
 }
 
-// gh43HasToken reports whether s contains tok delimited by non-letters on both
+// conformanceHasToken reports whether s contains tok delimited by non-letters on both
 // sides. s and tok are compared case-insensitively; tok must already be lowercase.
-func gh43HasToken(s, tok string) bool {
+func conformanceHasToken(s, tok string) bool {
 	low := strings.ToLower(s)
 	for start := 0; start+len(tok) <= len(low); {
 		off := strings.Index(low[start:], tok)
@@ -582,8 +582,8 @@ func gh43HasToken(s, tok string) bool {
 		}
 		at := start + off
 		end := at + len(tok)
-		leftOK := at == 0 || !gh43IsLetter(low[at-1])
-		rightOK := end == len(low) || !gh43IsLetter(low[end])
+		leftOK := at == 0 || !conformanceIsLetter(low[at-1])
+		rightOK := end == len(low) || !conformanceIsLetter(low[end])
 		if leftOK && rightOK {
 			return true
 		}
@@ -592,13 +592,13 @@ func gh43HasToken(s, tok string) bool {
 	return false
 }
 
-// gh43AttributeLab returns the index of the FIRST seed lab whose token group
+// conformanceAttributeLab returns the index of the FIRST seed lab whose token group
 // matches either the raw id or the raw upstream family string, and whether any
 // matched. First-match-wins keeps the per-lab counts disjoint.
-func gh43AttributeLab(id string, rawFamily Family) (int, bool) {
-	for i, lab := range gh43SeedTokens {
+func conformanceAttributeLab(id string, rawFamily Family) (int, bool) {
+	for i, lab := range conformanceSeedTokens {
 		for _, tok := range lab.Tokens {
-			if gh43HasToken(id, tok) || gh43HasToken(string(rawFamily), tok) {
+			if conformanceHasToken(id, tok) || conformanceHasToken(string(rawFamily), tok) {
 				return i, true
 			}
 		}
@@ -610,13 +610,13 @@ func gh43AttributeLab(id string, rawFamily Family) (int, bool) {
 // The boundary rule's declared COST: what the letter rule drops
 // ---------------------------------------------------------------------------
 
-// gh43PlainLab attributes by a BARE SUBSTRING search, with no delimiter test at
+// conformancePlainLab attributes by a BARE SUBSTRING search, with no delimiter test at
 // all. It is the naive rule the boundary rule replaces, and it exists only to
 // measure the gap between the two rules. That gap is the report's exclusion
 // table, which the report bills as a declared cost that was MEASURED.
-func gh43PlainLab(id string, rawFamily Family) (int, bool) {
+func conformancePlainLab(id string, rawFamily Family) (int, bool) {
 	low, fam := strings.ToLower(id), strings.ToLower(string(rawFamily))
-	for i, lab := range gh43SeedTokens {
+	for i, lab := range conformanceSeedTokens {
 		for _, tok := range lab.Tokens {
 			if strings.Contains(low, tok) || strings.Contains(fam, tok) {
 				return i, true
@@ -626,12 +626,12 @@ func gh43PlainLab(id string, rawFamily Family) (int, bool) {
 	return 0, false
 }
 
-// gh43Exclusion pins ONE row of the exclusion table, in BOTH units, for the same
+// conformanceExclusion pins ONE row of the exclusion table, in BOTH units, for the same
 // reason the class 5 table is pinned in both: the two units differ here, and a
 // row figure printed under a record heading is exactly the error this pin exists
 // to stop. A record is dropped when the plain rule attributes at least one of its
 // rows and the letter rule attributes none of them.
-type gh43Exclusion struct {
+type conformanceExclusion struct {
 	// Lab is the seed lab the plain rule would have attributed the record to.
 	Lab string
 	// Records is the count under the counting rule: distinct raw id per view.
@@ -642,12 +642,12 @@ type gh43Exclusion struct {
 	Where string
 }
 
-// gh43BoundaryExclusions is the pinned exclusion table. The one row where the two
+// conformanceBoundaryExclusions is the pinned exclusion table. The one row where the two
 // units disagree is mistral: "mistralai/mixtral-8x22b-instruct" is served three
 // times, twice with the raw family "mistral" (which the letter rule matches, so
 // the RECORD is attributed) and once with an empty raw family (that ROW is
 // dropped). One record, two units, two numbers.
-var gh43BoundaryExclusions = []gh43Exclusion{
+var conformanceBoundaryExclusions = []conformanceExclusion{
 	{Lab: "gpt", Records: 6, Rows: 6, Where: "boundary rule table"},
 	{Lab: "mistral", Records: 4, Rows: 5, Where: "boundary rule table"},
 	{Lab: "gemma", Records: 3, Rows: 3, Where: "boundary rule table"},
@@ -657,24 +657,24 @@ var gh43BoundaryExclusions = []gh43Exclusion{
 }
 
 const (
-	// gh43ExcludedRecords is the exclusion table's total in the report's own unit.
-	gh43ExcludedRecords = 17
-	// gh43ExcludedRows is the same drop set with no de-duplication.
-	gh43ExcludedRows = 18
+	// conformanceExcludedRecords is the exclusion table's total in the report's own unit.
+	conformanceExcludedRecords = 17
+	// conformanceExcludedRows is the same drop set with no de-duplication.
+	conformanceExcludedRows = 18
 )
 
-// gh43CheckBoundaryExclusions pins the exclusion table and the "NO record changes
+// conformanceCheckBoundaryExclusions pins the exclusion table and the "NO record changes
 // lab" half of the sentence that carries it. Without this the table is the one
 // measured figure in the report that can rot green: renaming a dropped id within
 // its own blocked stem moves no other pin.
-func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
+func conformanceCheckBoundaryExclusions(t *testing.T, cat Catalog) {
 	t.Helper()
 	type record struct {
 		plainLab, letterLab int
 		plain, letter       bool
 	}
 	recs := make(map[string]*record)
-	order := make([]string, 0, gh43UniverseRows)
+	order := make([]string, 0, conformanceUniverseRows)
 	dropRows := make(map[string]int)
 	visit := func(view, id string, fam Family) {
 		key := view + "|" + id
@@ -684,8 +684,8 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 			recs[key] = r
 			order = append(order, key)
 		}
-		plainLab, plainOK := gh43PlainLab(id, fam)
-		letterLab, letterOK := gh43AttributeLab(id, fam)
+		plainLab, plainOK := conformancePlainLab(id, fam)
+		letterLab, letterOK := conformanceAttributeLab(id, fam)
 		if plainOK && !r.plain {
 			r.plain, r.plainLab = true, plainLab
 		}
@@ -693,7 +693,7 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 			r.letter, r.letterLab = true, letterLab
 		}
 		if plainOK && !letterOK {
-			dropRows[gh43SeedTokens[plainLab].Name]++
+			dropRows[conformanceSeedTokens[plainLab].Name]++
 		}
 	}
 	for _, m := range cat.Models {
@@ -709,15 +709,15 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 		r := recs[key]
 		switch {
 		case r.plain && !r.letter:
-			dropRecords[gh43SeedTokens[r.plainLab].Name]++
+			dropRecords[conformanceSeedTokens[r.plainLab].Name]++
 		case r.plain && r.letter && r.plainLab != r.letterLab:
 			labChanged++
 		}
 	}
 
-	fix := "re-measure, then correct this pin and the boundary rule table in " + gh43ReportPath
+	fix := "re-measure, then correct this pin and the boundary rule table in " + conformanceReportPath
 	records, rows := 0, 0
-	for _, ex := range gh43BoundaryExclusions {
+	for _, ex := range conformanceBoundaryExclusions {
 		records += ex.Records
 		rows += ex.Rows
 		if got := dropRecords[ex.Lab]; got != ex.Records {
@@ -736,13 +736,13 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 				"  How to fix: %s", got, ex.Lab, ex.Rows, fix)
 		}
 	}
-	if records != gh43ExcludedRecords {
-		t.Errorf("the pinned exclusion rows sum to %d records, gh43ExcludedRecords says %d;"+
-			" the table and its total must state the same fact", records, gh43ExcludedRecords)
+	if records != conformanceExcludedRecords {
+		t.Errorf("the pinned exclusion rows sum to %d records, conformanceExcludedRecords says %d;"+
+			" the table and its total must state the same fact", records, conformanceExcludedRecords)
 	}
-	if rows != gh43ExcludedRows {
-		t.Errorf("the pinned exclusion rows sum to %d rows, gh43ExcludedRows says %d;"+
-			" the table and its total must state the same fact", rows, gh43ExcludedRows)
+	if rows != conformanceExcludedRows {
+		t.Errorf("the pinned exclusion rows sum to %d rows, conformanceExcludedRows says %d;"+
+			" the table and its total must state the same fact", rows, conformanceExcludedRows)
 	}
 	measuredRecords, measuredRows := 0, 0
 	for _, n := range dropRecords {
@@ -751,11 +751,11 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 	for _, n := range dropRows {
 		measuredRows += n
 	}
-	if measuredRecords != gh43ExcludedRecords || measuredRows != gh43ExcludedRows {
+	if measuredRecords != conformanceExcludedRecords || measuredRows != conformanceExcludedRows {
 		t.Errorf("the letter rule drops %d records / %d rows in total, the report states %d / %d\n"+
 			"  What: a lab OUTSIDE the pinned table now loses records to the boundary rule,"+
 			" or the totals moved\n"+
-			"  How to fix: %s", measuredRecords, measuredRows, gh43ExcludedRecords, gh43ExcludedRows, fix)
+			"  How to fix: %s", measuredRecords, measuredRows, conformanceExcludedRecords, conformanceExcludedRows, fix)
 	}
 	if labChanged != 0 {
 		t.Errorf("%d records change lab under the letter rule, the report states NONE\n"+
@@ -765,22 +765,22 @@ func gh43CheckBoundaryExclusions(t *testing.T, cat Catalog) {
 	}
 }
 
-func TestGH43Sweep_TokenCensus(t *testing.T) {
+func TestParserConformance_TokenCensus(t *testing.T) {
 	// Arithmetic mirror: the per-lab table and the total are two statements of
 	// one fact, so they are checked against each other before any measurement.
 	sum := 0
-	for _, lab := range gh43SeedTokens {
+	for _, lab := range conformanceSeedTokens {
 		sum += lab.Want
 	}
-	if sum != gh43CensusTotal {
-		t.Fatalf("per-lab counts sum to %d, gh43CensusTotal says %d; the table and the"+
-			" total must state the same fact", sum, gh43CensusTotal)
+	if sum != conformanceCensusTotal {
+		t.Fatalf("per-lab counts sum to %d, conformanceCensusTotal says %d; the table and the"+
+			" total must state the same fact", sum, conformanceCensusTotal)
 	}
 
-	cat := gh43LoadCatalog(t)
-	idx := gh43BuildIndex(cat)
+	cat := conformanceLoadCatalog(t)
+	idx := conformanceBuildIndex(cat)
 
-	got := make([]int, len(gh43SeedTokens))
+	got := make([]int, len(conformanceSeedTokens))
 	seen := make(map[string]bool)
 	unkeyed := 0
 	matchedRows := 0
@@ -793,7 +793,7 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 	// family string in ModelInfo.Family (the codegen pipeline reads it from there
 	// as the RAW family), so that is the field the census greps beside the id.
 	for _, m := range cat.Models {
-		i, ok := gh43AttributeLab(string(m.ID), m.Family)
+		i, ok := conformanceAttributeLab(string(m.ID), m.Family)
 		if !ok {
 			continue
 		}
@@ -810,16 +810,16 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 			continue
 		}
 		keyRecords[key]++
-		if strings.Contains(string(m.ID), gh43DoubledDash) {
+		if strings.Contains(string(m.ID), conformanceDoubledDash) {
 			doubledDash[key]++
 		}
-		if strings.Contains(strings.ToLower(string(m.ID)), gh43DuoChat) {
+		if strings.Contains(strings.ToLower(string(m.ID)), conformanceDuoChat) {
 			duoChat[key]++
 		}
 	}
 	// Models view: every LAB (metadata) row.
 	for _, md := range cat.Metadata {
-		i, ok := gh43AttributeLab(string(md.MetadataID), md.RawFamily)
+		i, ok := conformanceAttributeLab(string(md.MetadataID), md.RawFamily)
 		if !ok {
 			continue
 		}
@@ -835,16 +835,16 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 		// that it was counted.
 		key := metadataEntityRef(md.MetadataID).String()
 		keyRecords[key]++
-		if strings.Contains(string(md.MetadataID), gh43DoubledDash) {
+		if strings.Contains(string(md.MetadataID), conformanceDoubledDash) {
 			doubledDash[key]++
 		}
-		if strings.Contains(strings.ToLower(string(md.MetadataID)), gh43DuoChat) {
+		if strings.Contains(strings.ToLower(string(md.MetadataID)), conformanceDuoChat) {
 			duoChat[key]++
 		}
 	}
 
 	measured := 0
-	for i, lab := range gh43SeedTokens {
+	for i, lab := range conformanceSeedTokens {
 		measured += got[i]
 		if got[i] != lab.Want {
 			t.Errorf("lab %q matched %d catalog records, the pinned census says %d\n"+
@@ -852,15 +852,15 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 				"  Why it matters: GH#43's acceptance clause is a per-lab count whose sum is"+
 				" the total; a stale table makes the report a false statement\n"+
 				"  How to fix: re-run the sweep after the catalog re-vendor and update BOTH"+
-				" this table and gh43CensusTotal, then re-check the report in"+
-				" "+gh43ReportPath, lab.Name, got[i], lab.Want)
+				" this table and conformanceCensusTotal, then re-check the report in"+
+				" "+conformanceReportPath, lab.Name, got[i], lab.Want)
 		}
 		if got[i] == 0 {
 			t.Errorf("lab %q matched nothing; a seed lab with no match makes the census vacuous", lab.Name)
 		}
 	}
-	if measured != gh43CensusTotal {
-		t.Errorf("the census matched %d distinct records, gh43CensusTotal says %d", measured, gh43CensusTotal)
+	if measured != conformanceCensusTotal {
+		t.Errorf("the census matched %d distinct records, conformanceCensusTotal says %d", measured, conformanceCensusTotal)
 	}
 	if measured != len(seen) {
 		t.Errorf("the per-lab counts sum to %d but %d distinct records were attributed;"+
@@ -875,37 +875,37 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 	// The two units the report prints must both hold. The gap between them is the
 	// de-duplication step, and stating only one of them is what makes the census
 	// look wrong to a reader who re-derives it.
-	if len(cat.Models) != gh43ProviderViewRows || len(cat.Metadata) != gh43LabViewRows {
+	if len(cat.Models) != conformanceProviderViewRows || len(cat.Metadata) != conformanceLabViewRows {
 		t.Errorf("the catalog snapshot holds %d provider rows and %d lab rows, the report"+
 			" states %d and %d\n"+
 			"  What: the VIEW SPLIT moved. The sum alone is not enough: the two views reach"+
 			" the parser by two different code paths, so a change that moves both while"+
 			" preserving the sum is still a change the sweep must be re-measured against\n"+
 			"  How to fix: re-measure and correct the Method section of %s",
-			len(cat.Models), len(cat.Metadata), gh43ProviderViewRows, gh43LabViewRows, gh43ReportPath)
+			len(cat.Models), len(cat.Metadata), conformanceProviderViewRows, conformanceLabViewRows, conformanceReportPath)
 	}
-	if gh43ProviderViewRows+gh43LabViewRows != gh43UniverseRows {
-		t.Errorf("the pinned view split sums to %d, gh43UniverseRows says %d; the split and"+
+	if conformanceProviderViewRows+conformanceLabViewRows != conformanceUniverseRows {
+		t.Errorf("the pinned view split sums to %d, conformanceUniverseRows says %d; the split and"+
 			" the total must state the same fact",
-			gh43ProviderViewRows+gh43LabViewRows, gh43UniverseRows)
+			conformanceProviderViewRows+conformanceLabViewRows, conformanceUniverseRows)
 	}
-	if universe := len(cat.Models) + len(cat.Metadata); universe != gh43UniverseRows {
+	if universe := len(cat.Models) + len(cat.Metadata); universe != conformanceUniverseRows {
 		t.Errorf("the catalog snapshot holds %d rows, the report states %d\n"+
 			"  How to fix: re-measure and correct the Method section of %s",
-			universe, gh43UniverseRows, gh43ReportPath)
+			universe, conformanceUniverseRows, conformanceReportPath)
 	}
-	if matchedRows != gh43MatchedRows {
+	if matchedRows != conformanceMatchedRows {
 		t.Errorf("%d catalog ROWS carry a seed token, the report states %d\n"+
 			"  What: the row-level match figure moved. It is NOT the census total:"+
 			" the rows collapse to %d distinct (view, id) records\n"+
 			"  How to fix: re-measure and correct the Method section of %s",
-			matchedRows, gh43MatchedRows, gh43CensusTotal, gh43ReportPath)
+			matchedRows, conformanceMatchedRows, conformanceCensusTotal, conformanceReportPath)
 	}
 
 	// The per-key record counts the report and the six posted fix issues state.
 	// Without this pin the prose figures are unguarded, and six of them were
 	// measurably wrong before it existed.
-	for _, kr := range gh43KeyRecordCounts {
+	for _, kr := range conformanceKeyRecordCounts {
 		if got := keyRecords[kr.Key]; got != kr.Want {
 			t.Errorf("key %q holds %d records, the pinned table says %d\n"+
 				"  What: a per-key RECORD count the prose states has MOVED. A record is one"+
@@ -914,12 +914,12 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 				"  Why it matters: this figure sizes and orders the fix work. It is stated in"+
 				" %s\n"+
 				"  How to fix: re-measure, then correct BOTH this pin and every mirror of the"+
-				" figure: %s, the matching draft in docs/research/gh43-fix-drafts/, and the"+
+				" figure: %s, the matching draft in docs/research/parser-conformance-fix-drafts/, and the"+
 				" POSTED GitHub issue body",
-				kr.Key, got, kr.Want, kr.Where, gh43ReportPath)
+				kr.Key, got, kr.Want, kr.Where, conformanceReportPath)
 		}
 	}
-	for _, kr := range gh43DoubledDashCounts {
+	for _, kr := range conformanceDoubledDashCounts {
 		if got := doubledDash[kr.Key]; got != kr.Want {
 			t.Errorf("key %q holds %d records whose raw id carries the doubled dash %q,"+
 				" the pinned table says %d\n"+
@@ -927,26 +927,26 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 				" key's record count, and the report must not state the key total as if it"+
 				" were the blast radius\n"+
 				"  How to fix: re-measure, then correct this pin, %s and %s",
-				kr.Key, got, gh43DoubledDash, kr.Want, gh43ReportPath, kr.Where)
+				kr.Key, got, conformanceDoubledDash, kr.Want, conformanceReportPath, kr.Where)
 		}
 	}
 
-	for _, kr := range gh43DuoChatCounts {
+	for _, kr := range conformanceDuoChatCounts {
 		if got := duoChat[kr.Key]; got != kr.Want {
 			t.Errorf("key %q holds %d records whose raw id carries %q, the pinned table says %d\n"+
 				"  What: the size of the omission that made an earlier draft state 14 and 10"+
 				" for these two keys has moved. It is a SUBSET of the key's record count\n"+
 				"  How to fix: re-measure, then correct this pin, %s and %s",
-				kr.Key, got, gh43DuoChat, kr.Want, gh43ReportPath, kr.Where)
+				kr.Key, got, conformanceDuoChat, kr.Want, conformanceReportPath, kr.Where)
 		}
 	}
 
-	gh43CheckBoundaryExclusions(t, cat)
-	gh43CheckClass5(t, cat, idx)
+	conformanceCheckBoundaryExclusions(t, cat)
+	conformanceCheckClass5(t, cat, idx)
 
 	if testing.Verbose() {
-		names := make([]string, 0, len(gh43SeedTokens))
-		for i, lab := range gh43SeedTokens {
+		names := make([]string, 0, len(conformanceSeedTokens))
+		for i, lab := range conformanceSeedTokens {
 			names = append(names, fmt.Sprintf("%-10s %5d", lab.Name, got[i]))
 		}
 		sort.Strings(names)
@@ -955,18 +955,18 @@ func TestGH43Sweep_TokenCensus(t *testing.T) {
 	}
 }
 
-// gh43CheckClass5 pins the class-5 destination table. Class 5 measures a DIFFERENT
+// conformanceCheckClass5 pins the class-5 destination table. Class 5 measures a DIFFERENT
 // population from the census — every row carrying the upstream family label, not
 // the seed-token matches — so it is measured and pinned separately, in BOTH units,
 // because the report prints both and a reader must be able to tell them apart.
-func gh43CheckClass5(t *testing.T, cat Catalog, idx gh43Index) {
+func conformanceCheckClass5(t *testing.T, cat Catalog, idx conformanceIndex) {
 	t.Helper()
 	rows := 0
 	ids := make(map[string]bool)
 	destIDs := make(map[string]int)
 	destRows := make(map[string]int)
 	for _, m := range cat.Models {
-		if !strings.EqualFold(string(m.Family), gh43Class5Label) {
+		if !strings.EqualFold(string(m.Family), conformanceClass5Label) {
 			continue
 		}
 		rows++
@@ -980,27 +980,27 @@ func gh43CheckClass5(t *testing.T, cat Catalog, idx gh43Index) {
 	}
 	labIDs := make(map[string]bool)
 	for _, md := range cat.Metadata {
-		if strings.EqualFold(string(md.RawFamily), gh43Class5Label) {
+		if strings.EqualFold(string(md.RawFamily), conformanceClass5Label) {
 			labIDs[string(md.MetadataID)] = true
 		}
 	}
 
-	fix := "re-measure, then correct this pin, the class 5 section of " + gh43ReportPath +
-		", docs/research/gh43-fix-drafts/05-distill-destination-ruling.md and the POSTED issue #52"
-	if rows != gh43Class5ServedRows {
+	fix := "re-measure, then correct this pin, the class 5 section of " + conformanceReportPath +
+		", docs/research/parser-conformance-fix-drafts/05-distill-destination-ruling.md and the POSTED issue #52"
+	if rows != conformanceClass5ServedRows {
 		t.Errorf("upstream family %q carries %d provider ROWS, the pin says %d\n  How to fix: %s",
-			gh43Class5Label, rows, gh43Class5ServedRows, fix)
+			conformanceClass5Label, rows, conformanceClass5ServedRows, fix)
 	}
-	if len(ids) != gh43Class5ServedIDs {
+	if len(ids) != conformanceClass5ServedIDs {
 		t.Errorf("upstream family %q carries %d distinct served IDS, the pin says %d\n  How to fix: %s",
-			gh43Class5Label, len(ids), gh43Class5ServedIDs, fix)
+			conformanceClass5Label, len(ids), conformanceClass5ServedIDs, fix)
 	}
-	if len(labIDs) != gh43Class5LabIDs {
+	if len(labIDs) != conformanceClass5LabIDs {
 		t.Errorf("upstream family %q carries %d distinct lab IDS, the pin says %d\n  How to fix: %s",
-			gh43Class5Label, len(labIDs), gh43Class5LabIDs, fix)
+			conformanceClass5Label, len(labIDs), conformanceClass5LabIDs, fix)
 	}
 	sumIDs, sumRows := 0, 0
-	for _, d := range gh43Class5Destinations {
+	for _, d := range conformanceClass5Destinations {
 		sumIDs += d.IDs
 		sumRows += d.Rows
 		if got := destIDs[d.Key]; got != d.IDs {
@@ -1014,12 +1014,12 @@ func gh43CheckClass5(t *testing.T, cat Catalog, idx gh43Index) {
 	}
 	// The destination table must be TOTAL: it accounts for every row and every id
 	// the label carries, so a destination cannot be quietly dropped from the prose.
-	if sumIDs != gh43Class5ServedIDs {
+	if sumIDs != conformanceClass5ServedIDs {
 		t.Errorf("the class 5 destination table sums to %d ids but the label carries %d;"+
-			" the table must account for every id\n  How to fix: %s", sumIDs, gh43Class5ServedIDs, fix)
+			" the table must account for every id\n  How to fix: %s", sumIDs, conformanceClass5ServedIDs, fix)
 	}
-	if sumRows != gh43Class5ServedRows {
+	if sumRows != conformanceClass5ServedRows {
 		t.Errorf("the class 5 destination table sums to %d rows but the label carries %d;"+
-			" the table must account for every row\n  How to fix: %s", sumRows, gh43Class5ServedRows, fix)
+			" the table must account for every row\n  How to fix: %s", sumRows, conformanceClass5ServedRows, fix)
 	}
 }
