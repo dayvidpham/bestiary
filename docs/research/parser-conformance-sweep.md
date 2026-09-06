@@ -248,11 +248,15 @@ content, and it lands in a DIFFERENT slot depending on what follows it:
 The cited `glm/z#32b` is measured as `glm/z#9b` at this tip. `glm/z` holds
 3 records and `glm/z#9b` holds 1.
 
-The control isolates the cause: the SAME model under the slash-separated
-namespace, `zai/glm-5v-turbo`, keys `glm/v@5` correctly.
+The slash-separated namespace isolates the cause: the SAME model as
+`zai/glm-5v-turbo` strips the prefix with no `{z}` leak, keying `glm/v@5`.
+That refutes the dash-prefix defect. But `glm/v@5` still misreads the vision
+`v` as a variant (see the class 7 UAT follow-up), so its fully-correct key is
+`glm@5{vision}`, and the corpus records this case as a defect on that residual.
 
 A second split sits beside it: `glm-4-6v-flash` keys `glm/v@6{flash}`,
-split off the 5-record `glm/v@4.6{flash}` line by the lost dot.
+split off the `glm/v@4.6{flash}` line by the lost dot; its fully-correct key
+also fixes the vision `v` and the flash variant, to `glm/flash@4.6{vision}`.
 
 ### Class 4 — modifier questions: CONFIRMED as observed, destination UNDECIDED
 

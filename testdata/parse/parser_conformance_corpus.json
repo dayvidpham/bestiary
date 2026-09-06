@@ -473,15 +473,15 @@
         "key": "glm/v@5{z}",
         "conformance": "defect",
         "defect_class": 3,
-        "want_key": "glm/v@5"
+        "want_key": "glm@5{vision}"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 3, cited key glm/v@5{z}: the SAME 'z-ai' prefix becomes an identity modifier {z} here, so one prefix produces two different encodings."
+        "ref": "GH#43 defect class 3, cited key glm/v@5{z}: the SAME 'z-ai' prefix becomes an identity modifier {z} here, so one prefix produces two different encodings. The fully-correct final key also drops the {z} prefix artifact, reads the vision 'v' as the {vision} modifier (UAT vision ruling), and leaves turbo off the key: glm@5{vision}."
       },
       "mutation": {
-        "description": "the same z-ai prefix on a glm-5v id; the leftover 'z' lands in the modifier slot instead of the variant slot"
+        "description": "the same z-ai prefix on a glm-5v id; the leftover 'z' lands in the modifier slot, and the vision 'v' is read as the variant, so the final correct key must fix both"
       }
     },
     {
@@ -506,24 +506,24 @@
       }
     },
     {
-      "name": "class3_control_zai_slash_prefix",
+      "name": "class3_zai_slash_prefix_vision_residual",
       "input": {
         "raw": "zai/glm-5v-turbo",
         "kind": "serving-id"
       },
       "expected": {
         "key": "glm/v@5",
-        "conformance": "conforming",
+        "conformance": "defect",
         "defect_class": 3,
-        "want_key": "glm/v@5"
+        "want_key": "glm@5{vision}"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 3 control: the SAME model under a SLASH-separated namespace keys correctly, isolating the dash-glued prefix as the cause."
+        "ref": "GH#43 defect class 3: the SAME model under a SLASH-separated namespace strips the prefix correctly, so no {z} modifier leaks (contrast the dash-glued z-ai case above, which keys glm/v@5{z}). But even with the prefix stripped the vision 'v' is still read as the variant, so the key glm/v@5 remains a defect under the UAT vision ruling; the fully-correct final key is glm@5{vision}. This isolates the prefix cause AND shows the residual vision defect survives correct stripping."
       },
       "mutation": {
-        "description": "replaces the dash-glued z-ai prefix with a slash-separated zai namespace; the prefix is then stripped correctly"
+        "description": "replaces the dash-glued z-ai prefix with a slash-separated zai namespace; the prefix is stripped correctly, but the vision 'v' defect remains"
       }
     },
     {
@@ -536,15 +536,15 @@
         "key": "glm/v@6{flash}",
         "conformance": "defect",
         "defect_class": 3,
-        "want_key": "glm/v@4.6{flash}"
+        "want_key": "glm/flash@4.6{vision}"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 3, measured at this tip: the dash-glued dot-lost spelling of glm-4.6v keys @6, splitting it off the 34-record glm/v@4.6 line."
+        "ref": "GH#43 defect class 3, measured at this tip: the dash-glued dot-lost spelling of glm-4.6v keys @6, splitting it off the glm/v@4.6 line. The dot loss is the class-3 defect; the fully-correct final key also restores the dot, reads the vision 'v' as the {vision} modifier and 'flash' as the variant (UAT vision + flash rulings): glm/flash@4.6{vision}."
       },
       "mutation": {
-        "description": "replaces the dot in 4.6 with a dash; the parser then reads '6' as the whole version"
+        "description": "replaces the dot in 4.6 with a dash so the parser reads '6' as the version; the final correct key restores the dot and moves 'v' to {vision} and 'flash' to the variant slot"
       }
     },
     {
