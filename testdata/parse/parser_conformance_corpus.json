@@ -422,24 +422,24 @@
       }
     },
     {
-      "name": "class2_control_glm_41v_thinking_flash_resplit",
+      "name": "class8_glm_41v_thinking_flash_variant",
       "input": {
         "raw": "glm-4.1v-thinking-flash",
         "kind": "serving-id"
       },
       "expected": {
         "key": "glm/v@4.1{flash}",
-        "conformance": "conforming",
-        "defect_class": 2,
-        "want_key": "glm/v@4.1{flash}"
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flash@4.1{vision}"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 2, cited key glm-4.1v-thinking/flash: REFUTED at this tip. PR #40's re-split routes the id to glm/v@4.1{flash}."
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): 'flash' is a distinct-weight VARIANT, and the trailing 'v' on GLM is the VISION modality. The id keys glm/v@4.1{flash} today: 'v' is read as the variant and 'flash' as an identity modifier, the exact inversion of the ruling, and the 'thinking' token is dropped. The correct destination is glm/flash@4.1{vision}."
       },
       "mutation": {
-        "description": "the cited glm-4.1v-thinking spelling re-measured after PR #40; the family is no longer the whole compound"
+        "description": "the flash variant and the vision 'v' both land in the wrong slot: 'v' becomes the variant and 'flash' a modifier, and 'thinking' is dropped"
       }
     },
     {
@@ -555,17 +555,17 @@
       },
       "expected": {
         "key": "deepseek{turbo}",
-        "conformance": "undecided",
+        "conformance": "defect",
         "defect_class": 4,
-        "want_key": "EXPECTED_TBD"
+        "want_key": "deepseek"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 4, cited key deepseek{turbo}: turbo is kept as an IDENTITY modifier and the r1 line marker is destroyed. The correct destination is a curation ruling, not a parser fact."
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: turbo is a serving-speed ATTRIBUTE (off the key), evidenced by Novita's 64k-context turbo endpoint on the same base weights, not an identity modifier. The id keys deepseek{turbo} today, holding turbo on the key and destroying the r1 line marker; bare 'deepseek-r1' keys 'deepseek', so that is the correct destination with turbo off the key."
       },
       "mutation": {
-        "description": "a speed-tier token on a deepseek r1 id; whether turbo is identity-class or attribute-class for deepseek is undecided"
+        "description": "a serving-speed token on a deepseek r1 id; turbo must leave the key (attribute-class), and the case collides with the v3 turbo id below"
       }
     },
     {
@@ -576,17 +576,17 @@
       },
       "expected": {
         "key": "deepseek{turbo}",
-        "conformance": "undecided",
+        "conformance": "defect",
         "defect_class": 4,
-        "want_key": "EXPECTED_TBD"
+        "want_key": "deepseek@3"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 4, measured: a DIFFERENT model (v3, not r1) lands on the IDENTICAL key deepseek{turbo}, so the class also hides a two-model collision."
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: a DIFFERENT model (v3, not r1) lands on the IDENTICAL key deepseek{turbo}, so turbo-as-identity also HIDES a two-model collision. With turbo off the key (attribute-class), the v3 id must restore its version and key deepseek@3, splitting it from the r1 sibling above."
       },
       "mutation": {
-        "description": "the same turbo token on a v3 id; both ids collapse onto one key, so the ruling must also restore their versions"
+        "description": "the same turbo token on a v3 id; with turbo off the key the collision splits by the real base and the v3 version is restored"
       }
     },
     {
@@ -597,17 +597,17 @@
       },
       "expected": {
         "key": "claude{code}",
-        "conformance": "undecided",
+        "conformance": "excluded",
         "defect_class": 4,
-        "want_key": "EXPECTED_TBD"
+        "want_key": "EXCLUDED"
       },
       "classification": "must-pass",
       "provenance": {
         "source": "bug",
-        "ref": "GH#43 defect class 4, cited key claude{code}: a product name (Claude Code) is read as an identity modifier on the claude family. The correct destination is a curation ruling."
+        "ref": "GH#43 defect class 4, resolved by UAT ruling: Claude Code is a harness/agent, not model weights (Poe passthrough, 0 context / 0 cost), so it does not belong in the keyspace at all. The id keys claude{code} today, reading the product name as an identity modifier on the claude family; the ruling EXCLUDES it. The pinned key is the witness that today's parser still produces a key, so the exclusion goes red if that stops being true."
       },
       "mutation": {
-        "description": "a product-namespace token on a claude id; whether 'code' names an artifact, a product, or nothing is undecided"
+        "description": "a product/harness name on a claude id; the ruling removes it from the keyspace rather than assigning it a want-key"
       }
     },
     {
@@ -881,6 +881,216 @@
       },
       "mutation": {
         "description": "removes one dash from the vendor prefix; the version then reaches the @version slot"
+      }
+    },
+    {
+      "name": "class7_glm_45v_vision_suffix",
+      "input": {
+        "raw": "glm-4.5v",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.5",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@4.5{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the trailing 'v' on a GLM version is the VISION modality, not a variant. The id keys glm/v@4.5 today, reading 'v' as the variant; the correct destination is glm@4.5{vision}, with vision as a modifier."
+      },
+      "mutation": {
+        "description": "the version-glued vision 'v' is read as the variant slot instead of a {vision} modifier"
+      }
+    },
+    {
+      "name": "class7_glm_46v_vision_suffix",
+      "input": {
+        "raw": "glm-4.6v",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the same vision 'v' on the 4.6 generation keys glm/v@4.6, so the defect is not generation-specific; the correct destination is glm@4.6{vision}."
+      },
+      "mutation": {
+        "description": "the same vision 'v' on a different GLM generation lands in the variant slot instead of a {vision} modifier"
+      }
+    },
+    {
+      "name": "class7_glm_5v_turbo_vision_suffix",
+      "input": {
+        "raw": "glm-5v-turbo",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@5",
+        "conformance": "defect",
+        "defect_class": 7,
+        "want_key": "glm@5{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Vision-suffix (UAT ruling, GH#43 follow-up): the bare-major vision id keys glm/v@5, reading 'v' as the variant. The 'turbo' serving-speed token is already off the key here (it is dropped, not kept as a modifier), so the sole remaining defect is the vision 'v'; the correct destination is glm@5{vision}."
+      },
+      "mutation": {
+        "description": "the vision 'v' on a bare-major GLM id is read as the variant; turbo is already dropped, isolating the vision defect"
+      }
+    },
+    {
+      "name": "class8_gemini_25_flash_control",
+      "input": {
+        "raw": "gemini-2.5-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "gemini/flash@2.5",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "gemini/flash@2.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: 'flash' is a distinct-weight VARIANT, and Gemini already keys it correctly as the variant. This conforming control shows the ruling's target shape and isolates the GLM and qwen defects as the deviations, not flash itself."
+      },
+      "mutation": {
+        "description": "the reference-correct flash variant: 'flash' reaches the variant slot as the ruling requires"
+      }
+    },
+    {
+      "name": "class8_step_35_flash_control",
+      "input": {
+        "raw": "step-3.5-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "step/flash@3.5",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "step/flash@3.5"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: StepFun's flash also keys correctly as the variant, a second lab confirming the ruling's target shape is already met where the id is well formed."
+      },
+      "mutation": {
+        "description": "a second reference-correct flash variant on a different lab; flash reaches the variant slot"
+      }
+    },
+    {
+      "name": "class8_qwen3_coder_control",
+      "input": {
+        "raw": "qwen3-coder",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "qwen/coder@3",
+        "conformance": "conforming",
+        "defect_class": 8,
+        "want_key": "qwen/coder@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up) control: the collision base. qwen3-coder keys qwen/coder@3 correctly, and the qwen3-coder-flash sibling below collapses onto this SAME key because flash is dropped, so the two form the collision the ruling must split with a compound variant."
+      },
+      "mutation": {
+        "description": "the well-formed base of the qwen coder collision; its key is correct and the flash sibling wrongly shares it"
+      }
+    },
+    {
+      "name": "class8_qwen3_coder_flash_dropped",
+      "input": {
+        "raw": "qwen3-coder-flash",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "qwen/coder@3",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "qwen/coder-flash@3"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): flash is DROPPED here, so qwen3-coder-flash collapses onto qwen/coder@3 and collides with the qwen3-coder control above. flash must survive as part of a COMPOUND variant; the correct destination is qwen/coder-flash@3."
+      },
+      "mutation": {
+        "description": "the flash specializer is dropped and the id collides with its coder base; the ruling keeps it as the compound variant coder-flash"
+      }
+    },
+    {
+      "name": "class8_glm_41v_thinking_flashx_variant",
+      "input": {
+        "raw": "glm-4.1v-thinking-flashx",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.1",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flashx@4.1{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): the flashx variant is DROPPED entirely and the vision 'v' is read as the variant, so the id keys glm/v@4.1. The correct destination is glm/flashx@4.1{vision}: flashx the variant, vision the modifier."
+      },
+      "mutation": {
+        "description": "flashx is dropped and the vision 'v' takes the variant slot; both the flash-family variant and the vision modifier are lost"
+      }
+    },
+    {
+      "name": "class8_glm_46v_flash_vision",
+      "input": {
+        "raw": "glm-4.6v-flash",
+        "kind": "off-catalog-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6{flash}",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flash@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): an off-catalog GLM vision-flash spelling. The id-only decomposition keys glm/v@4.6{flash}, inverting both slots ('v' as variant, flash as modifier); the correct destination is glm/flash@4.6{vision}."
+      },
+      "mutation": {
+        "description": "the off-catalog vision-flash spelling inverts both slots: flash becomes a modifier and the vision 'v' the variant"
+      }
+    },
+    {
+      "name": "class8_glm_46v_flashx_variant",
+      "input": {
+        "raw": "glm-4.6v-flashx",
+        "kind": "serving-id"
+      },
+      "expected": {
+        "key": "glm/v@4.6",
+        "conformance": "defect",
+        "defect_class": 8,
+        "want_key": "glm/flashx@4.6{vision}"
+      },
+      "classification": "must-pass",
+      "provenance": {
+        "source": "bug",
+        "ref": "Flash-variant uniformity (UAT ruling, GH#43 follow-up): the flashx variant is DROPPED and the vision 'v' is read as the variant, so the id keys glm/v@4.6, colliding with the plain glm-4.6v vision case. The correct destination is glm/flashx@4.6{vision}."
+      },
+      "mutation": {
+        "description": "flashx dropped and the vision 'v' taken as the variant, collapsing the flashx id onto the plain 4.6v vision key"
       }
     }
   ]

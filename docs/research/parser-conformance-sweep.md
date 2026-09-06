@@ -351,21 +351,53 @@ the same keys while silently dropping the family-matched `duo-chat-*` ids
 (5 on opus, 3 on sonnet), which no other table in this report drops. The
 counting rule above now applies here too, and the figures are 19 and 13.
 
+## UAT follow-up: two further findings (classes 7 and 8)
+
+User acceptance of this sweep raised two findings the original six classes
+did not name, and ruled on the turbo and `claude-code` cases the sweep had
+left `EXPECTED_TBD`. The corpus records all of them:
+
+- **Class 7, the vision `v` suffix.** The trailing `v` on a GLM version
+  (`glm-4.5v`, `glm-4.6v`, `glm-5v`, `glm-4.1v`) is the VISION modality, not
+  a variant. The parser reads it as the variant, so `glm-4.5v` keys
+  `glm/v@4.5` where the ruling wants `glm@4.5{vision}`. The vision `v` line
+  currently splits under a `v` variant across the generations (`glm/v@4.6`
+  holds 9 records, `glm/v@4.5` 7, `glm/v@5` 6).
+- **Class 8, flash-variant uniformity.** `flash`/`flashx` is a
+  distinct-weight VARIANT and must key as one uniformly. Gemini
+  (`gemini/flash@2.5`, 24 records) and StepFun (`step/flash@3.5`, 5) already
+  do; but `qwen3-coder-flash` DROPS `flash` and collides with `qwen3-coder`
+  on `qwen/coder@3` (24 records), and the GLM vision-flash spellings invert
+  both slots (`glm-4.1v-thinking-flash` keys `glm/v@4.1{flash}` where the
+  ruling wants `glm/flash@4.1{vision}`; `flashx` is dropped entirely). The
+  compound-variant rule applies: `qwen/coder-flash@3`.
+- **Class 4 rulings.** `turbo` is a serving-speed ATTRIBUTE, off the key
+  (Novita's 64k-context turbo endpoint on the same base weights), so
+  `deepseek-r1-turbo` and `deepseek-v3-turbo` flip from `EXPECTED_TBD` to
+  defects and split their `deepseek{turbo}` collision to `deepseek` and
+  `deepseek@3`. Poe's `claude-code` is a harness, not model weights (0
+  context / 0 cost), so it is EXCLUDED from the keyspace.
+
+Classes 7 and 8 are carried into their own fix issues; the corpus flips its
+`want_key`s in the same PR that fixes them (red until then).
+
 ## Committed deliverables
 
 | Artifact | What it does |
 |---|---|
-| `testdata/parse/parser_conformance_corpus.json` | 42 authored cases: every cited string, the measured witnesses, and the conforming controls |
-| `parser_conformance_internal_test.go` | `TestParserConformance_CitedStrings` (exact count 42, `RequireValid` non-vacuity, verdict consistency, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestParserConformance_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash and `duo-chat` subsets, the class 5 destination table in both units, and the boundary-rule exclusion table in both units) |
+| `testdata/parse/parser_conformance_corpus.json` | 52 authored cases: every cited string, the measured witnesses, and the conforming controls (including the class 7 vision-suffix and class 8 flash-variant cases the UAT raised) |
+| `parser_conformance_internal_test.go` | `TestParserConformance_CitedStrings` (exact count 52, `RequireValid` non-vacuity, verdict consistency incl. the `EXCLUDED` marker, per-kind PREMISE guards, per-class coverage, value coverage, at-least-one-confirmed-defect) and `TestParserConformance_TokenCensus` (the census, its per-lab pins, the sum-equals-total mirror, the 7,791 / 6,666 / 3,105 unit figures, the per-key record counts every table above states, the class 6 doubled-dash and `duo-chat` subsets, the class 5 destination table in both units, and the boundary-rule exclusion table in both units) |
 | `fixtures_parser_conformance_test.go` | the `//go:embed` of the corpus into the test binary only |
 | `TESTING.md` | corpus table: `testdata/parse/` 49 -> 50, total 127 -> 128 |
 
 ## What this sweep deliberately did NOT do
 
 - It changed no entity key, no curated data, and no generated file.
-- It invented no ruling. Where the destination is a curation decision
-  (class 4 in full, the class-5 distill destination), the corpus records
-  the CURRENT key with the `EXPECTED_TBD` marker and the fix-issue draft
-  frames the decision for the user.
+- It invented no ruling. Where the destination is still a curation decision
+  (the nemotron dual-path pair, the class-5 distill destination), the corpus
+  records the CURRENT key with the `EXPECTED_TBD` marker and the fix-issue
+  draft frames the decision. The class 4 turbo cases and the `claude-code`
+  case, once `EXPECTED_TBD`, are now ruled by UAT (attribute-off-key and
+  keyspace-exclusion respectively).
 - It priced no fix by grep. Every fix issue says the blast radius must be
   measured by regenerating and diffing the key set.

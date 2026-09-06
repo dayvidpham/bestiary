@@ -81,12 +81,17 @@ const (
 	// say which — the destination is a curation ruling. WantKey carries the
 	// EXPECTED_TBD marker and the fix issue frames the decision.
 	conformanceUndecided conformanceVerdict = "undecided"
+	// conformanceExcluded: the string is NOT a model and does not belong in the
+	// keyspace at all (a harness, an agent, a product passthrough). The parser still
+	// produces a key for it TODAY, which Key pins as the witness, but the UAT ruling
+	// removes it, so WantKey carries the EXCLUDED marker instead of a destination.
+	conformanceExcluded conformanceVerdict = "excluded"
 )
 
 // IsValid reports whether the verdict is one of the known members.
 func (c conformanceVerdict) IsValid() bool {
 	switch c {
-	case conformanceConforming, conformanceDefect, conformanceUndecided:
+	case conformanceConforming, conformanceDefect, conformanceUndecided, conformanceExcluded:
 		return true
 	}
 	return false
@@ -97,9 +102,14 @@ func (c conformanceVerdict) IsValid() bool {
 // case whose author forgot to fill the field in.
 const conformanceExpectedTBD = "EXPECTED_TBD"
 
+// conformanceExcludedMarker is the marker an excluded case carries in WantKey. Like
+// EXPECTED_TBD it is a distinct literal, so an excluded (non-model) case is never
+// confused with a defect whose want-key was left blank.
+const conformanceExcludedMarker = "EXCLUDED"
+
 // conformanceCaseCount is the EXACT authored case count. An exact control (not a floor)
 // catches a drop as well as a stray add.
-const conformanceCaseCount = 42
+const conformanceCaseCount = 52
 
 // conformanceCatalogPath is the vendored catalog snapshot every figure in this file and
 // in the report is measured against. conformanceReportPath is the prose those figures
@@ -109,9 +119,12 @@ const (
 	conformanceReportPath  = "docs/research/parser-conformance-sweep.md"
 )
 
-// conformanceClassCount is the number of defect classes GH#43 cites. Every one must be
+// conformanceClassCount is the number of defect classes this corpus records: GH#43's
+// original six, plus the two UAT-raised follow-up findings — class 7 (the GLM
+// vision 'v' suffix read as a variant instead of a {vision} modifier) and class 8
+// (flash/flashx must be a distinct-weight variant uniformly). Every one must be
 // covered by at least one case.
-const conformanceClassCount = 6
+const conformanceClassCount = 8
 
 type conformanceInput struct {
 	Raw  string          `json:"raw"`
@@ -297,6 +310,11 @@ func TestParserConformance_CitedStrings(t *testing.T) {
 				t.Errorf("case %q: undecided case must carry want_key %q, got %q",
 					c.Name, conformanceExpectedTBD, c.Expected.WantKey)
 			}
+		case conformanceExcluded:
+			if c.Expected.WantKey != conformanceExcludedMarker {
+				t.Errorf("case %q: excluded case must carry want_key %q, got %q",
+					c.Name, conformanceExcludedMarker, c.Expected.WantKey)
+			}
 		}
 
 		t.Run(c.Name, func(t *testing.T) {
@@ -341,6 +359,11 @@ func TestParserConformance_CitedStrings(t *testing.T) {
 		"openai/gpt-5-mini-2025-08-07",  // class 6
 		"moonshotai/kimi-k2.5-0127",     // class 6
 		"anthropic--claude-4.6-sonnet",  // class 6
+		"glm-4.5v",                      // class 7, vision suffix
+		"glm-5v-turbo",                  // class 7, vision suffix, turbo off-key
+		"gemini-2.5-flash",              // class 8, flash variant control
+		"qwen3-coder-flash",             // class 8, flash dropped, coder collision
+		"glm-4.6v-flash",                // class 8, vision-flash inversion
 	} {
 		found := false
 		for _, c := range corpus.Cases {
@@ -478,6 +501,18 @@ var conformanceKeyRecordCounts = []conformanceKeyRecords{
 	// Class 6. These two are the pair the report first stated as 14 and 10.
 	{Key: "claude/opus", Want: 19, Where: "class 6 prose; issue #53"},
 	{Key: "claude/sonnet", Want: 13, Where: "class 6 prose; issue #53"},
+	// Class 7, the GLM vision 'v' line the vision-suffix fix issue re-keys to
+	// {vision}. These are the records the misparse currently splits under a v
+	// variant.
+	{Key: "glm/v@4.6", Want: 9, Where: "class 7 prose; vision-suffix fix issue"},
+	{Key: "glm/v@4.5", Want: 7, Where: "class 7 prose; vision-suffix fix issue"},
+	{Key: "glm/v@5", Want: 6, Where: "class 7 prose; vision-suffix fix issue"},
+	// Class 8, the flash variant line. The two conforming controls show the
+	// ruling's target shape is already met where the id is well formed; the qwen
+	// coder base is the collision the dropped-flash sibling shares.
+	{Key: "gemini/flash@2.5", Want: 24, Where: "class 8 prose; flash-uniformity fix issue"},
+	{Key: "qwen/coder@3", Want: 24, Where: "class 8 prose; flash-uniformity fix issue"},
+	{Key: "step/flash@3.5", Want: 5, Where: "class 8 prose; flash-uniformity fix issue"},
 }
 
 // conformanceDoubledDash is the vendor-prefix spelling class 6 blames. The report states

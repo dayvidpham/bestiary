@@ -299,11 +299,18 @@ for its **Go module tags** (`vX.Y.Z`).
   per catalog view, case-sensitive); AXIS: entity-key conformance per defect class;
   CONFIGURATION: the committed `parse/data/modelsdev/catalog.json` (**7,430** provider rows
   + **361** lab rows = **7,791**; **6,666** matched rows; **3,105** records; **0** unkeyed).
-  - `testdata/parse/parser_conformance_corpus.json`: **42** cases pinning the evidence for the
-    six defect classes; **6** cases carry `EXPECTED_TBD` where the destination is a curation
-    ruling, not a mechanical fact ([#51](https://github.com/dayvidpham/bestiary/issues/51), [#52](https://github.com/dayvidpham/bestiary/issues/52), and the nemotron dual-path pair in [#49](https://github.com/dayvidpham/bestiary/issues/49)).
+  - `testdata/parse/parser_conformance_corpus.json`: **52** cases pinning the evidence for
+    **eight** defect classes — GH#43's original six plus two UAT-raised follow-ups (class 7,
+    the GLM vision `v` suffix read as a variant instead of a `{vision}` modifier; class 8,
+    flash/flashx must be a distinct-weight variant uniformly). **3** cases carry
+    `EXPECTED_TBD` where the destination is still a curation ruling (the nemotron dual-path
+    pair in [#49](https://github.com/dayvidpham/bestiary/issues/49) and the class 5 distill in [#52](https://github.com/dayvidpham/bestiary/issues/52)); **1** case is `EXCLUDED` (Poe's
+    `claude-code` is a harness, not model weights). The UAT rulings also flip the two
+    `deepseek*-turbo` cases to defects (turbo is a serving-speed attribute, off the key,
+    splitting the r1/v3 collision) and the `glm-4.1v-thinking-flash` case to a defect
+    (`glm/flash@4.1{vision}`).
   - `TestParserConformance_TokenCensus` pins the counting rule end to end: all **19** per-lab
-    counts, **21** per-key record counts, the class 5 destination table in both units, the
+    counts, **27** per-key record counts, the class 5 destination table in both units, the
     class 6 doubled-dash and `duo-chat` subsets, the view split, and the boundary-rule
     exclusion table in both units (**17** records / **18** rows). Premise guards on all
     three id kinds keep a refutation from silently going stale.
