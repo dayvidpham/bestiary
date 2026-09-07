@@ -14,7 +14,9 @@
 # Refresh-introduced regressions are invisible to it by construction.
 #
 # This file is the measurement that gap needs, and it is deliberately NOT re-captured
-# on a refresh: it is the PREVIOUS RELEASE, and it moves only when a release is cut.
+# on a refresh: it is the release-comparison baseline, moved only during release PR
+# preparation. It now holds the pending v0.2.11 bake named above; after that release,
+# it remains fixed as the previous-release baseline for subsequent development.
 # Comparing it to the live bake over the rows present in BOTH catches a surviving row
 # losing a field it used to have — the one failure the re-capture procedure removes.
 #

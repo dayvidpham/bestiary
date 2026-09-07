@@ -23,6 +23,13 @@ correct for users of that release.
 
 **Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
 
+This release includes the work merged since v0.2.10: the Wayback capture
+([#39](https://github.com/dayvidpham/bestiary/pull/39)), models.dev refresh and
+curation ([#40](https://github.com/dayvidpham/bestiary/pull/40)), OpenRouter usage
+research ([#47](https://github.com/dayvidpham/bestiary/pull/47)), and parser-conformance
+evidence ([#54](https://github.com/dayvidpham/bestiary/pull/54)), plus the Pi harness
+identity below. Research findings and fixture expectations are not parser fixes.
+
 ### Changed
 
 - **First Wayback snapshot capture for the harvested HuggingFace nomina.** One live
@@ -112,7 +119,7 @@ correct for users of that release.
   alias target — the surviving Phi family is Phi-4, a different generation — so the entries
   were removed, which is exactly what `cmd/bestiary-hf` would itself emit on its next run
   under that file's fetch-owned field-ownership rule. **Every surviving snapshot was
-  preserved**: of the 159 `archived_url` values captured in 0.2.10, the 153 belonging to
+   preserved**: of the 159 `archived_url` values captured after v0.2.10, the 153 belonging to
   surviving repos are byte-identical before and after, and all 174 surviving records are
   unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
 
@@ -312,6 +319,24 @@ correct for users of that release.
 
 ### Added
 
+- **Pi Coding Agent harness identity.** `HarnessPi` names the canonical `pi` wire token,
+  `NewHarness` validates harness strings at input boundaries, and the authoritative
+  harness inventory includes Pi while preserving every existing identifier. Named fixtures
+  pin constructor, text, and exact unique inventory behavior. This identifies the coding
+  agent and is unrelated to the Inflection Pi model catalog.
+
+- **OpenRouter usage capture and concentration research.** `scripts/openrouter_usage.py`
+  adds explicit `capture` and `analyze` commands for the `rankings-daily` dataset, with
+  creator/family attribution through the Bestiary CLI and an optional per-day CSV export.
+  The committed report and CSV cover **2026-07-29 through 2026-08-27**, using the refreshed
+  2026-08-28 catalog. The report reaches at least 90% of recorded tokens with **16 creator
+  groups** (including the unattributed `ox-alpha` group) and **17 families**; **6.0%** is
+  the daily top-50 truncation's `other` bucket and **2.7%** is unmatched permaslugs.
+  These are bounded historical measurements, not a live ranking or a parser repair.
+  Raw API responses stay in the uncommitted cache. The source data is **CC BY 4.0**;
+  `docs/research/openrouter-usage-concentration-2026-08.md` carries the OpenRouter
+  attribution and links its companion `openrouter-rankings-daily_2026-07-29_2026-08-27.csv`.
+
 - **Parser-conformance sweep for the top-traffic labs** ([#43](https://github.com/dayvidpham/bestiary/issues/43), closed by this sweep). Every
   catalog record carrying one of the **19** seed lab tokens was driven through the
   production parser and its entity key asserted. UNIT: records (one distinct raw id string,
@@ -336,8 +361,8 @@ correct for users of that release.
   - Verdicts: class 1 CONFIRMED, the leading `v` misplaces or destroys the version ([#48](https://github.com/dayvidpham/bestiary/issues/48));
     class 2 PARTLY REFUTED, two compound families remain and the two ingest paths disagree
     about one model ([#49](https://github.com/dayvidpham/bestiary/issues/49)); class 3 CONFIRMED, the dash-glued `z-ai` namespace is read as
-    model content and collides with GLM-Z1 ([#50](https://github.com/dayvidpham/bestiary/issues/50)); class 4 CONFIRMED as observed,
-    destination is a ruling ([#51](https://github.com/dayvidpham/bestiary/issues/51)); class 5 VERIFIED, the `deepseek-thinking` label is
+    model content and collides with GLM-Z1 ([#50](https://github.com/dayvidpham/bestiary/issues/50)); class 4 CONFIRMED,
+    with turbo ruled a serving attribute in the expected keys ([#51](https://github.com/dayvidpham/bestiary/issues/51)); class 5 VERIFIED, the `deepseek-thinking` label is
     correctly discarded and the rows mostly re-expose class 1 ([#52](https://github.com/dayvidpham/bestiary/issues/52)); class 6 REFUTED as a
     parser defect, the cited spellings decompose correctly and fail at resolution, while a
     doubled vendor dash in the catalog does destroy the version ([#53](https://github.com/dayvidpham/bestiary/issues/53)).
@@ -345,6 +370,17 @@ correct for users of that release.
     byte-identical, and a `--no-fetch` regen leaves a zero diff. Each fix lands in its own
     issue, priced by regen-and-diff. Full method and figures:
     `docs/research/parser-conformance-sweep.md`.
+  - The final corpus has **16 conforming, 32 defect, 3 undecided, and 1 excluded** cases.
+    Its `want_key` values record the accepted destinations, not newly shipped parser
+    behavior: vision `v` belongs in `{vision}` ([#56](https://github.com/dayvidpham/bestiary/issues/56));
+    `flash`/`flashx` belong in distinct-weight variants, including `qwen/coder-flash@3`
+    ([#57](https://github.com/dayvidpham/bestiary/issues/57)); and the two DeepSeek turbo
+    spellings must lose the serving attribute from identity ([#51](https://github.com/dayvidpham/bestiary/issues/51)).
+    The class-3 expectations also honor those rulings; its conforming slash-prefix
+    control uses the non-vision `zai/glm-5.3` → `glm@5.3`, not a still-defective vision
+    spelling. Excluding Poe's `claude-code` from model-conformance expectations does
+    **not** remove that row from the production catalog. These parser and catalog
+    defects remain unresolved here; the sweep supplies evidence and fix-issue drafts.
 
 - **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
   shape, with a loud drift guard.** Every field path the vendored catalog publishes, with
@@ -411,10 +447,6 @@ correct for users of that release.
   passing run, so a dropped pin that left `(c)` at zero silently updated the committed
   evidence in the working tree beside a red test elsewhere. Refreshing it is now the same
   declared, env-gated act as re-capturing the baseline, and an ordinary run COMPARES.
-
-### Added
-
-- **Pi Coding Agent harness identity.** `HarnessPi` names the canonical `pi` wire token, `NewHarness` validates harness strings at input boundaries, and the authoritative harness inventory includes Pi while preserving every existing identifier. Named fixtures pin constructor, text, and exact unique inventory behavior. This identifies the coding agent and is unrelated to the Inflection Pi model catalog.
 
 ### Known defects (observed during the HuggingFace Wayback capture; not fixed here)
 
