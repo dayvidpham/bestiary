@@ -23,7 +23,7 @@ import (
 //
 // This file supplies the measurement that gap needs. testdata/bake_identity_baseline.tsv
 // is the PREVIOUS RELEASE's bake — (ID, Provider) -> (Family, Variant, Version) — and it
-// is deliberately NOT re-captured on a refresh. It moves only when a release is tagged —
+// is deliberately NOT re-captured on a refresh. It moves only when preparing a release PR —
 // moved BY the release engineer, at the numbered bake-identity-baseline step of the release
 // checklist in AGENTS.md, which is its only documented writer. There is no capture test for
 // it today (decomp_baseline.tsv has one, env-gated); AGENTS.md's file-ownership table and the
@@ -59,57 +59,59 @@ func (t bakeTuple) String() string {
 // so a new one is never silently absorbed, and it fails on any listed loss that no longer
 // occurs, so the ledger cannot rot into dead curation.
 //
-// SEEDED from the measured 2026-08-28 refresh: 5,146 rows are present in both bakes; 9
-// lose a populated Version, 2 GAIN one, and 0 change value. (The finding that produced
-// this gate measured TEN losses; the tenth — nano-gpt's Gemma 4 31B distill, which lost
-// its "4" when upstream stamped raw_family "claude" on it — was a real defect and is
-// FIXED by an exact-id pin rather than justified here.)
+// The active ledger is empty after the v0.2.11 release-preparation capture from 7c85400:
+// the baseline and live bake now agree. This is the release-only baseline reset required
+// by AGENTS.md, NOT a model correction or resolution of the deferred/open losses below.
+// Keeping the old waivers active would fail TestBakeIdentity_LedgerHasNoDeadRows and
+// could silently excuse a future loss on the same key. Historical rationale stays here
+// separately from executable waivers, so advancing the baseline does not erase it.
+var bakeIdentityVersionLosses = map[bakeRowKey]string{}
+
+// HISTORICAL LOSS RECORD — 2026-08-28 refresh, preserved from the ledger at 7c85400.
+// These nine rows were measured against the pre-refresh release bake: 5,146 shared
+// rows, 9 populated versions lost, 2 gained, 0 changed. They are not active exceptions
+// against the v0.2.11 baseline. No model identities or curation dispositions were changed
+// by that baseline capture or by preserving this record.
 //
-// Every remaining loss is one upstream FAMILY RELABEL, and the reason is recorded per row
-// rather than as a blanket rule, because each has a different disposition.
-var bakeIdentityVersionLosses = map[bakeRowKey]string{
-	// The ByteDance Seed fold. Upstream re-labelled these rows from the compound families
-	// "doubao-seed" / "doubao" to the short family "seed", and the short family carries no
-	// version-bearing token the scan can reach: the version lives in the DASH-SPELLED date
-	// suffix ("1-6-250615", "2-0-260215") that the doubao spellings used to expose.
-	//
-	// DEFERRED, DELIBERATELY, and this ledger is where the cost is now written down. A
-	// family_aliases.json row folding seed/doubao-seed/doubao together moves entity keys
-	// across three families at once, which is a curation slice with its own ruling — not
-	// something to land inside a data refresh. The deferral note recorded the cost as
-	// coexisting sibling keys; the measured cost is larger, and it is these six version
-	// losses. Recorded here so the next curator inherits the real figure.
-	{ID: "doubao-seed-1-6-250615", Provider: "nano-gpt"}:              doubaoSeedFold,
-	{ID: "doubao-seed-1-6-flash-250615", Provider: "nano-gpt"}:        doubaoSeedFold,
-	{ID: "doubao-seed-2-0-code-preview-260215", Provider: "nano-gpt"}: doubaoSeedFold,
-	{ID: "doubao-seed-2-0-lite-260215", Provider: "nano-gpt"}:         doubaoSeedFold,
-	{ID: "doubao-seed-2-0-mini-260215", Provider: "nano-gpt"}:         doubaoSeedFold,
-	{ID: "doubao-seed-2-0-pro-260215", Provider: "nano-gpt"}:          doubaoSeedFold,
-
-	// LearnLM was absorbed into Gemini upstream: the catalog now labels this row family
-	// "gemini", and "1.5" was LearnLM's own release line, not a Gemini one. Carrying it
-	// across would assert a Gemini 1.5 Pro that this row is not. The honest reading of the
-	// relabel is that the row's own version no longer applies, so the loss is CORRECT
-	// rather than merely tolerated. No pin is warranted.
-	{ID: "learnlm-1.5-pro-experimental", Provider: "nano-gpt"}: "upstream absorbed LearnLM into Gemini and re-labelled the row family gemini; \"1.5\" was LearnLM's release line, not Gemini's, so carrying it across would assert a generation this row does not belong to. The loss is the correct reading of the relabel.",
-
-	// Poolside's Laguna. Upstream moved the series letter out of the family
-	// ("laguna-s" -> "laguna") without moving it into the id, so the "s-2.1" segment is no
-	// longer split into a series letter plus a version and the 2.1 is not reached. This is
-	// the shape the mimo normalization repairs by separating the series letter from the
-	// family — but mimo has ~40 rows across nine keys establishing the reading, and laguna
-	// has these two, both on one provider, one of them a free spelling of the other. A
-	// two-row lever on a family with no sibling evidence is a curation judgement rather
-	// than a mechanical repair, so it is recorded here and left for the curator who has the
-	// wider Laguna picture. Named as an OPEN item, not as a settled correctness claim.
-	{ID: "poolside/laguna-s-2.1", Provider: "vercel"}:      lagunaSeriesLetter,
-	{ID: "poolside/laguna-s-2.1-free", Provider: "vercel"}: lagunaSeriesLetter,
-}
-
-const (
-	doubaoSeedFold     = "upstream re-labelled the row from the compound family doubao-seed/doubao to the short family seed, and the version lives in the dash-spelled date suffix the compound spelling used to expose. The seed/doubao-seed/doubao fold is DEFERRED to its own curation slice because it moves entity keys across three families; these six version losses are that deferral's real cost, recorded here rather than left unstated."
-	lagunaSeriesLetter = "upstream moved the series letter out of the family (laguna-s -> laguna) without moving it into the id, so \"s-2.1\" is no longer split into a series letter plus a version. This is the shape the mimo normalization repairs, but laguna has only these two rows on one provider (one the free spelling of the other) and no sibling evidence for the reading. OPEN: it needs the curator who has the wider Laguna picture, not a two-row pin landed inside a data refresh."
-)
+// ByteDance Seed — all six rows remain DEFERRED:
+//   - nano-gpt | doubao-seed-1-6-250615
+//   - nano-gpt | doubao-seed-1-6-flash-250615
+//   - nano-gpt | doubao-seed-2-0-code-preview-260215
+//   - nano-gpt | doubao-seed-2-0-lite-260215
+//   - nano-gpt | doubao-seed-2-0-mini-260215
+//   - nano-gpt | doubao-seed-2-0-pro-260215
+//
+// Upstream re-labelled these from compound families "doubao-seed" / "doubao" to
+// "seed". The short family exposes no version-bearing token the scan can reach: the
+// version lives in the dash-spelled date suffix ("1-6-250615", "2-0-260215") that the
+// compound spellings used to expose. A family_aliases.json fold of seed/doubao-seed/
+// doubao moves entity keys across three families and needs its own curation ruling,
+// not a change inside a data refresh. The earlier deferral described coexisting sibling
+// keys; these six version losses are the larger measured cost. The fold stays deferred.
+//
+// LearnLM — CORRECT loss, no pin warranted:
+//   - nano-gpt | learnlm-1.5-pro-experimental
+//
+// Upstream absorbed LearnLM into Gemini and re-labelled this row "gemini". "1.5" was
+// LearnLM's release line, not Gemini's; carrying it across would assert a Gemini 1.5 Pro
+// this row is not. Losing the version is the correct reading, not merely tolerated.
+//
+// Poolside Laguna — both rows remain OPEN, unresolved:
+//   - vercel | poolside/laguna-s-2.1
+//   - vercel | poolside/laguna-s-2.1-free
+//
+// Upstream moved the series letter out of the family ("laguna-s" -> "laguna") without
+// moving it into the id. The "s-2.1" segment is no longer split into series letter and
+// version, so 2.1 is not reached. The mimo normalization repairs this shape, but mimo
+// has about 40 rows across nine keys establishing the reading; Laguna has only these
+// two rows on one provider, one a free spelling of the other, with no sibling evidence.
+// A two-row lever needs the curator with the wider Laguna picture: this remains an open
+// curation judgement, not a settled correctness claim or a mechanical repair.
+//
+// The initial finding measured ten losses. The tenth, nano-gpt's Gemma 4 31B distill,
+// lost "4" when upstream stamped raw_family "claude" on it. That actual defect was
+// already fixed by an exact-id pin during refresh review, never waived in this ledger;
+// it is not a correction made by the release baseline reset.
 
 func loadBakeIdentityBaseline(t *testing.T) map[bakeRowKey]bakeTuple {
 	t.Helper()

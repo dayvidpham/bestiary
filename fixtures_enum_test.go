@@ -84,6 +84,11 @@ func loadEnumStringCorpus(t *testing.T, data []byte, wantN int) testcase.Corpus[
 	return loadParseCorpus[string, string](t, data, wantN)
 }
 
+func loadHarnessCorpus(t *testing.T) testcase.Corpus[string, string] {
+	t.Helper()
+	return loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, len(harnessRequiredNames))
+}
+
 // runEnumIntStringCorpus drives a String() method over every int-valued case. render
 // is the production call under test; it is passed the case's int input.
 func runEnumIntStringCorpus(t *testing.T, corpus testcase.Corpus[int, string], render func(int) string) {
@@ -139,5 +144,25 @@ func requireHarnessKnown(t *testing.T, corpus testcase.Corpus[string, string]) {
 		if !bestiary.Harness(c.Input).IsKnown() {
 			t.Errorf("corpus names harness %q, which is not a known Harness", c.Input)
 		}
+	}
+}
+
+func requireHarnessNames(t *testing.T, corpus testcase.Corpus[string, string]) {
+	t.Helper()
+	names := make(map[string]bool, len(corpus.Cases))
+	for _, c := range corpus.Cases {
+		if names[c.Name] {
+			t.Errorf("harness corpus contains duplicate required name %q", c.Name)
+		}
+		names[c.Name] = true
+	}
+	for _, name := range harnessRequiredNames {
+		if !names[name] {
+			t.Errorf("harness corpus is missing required name %q", name)
+		}
+		delete(names, name)
+	}
+	for name := range names {
+		t.Errorf("harness corpus contains unexpected name %q", name)
 	}
 }

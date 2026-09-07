@@ -98,11 +98,11 @@ const BestiarySchemaVersion = "0.7.0"
 // sat at "0.2.4" for three releases precisely because it was a literal, and a
 // stale version misreports the tool to the operators whose registry it polls.
 //
-// It is the module tag WITHOUT the leading "v": tag v0.2.10 -> "0.2.10". Bump it
+// It is the module tag WITHOUT the leading "v": tag v0.2.11 -> "0.2.11". Bump it
 // on the release branch, in the same commit that cuts the CHANGELOG stanza (see
 // AGENTS.md, "Releases"); TestReleaseVersion_Exact pins the current value so the
 // bump cannot be silently skipped.
-const ReleaseVersion = "0.2.10"
+const ReleaseVersion = "0.2.11"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

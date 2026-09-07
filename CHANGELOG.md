@@ -14,6 +14,22 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+The v0.2.11 release record below preserves the catalog-refresh corrections for
+`laguna-s/free@2.1`, `gpt/pro`, and `ministral#8b{instruct}`. The first now re-homes to
+`laguna`; the latter two are live again. Their v0.2.10 migration rows remain historically
+correct for users of that release.
+
+## [0.2.11] — 2026-09-06
+
+**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
+
+This release includes the work merged since v0.2.10: the Wayback capture
+([#39](https://github.com/dayvidpham/bestiary/pull/39)), models.dev refresh and
+curation ([#40](https://github.com/dayvidpham/bestiary/pull/40)), OpenRouter usage
+research ([#47](https://github.com/dayvidpham/bestiary/pull/47)), and parser-conformance
+evidence ([#54](https://github.com/dayvidpham/bestiary/pull/54)), plus the Pi harness
+identity below. Research findings and fixture expectations are not parser fixes.
+
 ### Changed
 
 - **First Wayback snapshot capture for the harvested HuggingFace nomina.** One live
@@ -103,7 +119,7 @@ for its **Go module tags** (`vX.Y.Z`).
   alias target — the surviving Phi family is Phi-4, a different generation — so the entries
   were removed, which is exactly what `cmd/bestiary-hf` would itself emit on its next run
   under that file's fetch-owned field-ownership rule. **Every surviving snapshot was
-  preserved**: of the 159 `archived_url` values captured in 0.2.10, the 153 belonging to
+   preserved**: of the 159 `archived_url` values captured after v0.2.10, the 153 belonging to
   surviving repos are byte-identical before and after, and all 174 surviving records are
   unchanged in every field. The 6 lost snapshots belong to the retired repos alone.
 
@@ -127,7 +143,7 @@ for its **Go module tags** (`vX.Y.Z`).
   - `ValidateNoBetaInIdentity` aborted the bake on four `grok/beta@4.20*` entities. Vercel
     re-namespaced its beta aliases `xai/` to `spacexai/`, breaking three exact-ID pins;
     requesty added `grok-4.2-beta`; and the new `llmgateway-providers` prefixes its rows by
-    backend host. Seven pins added; **beta stays a release stage and never an identity**.
+    backend host. Six pins added; **beta stays a release stage and never an identity**.
   - The `github-models` FK break above.
   - The HuggingFace seed FK break above.
 
@@ -218,7 +234,7 @@ for its **Go module tags** (`vX.Y.Z`).
     still live and still spelled the same way; upstream changed what it stamps on that row,
     so it now decomposes onto the bare `laguna` key. `laguna-s@2.1` is still a live key — it
     simply no longer holds this instance. That relabel also cost the row its version, which
-    is recorded with its reasoning in the bake-identity ledger below.
+    is recorded with its reasoning in the historical bake-identity record below.
 
 - **`modelsdev_unlinked.json` is 12, not 0, and the drained-to-zero gate is now a justified
   ledger.** This deviates from the slice brief, which asked for a drained-to-zero report,
@@ -286,12 +302,40 @@ for its **Go module tags** (`vX.Y.Z`).
   `doubao-seed`→`seed` rows, `learnlm`→`gemini`, and the two poolside `laguna-s`→`laguna`
   rows. The ByteDance fold stays DEFERRED to its own curation slice because it moves entity
   keys across three families — but the deferral note described the cost as coexisting
-  sibling keys, and the measured cost is larger. Each row now carries its own reason in the
-  bake-identity ledger, including which are correct readings of a relabel (`learnlm`, whose
+  sibling keys, and the measured cost is larger. Each row retains its reason in the
+  historical loss record beside `bakeIdentityVersionLosses` in `bake_identity_test.go`,
+  including which are correct readings of a relabel (`learnlm`, whose
   1.5 was LearnLM's release line and not Gemini's) and which are OPEN (`laguna`, which needs
   the series-letter reading the mimo lever established but has no sibling evidence).
 
+- **Release-only bake-identity baseline capture, not a curation fix.** The v0.2.11
+  baseline was captured from production `Models()` at commit `7c85400` as required by
+  the release checklist. The active `bakeIdentityVersionLosses` map is empty because
+  this baseline already contains the refresh's losses and agrees with the live bake.
+  Its dead-row gate forbids carrying old-baseline waivers forward. All nine historical
+  row identities and rationales remain visible beside the map; the six ByteDance losses
+  stay DEFERRED, LearnLM stays a correct loss, and both Laguna losses stay OPEN. The
+  capture changes no model identities and does not resolve those curation questions.
+
 ### Added
+
+- **Pi Coding Agent harness identity.** `HarnessPi` names the canonical `pi` wire token,
+  `NewHarness` validates harness strings at input boundaries, and the authoritative
+  harness inventory includes Pi while preserving every existing identifier. Named fixtures
+  pin constructor, text, and exact unique inventory behavior. This identifies the coding
+  agent and is unrelated to the Inflection Pi model catalog.
+
+- **OpenRouter usage capture and concentration research.** `scripts/openrouter_usage.py`
+  adds explicit `capture` and `analyze` commands for the `rankings-daily` dataset, with
+  creator/family attribution through the Bestiary CLI and an optional per-day CSV export.
+  The committed report and CSV cover **2026-07-29 through 2026-08-27**, using the refreshed
+  2026-08-28 catalog. The report reaches at least 90% of recorded tokens with **16 creator
+  groups** (including the unattributed `ox-alpha` group) and **17 families**; **6.0%** is
+  the daily top-50 truncation's `other` bucket and **2.7%** is unmatched permaslugs.
+  These are bounded historical measurements, not a live ranking or a parser repair.
+  Raw API responses stay in the uncommitted cache. The source data is **CC BY 4.0**;
+  `docs/research/openrouter-usage-concentration-2026-08.md` carries the OpenRouter
+  attribution and links its companion `openrouter-rankings-daily_2026-07-29_2026-08-27.csv`.
 
 - **Parser-conformance sweep for the top-traffic labs** ([#43](https://github.com/dayvidpham/bestiary/issues/43), closed by this sweep). Every
   catalog record carrying one of the **19** seed lab tokens was driven through the
@@ -317,8 +361,8 @@ for its **Go module tags** (`vX.Y.Z`).
   - Verdicts: class 1 CONFIRMED, the leading `v` misplaces or destroys the version ([#48](https://github.com/dayvidpham/bestiary/issues/48));
     class 2 PARTLY REFUTED, two compound families remain and the two ingest paths disagree
     about one model ([#49](https://github.com/dayvidpham/bestiary/issues/49)); class 3 CONFIRMED, the dash-glued `z-ai` namespace is read as
-    model content and collides with GLM-Z1 ([#50](https://github.com/dayvidpham/bestiary/issues/50)); class 4 CONFIRMED as observed,
-    destination is a ruling ([#51](https://github.com/dayvidpham/bestiary/issues/51)); class 5 VERIFIED, the `deepseek-thinking` label is
+    model content and collides with GLM-Z1 ([#50](https://github.com/dayvidpham/bestiary/issues/50)); class 4 CONFIRMED,
+    with turbo ruled a serving attribute in the expected keys ([#51](https://github.com/dayvidpham/bestiary/issues/51)); class 5 VERIFIED, the `deepseek-thinking` label is
     correctly discarded and the rows mostly re-expose class 1 ([#52](https://github.com/dayvidpham/bestiary/issues/52)); class 6 REFUTED as a
     parser defect, the cited spellings decompose correctly and fail at resolution, while a
     doubled vendor dash in the catalog does destroy the version ([#53](https://github.com/dayvidpham/bestiary/issues/53)).
@@ -326,6 +370,17 @@ for its **Go module tags** (`vX.Y.Z`).
     byte-identical, and a `--no-fetch` regen leaves a zero diff. Each fix lands in its own
     issue, priced by regen-and-diff. Full method and figures:
     `docs/research/parser-conformance-sweep.md`.
+  - The final corpus has **16 conforming, 32 defect, 3 undecided, and 1 excluded** cases.
+    Its `want_key` values record the accepted destinations, not newly shipped parser
+    behavior: vision `v` belongs in `{vision}` ([#56](https://github.com/dayvidpham/bestiary/issues/56));
+    `flash`/`flashx` belong in distinct-weight variants, including `qwen/coder-flash@3`
+    ([#57](https://github.com/dayvidpham/bestiary/issues/57)); and the two DeepSeek turbo
+    spellings must lose the serving attribute from identity ([#51](https://github.com/dayvidpham/bestiary/issues/51)).
+    The class-3 expectations also honor those rulings; its conforming slash-prefix
+    control uses the non-vision `zai/glm-5.3` → `glm@5.3`, not a still-defective vision
+    spelling. Excluding Poe's `claude-code` from model-conformance expectations does
+    **not** remove that row from the production catalog. These parser and catalog
+    defects remain unresolved here; the sweep supplies evidence and fix-issue drafts.
 
 - **`parse/data/modelsdev_field_census.json` — a committed census of the UPSTREAM field
   shape, with a loud drift guard.** Every field path the vendored catalog publishes, with
@@ -373,7 +428,8 @@ for its **Go module tags** (`vX.Y.Z`).
     path-unification baseline is re-captured on every refresh, so a decomposition change
     introduced BY the refresh is frozen into it before the gate measures anything, and
     `(c)REGRESSION=0` cannot mean what it appears to. `testdata/bake_identity_baseline.tsv`
-    is deliberately NOT re-captured on a refresh — it moves only when a release is tagged.
+    is deliberately NOT re-captured on a refresh — it moves only during release PR
+    preparation, as described in the release-only capture record above.
   - `refresh_2026_08_28_rekey_retired_keys_corpus.json` records the migration for the **19**
     retired keys whose ARTIFACTS SURVIVED under a different key, discriminated by measuring
     each retired key's v0.2.10 instance ids against the refreshed catalog's id set (19
@@ -2915,7 +2971,8 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.11...HEAD
+[0.2.11]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/dayvidpham/bestiary/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/dayvidpham/bestiary/compare/v0.2.7...v0.2.8
