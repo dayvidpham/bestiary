@@ -143,7 +143,7 @@ identity below. Research findings and fixture expectations are not parser fixes.
   - `ValidateNoBetaInIdentity` aborted the bake on four `grok/beta@4.20*` entities. Vercel
     re-namespaced its beta aliases `xai/` to `spacexai/`, breaking three exact-ID pins;
     requesty added `grok-4.2-beta`; and the new `llmgateway-providers` prefixes its rows by
-    backend host. Seven pins added; **beta stays a release stage and never an identity**.
+    backend host. Six pins added; **beta stays a release stage and never an identity**.
   - The `github-models` FK break above.
   - The HuggingFace seed FK break above.
 
