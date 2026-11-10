@@ -19,6 +19,10 @@ The v0.2.11 release record below preserves the catalog-refresh corrections for
 `laguna`; the latter two are live again. Their v0.2.10 migration rows remain historically
 correct for users of that release.
 
+## [0.3.0] — 2026-11-10
+
+**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
+
 ### Added
 
 - Harness identities for `grok-build`, `devin-desktop`, `cline`, `kiro`, `kiro-cli`, and `kiro-crew`.
@@ -2979,7 +2983,8 @@ Tag `v0.0.2`. The original entity-normalization epoch groundwork:
   the `CanonicalScheme` enum.
 - New types: `Designation`, `AcceptabilityRating`.
 
-[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.2.11...HEAD
+[Unreleased]: https://github.com/dayvidpham/bestiary/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/dayvidpham/bestiary/compare/v0.2.11...v0.3.0
 [0.2.11]: https://github.com/dayvidpham/bestiary/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/dayvidpham/bestiary/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/dayvidpham/bestiary/compare/v0.2.8...v0.2.9
