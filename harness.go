@@ -7,14 +7,21 @@ import "fmt"
 type Harness string
 
 const (
-	HarnessClaudeCode  Harness = "claude-code"
-	HarnessGeminiCLI   Harness = "gemini-cli"
-	HarnessCodex       Harness = "codex"
-	HarnessOpenCode    Harness = "opencode"
-	HarnessCursor      Harness = "cursor"
-	HarnessAntigravity Harness = "antigravity"
-	HarnessStrike      Harness = "strike"
-	HarnessPi          Harness = "pi"
+	HarnessClaudeCode Harness = "claude-code"
+	// Deprecated: Gemini CLI was replaced by the Antigravity products; retained for compatibility.
+	HarnessGeminiCLI    Harness = "gemini-cli"
+	HarnessCodex        Harness = "codex"
+	HarnessOpenCode     Harness = "opencode"
+	HarnessCursor       Harness = "cursor"
+	HarnessAntigravity  Harness = "antigravity"
+	HarnessStrike       Harness = "strike"
+	HarnessPi           Harness = "pi"
+	HarnessGrokBuild    Harness = "grok-build"
+	HarnessDevinDesktop Harness = "devin-desktop"
+	HarnessCline        Harness = "cline"
+	HarnessKiro         Harness = "kiro"
+	HarnessKiroCLI      Harness = "kiro-cli"
+	HarnessKiroCrew     Harness = "kiro-crew"
 )
 
 // knownHarnesses is the authoritative set of recognized Harness values.
@@ -27,6 +34,12 @@ var knownHarnesses = [...]Harness{
 	HarnessAntigravity,
 	HarnessStrike,
 	HarnessPi,
+	HarnessGrokBuild,
+	HarnessDevinDesktop,
+	HarnessCline,
+	HarnessKiro,
+	HarnessKiroCLI,
+	HarnessKiroCrew,
 }
 
 // NewHarness validates a wire value and returns its canonical Harness.

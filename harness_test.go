@@ -3,6 +3,10 @@ package bestiary_test
 import (
 	_ "embed"
 	"encoding/json"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -59,8 +63,23 @@ func TestNewHarness(t *testing.T) {
 	}
 }
 
+func TestHarnessConstants(t *testing.T) {
+	check := func(h bestiary.Harness, want string) {
+		t.Helper()
+		if h.String() != want {
+			t.Errorf("harness constant = %q, want %q", h, want)
+		}
+	}
+	check(bestiary.HarnessGrokBuild, "grok-build")
+	check(bestiary.HarnessDevinDesktop, "devin-desktop")
+	check(bestiary.HarnessCline, "cline")
+	check(bestiary.HarnessKiro, "kiro")
+	check(bestiary.HarnessKiroCLI, "kiro-cli")
+	check(bestiary.HarnessKiroCrew, "kiro-crew")
+}
+
 // TestHarness_String drives Harness.String() over every well-known constant, loaded
-// from testdata/enum/harness_string_corpus.json. requireHarnessKnown additionally
+// from testdata/enum/harness_string_corpus.yaml. requireHarnessKnown additionally
 // pins that each corpus token is still a recognized Harness.
 func TestHarness_String(t *testing.T) {
 	corpus := loadHarnessCorpus(t)
@@ -118,6 +137,11 @@ func TestHarnesses_AllKnown(t *testing.T) {
 		want[bestiary.Harness(c.Input)] = true
 	}
 	got := bestiary.Harnesses()
+	for i, h := range got {
+		if i < len(corpus.Cases) && h.String() != corpus.Cases[i].Expected {
+			t.Errorf("Harnesses()[%d] = %q, want %q", i, h, corpus.Cases[i].Expected)
+		}
+	}
 	seen := make(map[bestiary.Harness]bool, len(got))
 	for _, h := range got {
 		if seen[h] {
@@ -134,6 +158,41 @@ func TestHarnesses_AllKnown(t *testing.T) {
 	}
 	for missing := range want {
 		t.Errorf("Harnesses() omitted %q", missing)
+	}
+}
+
+func TestHarnessGeminiCLIDeprecation(t *testing.T) {
+	file, err := parser.ParseFile(token.NewFileSet(), "harness.go", nil, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			value := spec.(*ast.ValueSpec)
+			if value.Doc == nil || !strings.Contains(value.Doc.Text(), "Deprecated:") {
+				continue
+			}
+			for _, name := range value.Names {
+				if strings.HasPrefix(name.Name, "Harness") {
+					if name.Name != "HarnessGeminiCLI" {
+						t.Errorf("unexpected deprecated harness %s", name.Name)
+					} else {
+						found = true
+						if !strings.Contains(value.Doc.Text(), "Antigravity") {
+							t.Error("HarnessGeminiCLI deprecation does not name Antigravity")
+						}
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Error("HarnessGeminiCLI has no Deprecated: documentation")
 	}
 }
 

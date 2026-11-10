@@ -104,6 +104,84 @@
       "mutation": {
         "description": "renders the pi harness constant"
       }
+    },
+    {
+      "name": "grok-build",
+      "input": "grok-build",
+      "expected": "grok-build",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant grok-build"
+      },
+      "mutation": {
+        "description": "renders the grok-build harness constant"
+      }
+    },
+    {
+      "name": "devin-desktop",
+      "input": "devin-desktop",
+      "expected": "devin-desktop",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant devin-desktop"
+      },
+      "mutation": {
+        "description": "renders the devin-desktop harness constant"
+      }
+    },
+    {
+      "name": "cline",
+      "input": "cline",
+      "expected": "cline",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant cline"
+      },
+      "mutation": {
+        "description": "renders the cline harness constant"
+      }
+    },
+    {
+      "name": "kiro",
+      "input": "kiro",
+      "expected": "kiro",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant kiro"
+      },
+      "mutation": {
+        "description": "renders the kiro harness constant"
+      }
+    },
+    {
+      "name": "kiro-cli",
+      "input": "kiro-cli",
+      "expected": "kiro-cli",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant kiro-cli"
+      },
+      "mutation": {
+        "description": "renders the kiro-cli harness constant"
+      }
+    },
+    {
+      "name": "kiro-crew",
+      "input": "kiro-crew",
+      "expected": "kiro-crew",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant kiro-crew"
+      },
+      "mutation": {
+        "description": "renders the kiro-crew harness constant"
+      }
     }
   ]
 }

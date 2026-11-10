@@ -16,6 +16,7 @@ import (
 
 	"github.com/dayvidpham/bestiary"
 	"github.com/dayvidpham/bestiary/testcase"
+	tcassert "github.com/dayvidpham/bestiary/testcase/assert"
 )
 
 // ---- Modality ---------------------------------------------------------------
@@ -39,7 +40,7 @@ var enumAcceptabilityUnmarshalRejectCorpusJSON []byte
 
 // ---- Harness ----------------------------------------------------------------
 
-//go:embed testdata/enum/harness_string_corpus.json
+//go:embed testdata/enum/harness_string_corpus.yaml
 var enumHarnessStringCorpusJSON []byte
 
 // ---- CanonicalScheme --------------------------------------------------------
@@ -86,7 +87,12 @@ func loadEnumStringCorpus(t *testing.T, data []byte, wantN int) testcase.Corpus[
 
 func loadHarnessCorpus(t *testing.T) testcase.Corpus[string, string] {
 	t.Helper()
-	return loadEnumStringCorpus(t, enumHarnessStringCorpusJSON, len(harnessRequiredNames))
+	corpus, err := testcase.LoadCorpus[string, string](enumHarnessStringCorpusJSON)
+	if err != nil {
+		t.Fatalf("load harness corpus: %v", err)
+	}
+	tcassert.RequireValid(t, corpus)
+	return corpus
 }
 
 // runEnumIntStringCorpus drives a String() method over every int-valued case. render

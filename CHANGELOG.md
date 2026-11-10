@@ -19,6 +19,14 @@ The v0.2.11 release record below preserves the catalog-refresh corrections for
 `laguna`; the latter two are live again. Their v0.2.10 migration rows remain historically
 correct for users of that release.
 
+### Added
+
+- Harness identities for `grok-build`, `devin-desktop`, `cline`, `kiro`, `kiro-cli`, and `kiro-crew`.
+
+### Deprecated
+
+- `gemini-cli` remains recognized for compatibility but was replaced by the Antigravity products.
+
 ## [0.2.11] — 2026-09-06
 
 **Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
