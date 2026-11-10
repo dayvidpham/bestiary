@@ -1,5 +1,5 @@
-# BAKE IDENTITY BASELINE — the v0.2.11 release bake, tag v0.2.11 pending.
-# Captured from production Models() at commit 7c85400 during release preparation.
+# BAKE IDENTITY BASELINE — the v0.3.0 release bake, tag v0.3.0 pending.
+# Captured from production Models() at commit e2bb32d during release preparation.
 #
 # One row per baked model, TAB-separated:
 #
@@ -15,7 +15,7 @@
 #
 # This file is the measurement that gap needs, and it is deliberately NOT re-captured
 # on a refresh: it is the release-comparison baseline, moved only during release PR
-# preparation. It now holds the pending v0.2.11 bake named above; after that release,
+# preparation. It now holds the pending v0.3.0 bake named above; after that release,
 # it remains fixed as the previous-release baseline for subsequent development.
 # Comparing it to the live bake over the rows present in BOTH catches a surviving row
 # losing a field it used to have — the one failure the re-capture procedure removes.
