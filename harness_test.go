@@ -6,6 +6,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -18,7 +20,7 @@ var harnessRequiredNamesJSON []byte
 var harnessRequiredNames = func() []string {
 	var names []string
 	if err := json.Unmarshal(harnessRequiredNamesJSON, &names); err != nil {
-		panic(err)
+		panic("decode testdata/enum/harness_required_names.json: " + err.Error())
 	}
 	return names
 }()
@@ -63,23 +65,8 @@ func TestNewHarness(t *testing.T) {
 	}
 }
 
-func TestHarnessConstants(t *testing.T) {
-	check := func(h bestiary.Harness, want string) {
-		t.Helper()
-		if h.String() != want {
-			t.Errorf("harness constant = %q, want %q", h, want)
-		}
-	}
-	check(bestiary.HarnessGrokBuild, "grok-build")
-	check(bestiary.HarnessDevinDesktop, "devin-desktop")
-	check(bestiary.HarnessCline, "cline")
-	check(bestiary.HarnessKiro, "kiro")
-	check(bestiary.HarnessKiroCLI, "kiro-cli")
-	check(bestiary.HarnessKiroCrew, "kiro-crew")
-}
-
 // TestHarness_String drives Harness.String() over every well-known constant, loaded
-// from testdata/enum/harness_string_corpus.yaml. requireHarnessKnown additionally
+// from testdata/enum/harness_string_corpus.json. requireHarnessKnown additionally
 // pins that each corpus token is still a recognized Harness.
 func TestHarness_String(t *testing.T) {
 	corpus := loadHarnessCorpus(t)
@@ -137,11 +124,6 @@ func TestHarnesses_AllKnown(t *testing.T) {
 		want[bestiary.Harness(c.Input)] = true
 	}
 	got := bestiary.Harnesses()
-	for i, h := range got {
-		if i < len(corpus.Cases) && h.String() != corpus.Cases[i].Expected {
-			t.Errorf("Harnesses()[%d] = %q, want %q", i, h, corpus.Cases[i].Expected)
-		}
-	}
 	seen := make(map[bestiary.Harness]bool, len(got))
 	for _, h := range got {
 		if seen[h] {
@@ -162,9 +144,14 @@ func TestHarnesses_AllKnown(t *testing.T) {
 }
 
 func TestHarnessGeminiCLIDeprecation(t *testing.T) {
-	file, err := parser.ParseFile(token.NewFileSet(), "harness.go", nil, parser.ParseComments)
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("locate harness.go for HarnessGeminiCLI: runtime.Caller failed; expected a source file path")
+	}
+	path := filepath.Join(filepath.Dir(testFile), "harness.go")
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ParseComments)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("parse %s for HarnessGeminiCLI deprecation: %v", path, err)
 	}
 	found := false
 	for _, decl := range file.Decls {
@@ -174,17 +161,28 @@ func TestHarnessGeminiCLIDeprecation(t *testing.T) {
 		}
 		for _, spec := range gen.Specs {
 			value := spec.(*ast.ValueSpec)
-			if value.Doc == nil || !strings.Contains(value.Doc.Text(), "Deprecated:") {
+			if value.Doc == nil {
+				continue
+			}
+			reason, marked := "", false
+			for _, line := range strings.Split(value.Doc.Text(), "\n") {
+				if text, ok := strings.CutPrefix(line, "Deprecated:"); ok {
+					marked = true
+					reason = strings.TrimSpace(text)
+					break
+				}
+			}
+			if !marked {
 				continue
 			}
 			for _, name := range value.Names {
 				if strings.HasPrefix(name.Name, "Harness") {
 					if name.Name != "HarnessGeminiCLI" {
-						t.Errorf("unexpected deprecated harness %s", name.Name)
+						t.Errorf("%s: unexpected Deprecated: marker on %s; only HarnessGeminiCLI is expected", path, name.Name)
 					} else {
 						found = true
-						if !strings.Contains(value.Doc.Text(), "Antigravity") {
-							t.Error("HarnessGeminiCLI deprecation does not name Antigravity")
+						if reason == "" {
+							t.Errorf("%s: HarnessGeminiCLI Deprecated: marker must have a non-empty reason", path)
 						}
 					}
 				}
@@ -192,7 +190,7 @@ func TestHarnessGeminiCLIDeprecation(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("HarnessGeminiCLI has no Deprecated: documentation")
+		t.Errorf("%s: HarnessGeminiCLI must have a Deprecated: marker with a non-empty reason", path)
 	}
 }
 

@@ -2,8 +2,8 @@ package bestiary_test
 
 // Embedded JSON case corpora for the closed-enum table-driven tests (Modality,
 // AcceptabilityRating, Harness, CanonicalScheme) plus their shared runners. See
-// TESTING.md for the corpus standard: each corpus is guarded by an exact case-count
-// control, a value-based coverage assertion, and testcase.Corpus.Validate non-vacuity.
+// TESTING.md for the corpus standard. Coverage guards and testcase.Corpus.Validate
+// protect against missing and vacuous cases; harness coverage uses required wire values.
 //
 // These tables are all the same SHAPE — an enum member (int value, or the underlying
 // token for a string enum) mapped to a rendered wire string, or a JSON literal mapped
@@ -40,7 +40,7 @@ var enumAcceptabilityUnmarshalRejectCorpusJSON []byte
 
 // ---- Harness ----------------------------------------------------------------
 
-//go:embed testdata/enum/harness_string_corpus.yaml
+//go:embed testdata/enum/harness_string_corpus.json
 var enumHarnessStringCorpusJSON []byte
 
 // ---- CanonicalScheme --------------------------------------------------------
@@ -89,7 +89,7 @@ func loadHarnessCorpus(t *testing.T) testcase.Corpus[string, string] {
 	t.Helper()
 	corpus, err := testcase.LoadCorpus[string, string](enumHarnessStringCorpusJSON)
 	if err != nil {
-		t.Fatalf("load harness corpus: %v", err)
+		t.Fatalf("load testdata/enum/harness_string_corpus.json: %v", err)
 	}
 	tcassert.RequireValid(t, corpus)
 	return corpus
@@ -157,10 +157,10 @@ func requireHarnessNames(t *testing.T, corpus testcase.Corpus[string, string]) {
 	t.Helper()
 	names := make(map[string]bool, len(corpus.Cases))
 	for _, c := range corpus.Cases {
-		if names[c.Name] {
-			t.Errorf("harness corpus contains duplicate required name %q", c.Name)
+		if names[c.Input] {
+			t.Errorf("harness corpus contains duplicate wire value %q", c.Input)
 		}
-		names[c.Name] = true
+		names[c.Input] = true
 	}
 	for _, name := range harnessRequiredNames {
 		if !names[name] {
