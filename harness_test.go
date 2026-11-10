@@ -3,6 +3,12 @@ package bestiary_test
 import (
 	_ "embed"
 	"encoding/json"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
@@ -14,7 +20,7 @@ var harnessRequiredNamesJSON []byte
 var harnessRequiredNames = func() []string {
 	var names []string
 	if err := json.Unmarshal(harnessRequiredNamesJSON, &names); err != nil {
-		panic(err)
+		panic("decode testdata/enum/harness_required_names.json: " + err.Error())
 	}
 	return names
 }()
@@ -134,6 +140,59 @@ func TestHarnesses_AllKnown(t *testing.T) {
 	}
 	for missing := range want {
 		t.Errorf("Harnesses() omitted %q", missing)
+	}
+}
+
+func TestHarnessGeminiCLIDeprecation(t *testing.T) {
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("locate harness.go for HarnessGeminiCLI: runtime.Caller failed; expected a source file path")
+	}
+	path := filepath.Join(filepath.Dir(testFile), "harness.go")
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("parse %s for HarnessGeminiCLI deprecation: %v", path, err)
+	}
+	found := false
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			value := spec.(*ast.ValueSpec)
+			if value.Doc == nil {
+				continue
+			}
+			reason, marked := "", false
+			for _, line := range strings.Split(value.Doc.Text(), "\n") {
+				if text, ok := strings.CutPrefix(line, "Deprecated:"); ok {
+					marked = true
+					reason = strings.TrimSpace(text)
+					break
+				}
+			}
+			if !marked {
+				continue
+			}
+			for _, name := range value.Names {
+				if strings.HasPrefix(name.Name, "Harness") {
+					if name.Name != "HarnessGeminiCLI" {
+						t.Errorf("%s: unexpected Deprecated: marker on %s; only HarnessGeminiCLI is expected", path, name.Name)
+					} else {
+						found = true
+						if reason == "" {
+							t.Errorf("%s: HarnessGeminiCLI Deprecated: marker must have a non-empty reason", path)
+						} else if !strings.Contains(reason, "Antigravity") {
+							t.Errorf("%s: HarnessGeminiCLI Deprecated: reason must name Antigravity as successor", path)
+						}
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("%s: HarnessGeminiCLI must have a Deprecated: marker with a non-empty reason", path)
 	}
 }
 
