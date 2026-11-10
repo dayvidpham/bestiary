@@ -183,6 +183,8 @@ func TestHarnessGeminiCLIDeprecation(t *testing.T) {
 						found = true
 						if reason == "" {
 							t.Errorf("%s: HarnessGeminiCLI Deprecated: marker must have a non-empty reason", path)
+						} else if !strings.Contains(reason, "Antigravity") {
+							t.Errorf("%s: HarnessGeminiCLI Deprecated: reason must name Antigravity as successor", path)
 						}
 					}
 				}

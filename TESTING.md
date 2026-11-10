@@ -85,6 +85,10 @@ same cases, just loaded from JSON. Three guards enforce this:
 3. **Non-vacuity.** `corpus.Validate()` (or `assert.RequireValid`) asserts every
    case carries classification + provenance + mutation.
 
+For a closed name set, use a required-NAME manifest for deletion protection:
+a deleted name fails, while a count cannot catch a rename. A bare count is
+acceptable only when the count itself is the contract stated in the fixture.
+
 For a **growable** corpus (new rows expected over time) use
 `assert.RequireMin(t, corpus, floor)` instead of the exact count.
 
