@@ -364,7 +364,7 @@ func TestRetiredKeys_FreeDemotion_ChangelogTableMatchesCorpus(t *testing.T) {
 // This type is how the divergence stays reviewed instead of silent. Each entry names the
 // row, what the corpus now records, and why it moved; anything NOT declared here still
 // fails, so the cross-check keeps all of its original power. The corrections themselves
-// are published in the `[Unreleased]` stanza, and that is asserted, not assumed — a
+// are published in the latest changelog stanza, and that is asserted, not assumed — a
 // correction nobody can read is not a correction.
 type releasedTableCorrection struct {
 	// Successors is what the corpus records now. NIL means the key is no longer retired at
@@ -392,15 +392,15 @@ func assertChangelogTableMatchesCorpus(
 ) {
 	t.Helper()
 
-	unreleased := unreleasedStanza(t, changelog)
+	latest := latestStanza(t, changelog)
 	for key, c := range corrections {
-		if !strings.Contains(unreleased, key) {
+		if !strings.Contains(latest, key) {
 			t.Errorf("the released migration table's row for %q is declared corrected, but %q is not "+
-				"mentioned anywhere in the [Unreleased] stanza\n"+
+				"mentioned anywhere in the latest changelog stanza\n"+
 				"  What: the correction exists in the test and nowhere a reader can see it\n"+
 				"  Why it matters: the released stanza is immutable BECAUSE the correction is carried\n"+
-				"    in [Unreleased]. Without the published half, the immutability is just a stale table\n"+
-				"  How to fix: state the correction in [Unreleased] — what moved, and why the released\n"+
+				"    in the latest stanza. Without the published half, the immutability is just a stale table\n"+
+				"  How to fix: state the correction in the latest stanza — what moved, and why the released\n"+
 				"    row is still correct for the release it documents (%s)", key, key, c.Why)
 		}
 	}
@@ -474,8 +474,7 @@ func assertChangelogTableMatchesCorpus(
 	}
 }
 
-// unreleasedStanza returns the text of the [Unreleased] stanza, which is where every
-// correction to a released migration record must be published.
+// unreleasedStanza returns the body of the [Unreleased] stanza.
 func unreleasedStanza(t *testing.T, changelog string) string {
 	t.Helper()
 	const head = "## [Unreleased]"
@@ -488,6 +487,42 @@ func unreleasedStanza(t *testing.T, changelog string) string {
 		rest = rest[:j]
 	}
 	return rest
+}
+
+// latestStanza selects unreleased content when present, otherwise the newest release.
+func latestStanza(t *testing.T, changelog string) string {
+	t.Helper()
+	unreleased := unreleasedStanza(t, changelog)
+	if strings.TrimSpace(unreleased) != "" {
+		return unreleased
+	}
+	const head = "## [Unreleased]"
+	rest := changelog[strings.Index(changelog, head)+len(head):]
+	i := strings.Index(rest, "\n## [")
+	if i < 0 {
+		t.Fatal("CHANGELOG.md has no version stanza after [Unreleased]")
+	}
+	rest = rest[i+len("\n## ["):]
+	if len(rest) == 0 || rest[0] < '0' || rest[0] > '9' {
+		t.Fatal("CHANGELOG.md has no version stanza after [Unreleased]")
+	}
+	if j := strings.Index(rest, "\n## ["); j >= 0 {
+		rest = rest[:j]
+	}
+	return rest
+}
+
+func TestChangelogLatestStanza(t *testing.T) {
+	changelog := "## [Unreleased]\n \t\n\n## [1.2.0] — date\ncorrection\n\n## [1.1.0] — date\nold\n"
+	got := latestStanza(t, changelog)
+	if !strings.Contains(got, "correction") || strings.Contains(got, "old") {
+		t.Fatalf("latest stanza should be the newest release, got %q", got)
+	}
+	changelog = strings.Replace(changelog, " \t\n", "new correction\n", 1)
+	got = latestStanza(t, changelog)
+	if !strings.Contains(got, "new correction") || strings.Contains(got, "1.2.0") {
+		t.Fatalf("latest stanza should be unreleased when non-empty, got %q", got)
+	}
 }
 
 // parseMigrationTable reads one "old -> new" markdown migration table out of the

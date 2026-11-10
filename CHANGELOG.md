@@ -14,14 +14,14 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-11-10
+
+**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
+
 The v0.2.11 release record below preserves the catalog-refresh corrections for
 `laguna-s/free@2.1`, `gpt/pro`, and `ministral#8b{instruct}`. The first now re-homes to
 `laguna`; the latter two are live again. Their v0.2.10 migration rows remain historically
 correct for users of that release.
-
-## [0.3.0] — 2026-11-10
-
-**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
 
 ### Added
 
