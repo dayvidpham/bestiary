@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "name": "gemini-cli-is-archived-and-never-removed",
+      "input": {"constant": "HarnessGeminiCLI", "value": "gemini-cli"},
+      "expected": {
+        "deprecated": false,
+        "doc_contains": ["archived: retained for history, never removed", "Antigravity"]
+      },
+      "classification": "must-pass",
+      "provenance": {"source": "requirement", "ref": "Gemini CLI is archived and its value is retained indefinitely"},
+      "mutation": {"description": "a Deprecated marker must not be restored to the retained value"}
+    },
+    {
+      "name": "antigravity-is-archived-with-removal-planned",
+      "input": {"constant": "HarnessAntigravity", "value": "antigravity"},
+      "expected": {
+        "deprecated": true,
+        "doc_contains": ["archived", "HarnessAntigravityCLI", "HarnessAntigravityIDE", "https://github.com/peasant-labs/schema/issues/232"],
+        "deprecated_contains": ["HarnessAntigravityCLI", "HarnessAntigravityIDE", "https://github.com/peasant-labs/schema/issues/232"]
+      },
+      "classification": "must-pass",
+      "provenance": {"source": "requirement", "ref": "The bare Antigravity identity is archived with removal planned"},
+      "mutation": {"description": "the deprecation marker and successor guidance must remain on the archived value"}
+    }
+  ]
+}

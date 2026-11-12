@@ -8,10 +8,13 @@ import (
 	"go/token"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/dayvidpham/bestiary"
+	"github.com/dayvidpham/bestiary/testcase"
 )
 
 //go:embed testdata/enum/harness_required_names.json
@@ -24,6 +27,15 @@ var harnessRequiredNames = func() []string {
 	}
 	return names
 }()
+
+//go:embed testdata/enum/harness_lifecycle.json
+var harnessLifecycleJSON []byte
+
+//go:embed testdata/enum/harness_lifecycle_required_names.json
+var harnessLifecycleRequiredNamesJSON []byte
+
+//go:embed testdata/enum/harness_archived_required_names.json
+var harnessArchivedRequiredNamesJSON []byte
 
 func TestHarness_IsKnown(t *testing.T) {
 	corpus := loadHarnessCorpus(t)
@@ -120,10 +132,15 @@ func TestHarnesses_AllKnown(t *testing.T) {
 	corpus := loadHarnessCorpus(t)
 	requireHarnessNames(t, corpus)
 	want := make(map[bestiary.Harness]bool, len(corpus.Cases))
+	var wantOrder []bestiary.Harness
 	for _, c := range corpus.Cases {
 		want[bestiary.Harness(c.Input)] = true
+		wantOrder = append(wantOrder, bestiary.Harness(c.Input))
 	}
 	got := bestiary.Harnesses()
+	if !slices.Equal(got, wantOrder) {
+		t.Errorf("Harnesses() = %v, want canonical corpus order %v", got, wantOrder)
+	}
 	seen := make(map[bestiary.Harness]bool, len(got))
 	for _, h := range got {
 		if seen[h] {
@@ -143,17 +160,43 @@ func TestHarnesses_AllKnown(t *testing.T) {
 	}
 }
 
-func TestHarnessGeminiCLIDeprecation(t *testing.T) {
+type harnessLifecycleInput struct {
+	Constant string `json:"constant"`
+	Value    string `json:"value"`
+}
+
+type harnessLifecycleExpected struct {
+	Deprecated         bool     `json:"deprecated"`
+	DocContains        []string `json:"doc_contains"`
+	DeprecatedContains []string `json:"deprecated_contains"`
+}
+
+type harnessDeclaration struct {
+	value bestiary.Harness
+	doc   string
+}
+
+func TestHarnessLifecycle(t *testing.T) {
+	corpus, err := testcase.LoadCorpus[harnessLifecycleInput, harnessLifecycleExpected](harnessLifecycleJSON)
+	if err != nil {
+		t.Fatalf("load harness lifecycle corpus: %v", err)
+	}
+	if err := corpus.Validate(); err != nil {
+		t.Fatalf("validate harness lifecycle corpus: %v", err)
+	}
+	requiredCases := loadHarnessNameManifest(t, harnessLifecycleRequiredNamesJSON, "harness_lifecycle_required_names.json")
+	requiredArchived := loadHarnessNameManifest(t, harnessArchivedRequiredNamesJSON, "harness_archived_required_names.json")
+
 	_, testFile, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal("locate harness.go for HarnessGeminiCLI: runtime.Caller failed; expected a source file path")
+		t.Fatal("locate harness.go for harness lifecycle: runtime.Caller failed; expected a source file path")
 	}
 	path := filepath.Join(filepath.Dir(testFile), "harness.go")
 	file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ParseComments)
 	if err != nil {
-		t.Fatalf("parse %s for HarnessGeminiCLI deprecation: %v", path, err)
+		t.Fatalf("parse %s for harness lifecycle: %v", path, err)
 	}
-	found := false
+	declarations := make(map[string]harnessDeclaration)
 	for _, decl := range file.Decls {
 		gen, ok := decl.(*ast.GenDecl)
 		if !ok || gen.Tok != token.CONST {
@@ -161,39 +204,170 @@ func TestHarnessGeminiCLIDeprecation(t *testing.T) {
 		}
 		for _, spec := range gen.Specs {
 			value := spec.(*ast.ValueSpec)
-			if value.Doc == nil {
-				continue
+			doc := value.Doc
+			if doc == nil && len(gen.Specs) == 1 {
+				doc = gen.Doc
 			}
-			reason, marked := "", false
-			for _, line := range strings.Split(value.Doc.Text(), "\n") {
-				if text, ok := strings.CutPrefix(line, "Deprecated:"); ok {
-					marked = true
-					reason = strings.TrimSpace(text)
-					break
+			for i, name := range value.Names {
+				if !strings.HasPrefix(name.Name, "Harness") {
+					continue
 				}
-			}
-			if !marked {
-				continue
-			}
-			for _, name := range value.Names {
-				if strings.HasPrefix(name.Name, "Harness") {
-					if name.Name != "HarnessGeminiCLI" {
-						t.Errorf("%s: unexpected Deprecated: marker on %s; only HarnessGeminiCLI is expected", path, name.Name)
-					} else {
-						found = true
-						if reason == "" {
-							t.Errorf("%s: HarnessGeminiCLI Deprecated: marker must have a non-empty reason", path)
-						} else if !strings.Contains(reason, "Antigravity") {
-							t.Errorf("%s: HarnessGeminiCLI Deprecated: reason must name Antigravity as successor", path)
-						}
-					}
+				if i >= len(value.Values) {
+					t.Fatalf("%s: %s must have an explicit string value for lifecycle validation", path, name.Name)
 				}
+				literal, ok := value.Values[i].(*ast.BasicLit)
+				if !ok || literal.Kind != token.STRING {
+					t.Fatalf("%s: %s must have an explicit string value for lifecycle validation", path, name.Name)
+				}
+				wire, err := strconv.Unquote(literal.Value)
+				if err != nil {
+					t.Fatalf("%s: parse value of %s: %v", path, name.Name, err)
+				}
+				text := ""
+				if doc != nil {
+					text = doc.Text()
+				}
+				declarations[name.Name] = harnessDeclaration{value: bestiary.Harness(wire), doc: text}
 			}
 		}
 	}
-	if !found {
-		t.Errorf("%s: HarnessGeminiCLI must have a Deprecated: marker with a non-empty reason", path)
+
+	caseNames := make(map[string]bool, len(corpus.Cases))
+	caseConstants := make(map[string]bool, len(corpus.Cases))
+	caseValues := make(map[bestiary.Harness]bool, len(corpus.Cases))
+	for _, c := range corpus.Cases {
+		if caseNames[c.Name] || caseConstants[c.Input.Constant] {
+			t.Errorf("harness lifecycle has duplicate case name or constant: %q, %q", c.Name, c.Input.Constant)
+		}
+		caseNames[c.Name] = true
+		caseConstants[c.Input.Constant] = true
+		if c.Classification != testcase.MustPass || c.Input.Constant == "" || c.Input.Value == "" || len(c.Expected.DocContains) == 0 {
+			t.Errorf("harness lifecycle case %q must name a constant, value, required doc text, and must-pass classification", c.Name)
+		}
+		t.Run(c.Name, func(t *testing.T) {
+			decl, ok := declarations[c.Input.Constant]
+			if !ok {
+				t.Fatalf("%s has no %s declaration", path, c.Input.Constant)
+			}
+			if decl.value != bestiary.Harness(c.Input.Value) {
+				t.Errorf("%s = %q, want %q", c.Input.Constant, decl.value, c.Input.Value)
+			}
+			for _, text := range c.Expected.DocContains {
+				if text == "" || !strings.Contains(decl.doc, text) {
+					t.Errorf("%s documentation must contain %q; got %q", c.Input.Constant, text, decl.doc)
+				}
+			}
+			paragraphs := deprecationParagraphs(decl.doc)
+			if c.Expected.Deprecated {
+				if len(paragraphs) != 1 || paragraphs[0] == "" {
+					t.Errorf("%s must have one non-empty Deprecated: paragraph; got %q", c.Input.Constant, paragraphs)
+				} else {
+					for _, text := range c.Expected.DeprecatedContains {
+						if text == "" || !strings.Contains(paragraphs[0], text) {
+							t.Errorf("%s deprecation paragraph must contain %q; got %q", c.Input.Constant, text, paragraphs[0])
+						}
+					}
+				}
+			} else if len(paragraphs) != 0 {
+				t.Errorf("%s must not carry a Deprecated: marker", c.Input.Constant)
+			}
+		})
+		if decl, ok := declarations[c.Input.Constant]; ok {
+			if caseValues[decl.value] {
+				t.Errorf("harness lifecycle repeats archived value %q", decl.value)
+			}
+			caseValues[decl.value] = true
+		}
 	}
+	for _, name := range requiredCases {
+		if !caseNames[name] {
+			t.Errorf("harness lifecycle corpus is missing required case %q", name)
+		}
+	}
+	for name, decl := range declarations {
+		if !caseConstants[name] && len(deprecationParagraphs(decl.doc)) != 0 {
+			t.Errorf("%s: unexpected Deprecated: marker on %s", path, name)
+		}
+	}
+
+	archived := bestiary.ArchivedHarnesses()
+	wantArchived := make([]bestiary.Harness, 0, len(requiredArchived))
+	for _, name := range requiredArchived {
+		wantArchived = append(wantArchived, bestiary.Harness(name))
+	}
+	if !slices.Equal(archived, wantArchived) {
+		t.Errorf("ArchivedHarnesses() = %v, want manifest order and membership %v", archived, wantArchived)
+	}
+	seen := make(map[bestiary.Harness]bool, len(archived))
+	for _, h := range archived {
+		if seen[h] {
+			t.Errorf("ArchivedHarnesses() repeats %q", h)
+		}
+		seen[h] = true
+		if !h.IsKnown() {
+			t.Errorf("ArchivedHarnesses() includes unknown harness %q", h)
+		}
+		if !caseValues[h] {
+			t.Errorf("archived harness %q has no lifecycle case", h)
+		}
+	}
+	for h := range caseValues {
+		if !seen[h] {
+			t.Errorf("lifecycle case for %q has no archived harness", h)
+		}
+	}
+	if len(archived) > 0 {
+		before := slices.Clone(archived)
+		archived[0] = "tampered"
+		if !slices.Equal(bestiary.ArchivedHarnesses(), before) {
+			t.Error("ArchivedHarnesses() returned a non-defensive copy")
+		}
+	}
+}
+
+func loadHarnessNameManifest(t *testing.T, data []byte, name string) []string {
+	t.Helper()
+	var names []string
+	if err := json.Unmarshal(data, &names); err != nil {
+		t.Fatalf("decode testdata/enum/%s: %v", name, err)
+	}
+	if len(names) == 0 {
+		t.Fatalf("testdata/enum/%s must not be empty", name)
+	}
+	seen := make(map[string]bool, len(names))
+	for _, entry := range names {
+		if entry == "" || seen[entry] {
+			t.Errorf("testdata/enum/%s contains an empty or duplicate name %q", name, entry)
+		}
+		seen[entry] = true
+	}
+	return names
+}
+
+// deprecationParagraphs records each marker, including malformed markers not at
+// a paragraph boundary, so an unexpected marker can never disappear from checks.
+func deprecationParagraphs(doc string) []string {
+	lines := strings.Split(doc, "\n")
+	var paragraphs []string
+	for i, line := range lines {
+		reason, marked := strings.CutPrefix(line, "Deprecated:")
+		if !marked {
+			continue
+		}
+		if i > 0 && strings.TrimSpace(lines[i-1]) != "" {
+			paragraphs = append(paragraphs, "")
+			continue
+		}
+		parts := []string{strings.TrimSpace(reason)}
+		for _, next := range lines[i+1:] {
+			if strings.TrimSpace(next) == "" {
+				break
+			}
+			parts = append(parts, strings.TrimSpace(next))
+		}
+		paragraphs = append(paragraphs, strings.TrimSpace(strings.Join(parts, " ")))
+	}
+	return paragraphs
 }
 
 func TestHarnesses_DefensiveCopy(t *testing.T) {
