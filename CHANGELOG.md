@@ -14,6 +14,22 @@ for its **Go module tags** (`vX.Y.Z`).
 
 ## [Unreleased]
 
+**Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.
+
+### Added
+
+- Separate `antigravity-cli` and `antigravity-ide` harness identities, appended to the known
+  harness list, and `ArchivedHarnesses()` to list archived identities while preserving the
+  validity of historical records.
+
+### Changed
+
+- `gemini-cli` is archived and retained for history, never removed. Its earlier deprecation
+  notice is withdrawn; it remains a recognized harness.
+- The bare `antigravity` identity remains known but is archived and deprecated in favor of the
+  two product-specific identities. Its planned removal and conditions are tracked in
+  [schema#232](https://github.com/peasant-labs/schema/issues/232).
+
 ## [0.3.0] — 2026-11-10
 
 **Schema:** unchanged at `0.7.0`. SQLite store schema unchanged at `9`.

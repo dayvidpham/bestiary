@@ -12,5 +12,7 @@
   "cline",
   "kiro",
   "kiro-cli",
-  "kiro-crew"
+  "kiro-crew",
+  "antigravity-cli",
+  "antigravity-ide"
 ]

@@ -182,6 +182,32 @@
       "mutation": {
         "description": "renders the kiro-crew harness constant"
       }
+    },
+    {
+      "name": "antigravity-cli",
+      "input": "antigravity-cli",
+      "expected": "antigravity-cli",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant antigravity-cli"
+      },
+      "mutation": {
+        "description": "renders the antigravity-cli harness constant"
+      }
+    },
+    {
+      "name": "antigravity-ide",
+      "input": "antigravity-ide",
+      "expected": "antigravity-ide",
+      "classification": "must-pass",
+      "provenance": {
+        "source": "enum",
+        "ref": "bestiary.Harness constant antigravity-ide"
+      },
+      "mutation": {
+        "description": "renders the antigravity-ide harness constant"
+      }
     }
   ]
 }
