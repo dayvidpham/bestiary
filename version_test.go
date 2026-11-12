@@ -190,7 +190,7 @@ func TestUpstreamGitRemote_NonEmpty(t *testing.T) {
 // branch cuts the CHANGELOG stanza and bumps this const together, and this test
 // fails until both happen. Update it (and version.go) on the release branch.
 func TestReleaseVersion_Exact(t *testing.T) {
-	const want = "0.3.0"
+	const want = "0.4.0"
 	if bestiary.ReleaseVersion != want {
 		t.Errorf(
 			"ReleaseVersion = %q, want %q;\n"+
