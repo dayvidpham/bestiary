@@ -102,7 +102,7 @@ const BestiarySchemaVersion = "0.7.0"
 // on the release branch, in the same commit that cuts the CHANGELOG stanza (see
 // AGENTS.md, "Releases"); TestReleaseVersion_Exact pins the current value so the
 // bump cannot be silently skipped.
-const ReleaseVersion = "0.3.0"
+const ReleaseVersion = "0.4.0"
 
 // UpstreamSchemaVersion identifies the exact snapshot of the models.dev schema
 // that this bestiary schema was derived from. Format: YYYY.MM.DD-sha256

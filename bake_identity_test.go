@@ -59,7 +59,7 @@ func (t bakeTuple) String() string {
 // so a new one is never silently absorbed, and it fails on any listed loss that no longer
 // occurs, so the ledger cannot rot into dead curation.
 //
-// The active ledger is empty after the v0.3.0 release-preparation advance from e2bb32d:
+// The active ledger is empty after the v0.4.0 release-preparation advance from 5dd0228:
 // the baseline and live bake now agree. This is the release-only baseline reset required
 // by AGENTS.md, NOT a model correction or resolution of the deferred/open losses below.
 // Keeping the old waivers active would fail TestBakeIdentity_LedgerHasNoDeadRows and
